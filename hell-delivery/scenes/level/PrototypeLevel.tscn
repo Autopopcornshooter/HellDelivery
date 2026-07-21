@@ -1,0 +1,94 @@
+[gd_scene format=3 uid="uid://degy551ayoeo7"]
+
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(1, 0.4, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+size = Vector3(1, 0.4, 4)
+
+[node name="PrototypeLevel" type="Node3D" unique_id=347579214]
+
+[node name="Environment" type="Node3D" parent="." unique_id=25067045]
+
+[node name="Floor" type="StaticBody3D" parent="Environment" unique_id=657067123]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floor" unique_id=1314966339]
+shape = SubResource("BoxShape3D_1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Floor" unique_id=406609649]
+mesh = SubResource("BoxMesh_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=1948281938]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1793688593]
+environment = SubResource("Environment_1")
+
+[node name="Stairs" type="Node3D" parent="Environment" unique_id=516190453]
+
+[node name="Step1" type="StaticBody3D" parent="Environment/Stairs" unique_id=1952554904]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0.7, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step1" unique_id=636732110]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step1" unique_id=288086702]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Step2" type="StaticBody3D" parent="Environment/Stairs" unique_id=475069741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 1.1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step2" unique_id=1278590511]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step2" unique_id=983012293]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Step3" type="StaticBody3D" parent="Environment/Stairs" unique_id=631863706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 1.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step3" unique_id=1383352179]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step3" unique_id=1304340033]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Step4" type="StaticBody3D" parent="Environment/Stairs" unique_id=1633013817]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 1.9, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step4" unique_id=1256998540]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step4" unique_id=1764309985]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Step5" type="StaticBody3D" parent="Environment/Stairs" unique_id=1181967013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 2.3, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step5" unique_id=426764324]
+shape = SubResource("BoxShape3D_2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step5" unique_id=1164884634]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Gameplay" type="Node3D" parent="." unique_id=163921615]
+
+[node name="Player" parent="Gameplay" unique_id=1913023321 instance=ExtResource("1_player")]
+
+[node name="UI" type="Node3D" parent="." unique_id=549853222]
