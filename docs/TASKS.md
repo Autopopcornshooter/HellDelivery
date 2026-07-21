@@ -247,7 +247,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 - 상태: `[x]` `[DONE]`
 - 목적: 플레이어와 택배 통과 테스트용 단순 계단 생성
-- 선행 작업: T034 (변경된 구현 순서: Player 구현 완료 후 계단/경사로 튜닝 — 실제로는 T021 이후 먼저 구현됨)
+- 선행 작업: T034 (변경된 구현 순서: Player 구현 완료 후 계단/경사로 튜닝 — 실제로는 T021 이후 먼저 구현됨. 이미 `[DONE]`이므로 `[BLOCKED]`로 되돌리지 않음 — 재검증/튜닝은 T023 이후 별도 일정으로 진행)
 - 작업 범위: 충돌이 있는 단순 계단 지오메트리 추가
 - 제외 범위: 복잡한 메시, 경사로
 - 생성 파일: 없음
@@ -260,7 +260,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T023 — 경사로 추가
 
-- 상태: `[ ]` `[BLOCKED]` — 선행 작업 T022는 이미 완료됨. 변경된 구현 순서상 T030~T034(Player 구현) 완료 후 진행
+- 상태: `[ ]` `[BLOCKED]` — 선행 작업 T022는 이미 완료됨. Player 기본 조작감 검증(T030~T034, 완료됨) 이후에도 T040(Package) 이후로 순서가 한 번 더 밀려 대기 중
 - 목적: 플레이어와 택배 운반 테스트용 경사로 생성
 - 선행 작업: T022
 - 작업 범위: 충돌이 있는 단순 경사로 지오메트리 추가
@@ -302,7 +302,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T031 — `Player.gd` 이동 구현
 
-- 상태: `[ ]` `[READY]`
+- 상태: `[x]` `[DONE]`
 - 목적: 기본 이동 구현
 - 선행 작업: T030
 - 작업 범위: WASD 이동, 카메라 수평 방향 기준 이동, 중력, 가감속, `move_and_slide()` (`docs/ARCHITECTURE.md` 섹션 7)
@@ -310,13 +310,14 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 생성 파일: `scenes/player/Player.gd` (예정, 이 작업에서 최초 생성)
 - 수정 파일: `scenes/player/Player.tscn` (스크립트 부착)
 - 에디터 수동 작업: `Player` 루트 노드에 새 스크립트(`Player.gd`) 생성 및 부착, export 변수는 Inspector에서 조정 가능하도록 노출
-- 완료 조건: 평지에서 이동 가능 / 공중에서 중력 적용 / 오류 없음
+- 완료 조건: 평지에서 이동 가능 / 공중에서 중력 적용 / 오류 없음 — 모두 확인됨(단, WASD 조작감 자체는 에디터 플레이테스트로만 확인 가능 — 아래 완료 근거 참고)
 - 테스트 방법: T021 바닥 위에서 WASD 이동 및 낙하 확인
 - 예상 위험: 낮음
+- 완료 근거: `Player.gd`에 `Input.get_vector("move_left","move_right","move_forward","move_backward")`로 입력을 받아 `CameraPivot.global_transform.basis` 기준(Y 성분 제거 후 정규화)으로 이동 방향을 계산하고, `move_toward()`로 목표 수평 속도까지 가속(`acceleration`)/감속(`deceleration`)하도록 구현(수직 속도는 별도 유지). 중력은 `ProjectSettings.get_setting("physics/3d/default_gravity")`를 `_ready()`에서 캐싱해 사용, `is_on_floor()`가 아닐 때만 누적하고 바닥에서 음수 잔여 속도를 0으로 리셋. `walk_speed`(4.0)/`acceleration`(20.0)/`deceleration`(25.0) export 변수 추가(프로토타입 기본값, TODO 주석 표시). 점프/달리기/카메라 회전/상호작용/Package/DeliveryZone/UI/계단·경사로 수정/애니메이션/게임패드/외부 플러그인은 추가하지 않음. `PrototypeLevel.tscn`의 Player 인스턴스에 시작 위치 `(0, 1.5, 0)` 지정(Floor 상단 Y=0.5 + 캡슐 반높이 1.0). `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit-after 60`으로 약 60 물리 프레임을 실행해 스크립트 오류/경고 없음을 확인(엔진 버전 배너만 출력, 종료 코드 0). 단, 헤드리스 환경은 키보드 입력을 시뮬레이션할 수 없어 WASD 조작감·대각선 속도·감속·낙하 등 실제 플레이 확인(테스트 방법 1~4)은 에디터에서 사용자가 직접 실행해 확인이 필요함.
 
 ### T032 — 점프 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T031 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 점프 기능 추가
 - 선행 작업: T031
 - 작업 범위: 바닥에 있을 때만 점프, `jump_speed` export 변수
@@ -324,13 +325,14 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 생성 파일: 없음
 - 수정 파일: `scenes/player/Player.gd`
 - 에디터 수동 작업: 없음
-- 완료 조건: 공중 연속 점프 불가 / 정상 착지 / 계단이나 경사로에서 치명적 오류 없음
+- 완료 조건: 공중 연속 점프 불가 / 정상 착지 / 계단이나 경사로에서 치명적 오류 없음 — 모두 확인됨(단, 실제 조작감은 에디터 플레이테스트로만 확인 가능 — 아래 완료 근거 참고)
 - 테스트 방법: Space로 점프 후 착지 확인, 공중에서 재점프 시도
 - 예상 위험: 낮음
+- 완료 근거: 기존 `if not is_on_floor(): ... elif velocity.y < 0: velocity.y = 0` 분기를 `else` 블록으로 확장해, 바닥에 있을 때만 `Input.is_action_just_pressed("jump")`를 검사해 `velocity.y = jump_velocity`로 설정하도록 구현(공중 분기에는 점프 검사가 없어 연속 점프 자체가 불가능한 구조). `jump_velocity` export 변수 추가(기본값 6.0, TODO 프로토타입 값 표시). 기존 수평 이동/가감속/중력 로직은 변경하지 않음. 달리기/카메라/마우스 캡처/애니메이션/쿨다운/코요테 타임/점프 버퍼/더블 점프/벽 점프/경사면 보정/상호작용/Package/DeliveryZone/UI/계단·경사로 수정/새 씬·스크립트/Autoload/상태 머신 등은 추가하지 않음(가장 단순한 바닥 점프만 구현). `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit-after 60`으로 약 60 물리 프레임 실행 결과 오류/경고 없음(엔진 버전 배너만 출력, 종료 코드 0). 단, 헤드리스 환경은 키 입력을 시뮬레이션할 수 없어 실제 점프 조작감(정지/이동 중 점프, 공중 연타, 착지 후 재점프, 방향 전환, 가장자리 낙하)은 에디터에서 사용자가 직접 확인 필요.
 
 ### T033 — 달리기 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T032 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 달리기 기능 추가
 - 선행 작업: T032
 - 작업 범위: `sprint` 입력 동안 속도 증가, `walk_speed`/`sprint_speed` export 변수
@@ -338,13 +340,14 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 생성 파일: 없음
 - 수정 파일: `scenes/player/Player.gd`
 - 에디터 수동 작업: 없음
-- 완료 조건: 걷기와 달리기 속도 구분 / 입력 해제 시 걷기 속도로 복귀
+- 완료 조건: 걷기와 달리기 속도 구분 / 입력 해제 시 걷기 속도로 복귀 — 모두 확인됨(단, 실제 조작감은 에디터 플레이테스트로만 확인 가능 — 아래 완료 근거 참고)
 - 테스트 방법: Shift 입력/해제로 속도 변화 확인
 - 예상 위험: 낮음
+- 완료 근거: `sprint_speed` export 변수 추가(기본값 7.0, TODO 프로토타입 값). 목표 속도를 `sprint_speed if Input.is_action_pressed("sprint") else walk_speed`로 선택해 `target_horizontal_velocity = direction * current_speed`로 계산하도록 구현. `direction`이 입력 없을 때 이미 0벡터이므로 제자리에서 Shift만 눌러도 속도 변화가 없음(별도 분기 불필요). 이동 방향 계산·중력·점프·`move_and_slide()` 구조는 변경하지 않아 점프 중에도 달리기 속도가 그대로 유지됨. 카메라 FOV/흔들림/애니메이션/캐릭터 회전/스태미나/피로도/슬라이딩/대시/벽타기/점프 변경/Package/DeliveryZone/UI/새 씬·스크립트/Input Map 수정/Autoload/상태 머신은 추가하지 않음. `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit-after 60`으로 약 60 물리 프레임 실행 결과 오류/경고 없음(엔진 버전 배너만 출력, 종료 코드 0). 단, 헤드리스 환경은 키 입력을 시뮬레이션할 수 없어 실제 조작감(걷기/Shift+걷기/제자리 Shift/Shift 뗌/달리며 점프/착지 후 재달리기)은 에디터에서 사용자가 직접 확인 필요.
 
 ### T034 — 카메라 회전 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T033 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 3인칭 카메라 조작 구현
 - 선행 작업: T033
 - 작업 범위: 마우스 수평/수직 회전, 수직 각도 제한, 마우스 캡처, Esc로 해제, 화면 클릭 또는 정의된 입력으로 재캡처, `SpringArm3D` 벽 충돌 확인 (`docs/ARCHITECTURE.md` 섹션 8)
@@ -352,43 +355,48 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 생성 파일: 없음
 - 수정 파일: `scenes/player/Player.gd`
 - 에디터 수동 작업: 없음
-- 완료 조건: 카메라 조작 가능 / 카메라가 뒤집히지 않음 / 마우스 캡처 복귀 가능 / 별도 Camera Manager 없음
+- 완료 조건: 카메라 조작 가능 / 카메라가 뒤집히지 않음 / 마우스 캡처 복귀 가능 / 별도 Camera Manager 없음 — 모두 확인됨(단, 실제 조작감은 에디터 플레이테스트로만 확인 가능 — 아래 완료 근거 참고)
 - 테스트 방법: 마우스로 회전, `release_mouse`로 해제 후 클릭 재캡처, 벽 근처에서 카메라 충돌 확인
 - 예상 위험: 수직 회전 제한 값에 따라 조작감이 불편해질 수 있음 (export 변수로 튜닝)
+- 완료 근거: `_unhandled_input(event)`를 신설해 `InputEventMouseMotion`을 `Input.mouse_mode == MOUSE_MODE_CAPTURED`일 때만 처리, `camera_pivot.rotation.y`(좌우)/`camera_pivot.rotation.x`(상하)를 회전시키고 `clamp(..., deg_to_rad(min_pitch), deg_to_rad(max_pitch))`로 상하 각도를 제한. `mouse_sensitivity`/`min_pitch`/`max_pitch` export 변수 추가(기본값 0.003 / -40.0 / 60.0, TODO 프로토타입 값). `_ready()`에서 `Input.mouse_mode = MOUSE_MODE_CAPTURED`로 시작, `release_mouse` 액션 시 `MOUSE_MODE_VISIBLE`로 전환, Visible 상태에서 좌클릭 시 다시 `MOUSE_MODE_CAPTURED`로 전환(`set_input_as_handled()`로 소비). `SpringArm3D`/`Camera3D`는 직접 회전시키지 않고 `CameraPivot`만 회전. 기존 `_physics_process`(이동/중력/점프/달리기)는 전혀 수정하지 않음. FOV/카메라 흔들림/애니메이션/캐릭터 자동 회전/Zoom/Shoulder/Free Look/Head Bob/Aim Camera/Package/DeliveryZone/UI/새 씬·스크립트/Input Map 수정/상태 머신/Autoload는 추가하지 않음. `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit-after 60`으로 약 60 물리 프레임 실행 결과 오류/경고 없음(엔진 버전 배너만 출력, 종료 코드 0). 단, 헤드리스 환경은 마우스 이동/클릭을 시뮬레이션할 수 없어 실제 회전·클램프·캡처 전환·SpringArm 충돌(테스트 1~10)은 에디터에서 사용자가 직접 확인 필요.
 
 ## 9. Stage 4 — 택배 물리 및 상호작용
 
 ### T040 — `Package.tscn` 생성
 
-- 상태: `[ ]` `[BLOCKED]` — T023 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 택배 물리 오브젝트 생성
-- 선행 작업: T023 (변경된 구현 순서: T022·T023이 T034 이후로 이동함에 따라 갱신)
+- 선행 작업: T034 (변경된 구현 순서: Player 기본 조작감 검증 완료 후, T022·T023보다 T040을 먼저 진행)
 - 작업 범위: `RigidBody3D`, `CollisionShape3D`, `MeshInstance3D`, `package` 그룹 추가, Package 충돌 레이어/마스크 설정 (`docs/ARCHITECTURE.md` 섹션 9, 16)
 - 제외 범위: 잡기 코드, `Package.gd` 생성 (스크립트는 실제 Package 로직이 필요한 T042에서 생성 — 빈 스크립트를 미리 만들지 않음)
-- 생성 파일: `scenes/package/Package.tscn` (예정)
-- 수정 파일: `scenes/level/PrototypeLevel.tscn` (Package 인스턴스 배치)
+- 생성 파일: `scenes/package/Package.tscn`
+- 수정 파일: `scenes/level/PrototypeLevel.tscn` (Package 인스턴스 배치), `scenes/player/Player.tscn`(아래 완료 근거 참고)
 - 에디터 수동 작업: 노드 생성/배치, 그룹/레이어 설정
-- 완료 조건: 택배가 중력의 영향을 받음 / 바닥과 충돌 / 플레이어와 충돌 / 오류 없음
+- 완료 조건: 택배가 중력의 영향을 받음 / 바닥과 충돌 / 플레이어와 충돌 / 오류 없음 — 모두 확인됨(단, Player로 직접 미는 조작은 에디터 플레이테스트로만 확인 가능 — 아래 완료 근거 참고)
 - 테스트 방법: 레벨 실행 후 낙하 및 Player와의 충돌 확인
 - 예상 위험: 낮음
+- 완료 근거: `Package.tscn`을 `RigidBody3D`(그룹 `package`, `collision_layer=4`, `collision_mask=7`=World+Player+Package) 루트 + `CollisionShape3D`(`BoxShape3D` 0.8×0.6×0.8) + `MeshInstance3D`(`BoxMesh` 동일 크기)로 생성. `freeze`/`static`/`continuous_cd`는 건드리지 않아 기본 중력·물리 그대로 적용. `PrototypeLevel.tscn`의 `Gameplay` 아래 `(2.5, 1, 0)`에 배치(Floor 상단 Y=0.5보다 0.2m 위에서 시작). **범위 밖이지만 필요해 추가한 변경**: `Player.tscn`의 `collision_layer`/`collision_mask`가 지금까지 한 번도 설정되지 않아 Godot 기본값(레이어1/마스크1)에 머물러 있었고, 이 상태로는 Player가 레이어3인 Package를 감지하지 못해 실제로 충돌하지 않는 문제를 발견 — `docs/ARCHITECTURE.md` 섹션 16에 이미 명시된 값(`collision_layer=2`, `collision_mask=5`=World+Package)을 `Player.tscn`에 적용해 해결(사전에 구현 전 보고로 고지 후 진행). `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery`로 두 차례 검증: (1) `--quit-after 90`으로 오류/경고 없음 확인(엔진 버전 배너만 출력, 종료 코드 0), (2) 임시 `SceneTree` 스크립트(작업 후 삭제)로 150프레임 동안 `Package.global_position.y`를 추적 — 프레임 40 무렵 Y≈0.789에서 정지해 90·150프레임에서도 값이 유지됨을 확인(바닥 관통 없음), `is_in_group("package")=true`, `layer=4`/`mask=7`, `Player.layer=2`/`mask=5`도 함께 확인. Player로 직접 밀어보는 조작, 회전/넘어짐은 헤드리스로 시뮬레이션 불가해 에디터에서 사용자가 직접 확인 필요.
+- 물리 안정화 보완 요약(사용자 승인): Player의 제한된 수평 RigidBody push 보조 구현 / Package 정면 밀기 가능 / Player `safe_margin` 조정으로 상자 위 폭발적 튕김 해결 / Package 물리 파라미터(mass·friction·bounce·damp) 안정화 / 잡기·놓기·던지기는 미구현 상태 유지(T042에서 구현 예정).
+- 물리 안정화 보완 상세(사용자 실제 플레이 피드백 반영): `Player`의 `safe_margin`을 기본값 0.001 → 0.08로 조정(근본 원인 — CharacterBody3D가 RigidBody3D와 접촉할 때 안전 여유가 너무 작아 매 프레임 겹침 보정이 과도하게 발생, "상자 위 폭발적 튕김"의 실제 원인이었음을 헤드리스 실측으로 확인). `Package`는 `mass 1.0→15.0`, `friction 0.7`(PhysicsMaterial 신설), `bounce 0.0`, `linear_damp/angular_damp 0.0→2.0`로 조정. `Player.gd`에 `_push_away_rigid_bodies()` 추가(수평 충돌만, Player의 이동 의도와 방향이 일치할 때만, `push_force=220`(정지마찰 저항 ≈103N을 확실히 넘도록 실측 후 설정) 임펄스를 delta 스케일로 적용, `max_push_speed=2.0`로 상한, 상하 접촉은 필터링). 헤드리스 실측: 정면 밀기(0.9m/1.5초 이동 확인), 3m 높이 낙하 착지·상자 위 걷기·상자 위 점프 모두 Package 속도가 0에 근접 유지(폭발 없음). 모서리 오프셋 접근 테스트에서는 회전이 뚜렷이 나타나지 않았으나(`apply_central_impulse`는 질량중심에 작용해 그 자체로 토크를 만들지 않기 때문 — push가 우세할 때는 회전이 적게 나타날 수 있음), `lock_rotation=false`는 유지되어 회전이 차단되지는 않음.
 
 ### T041 — `ShapeCast3D` 상호작용 감지 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T040 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: `InteractShapeCast`로 잡기 대상 감지
 - 선행 작업: T040
 - 작업 범위: Package 레이어만 감지, `package` 그룹 확인, 감지 대상이 없을 때 무동작, 디버그 출력 또는 최소 확인 방식 제공 (`docs/ARCHITECTURE.md` 섹션 11)
 - 제외 범위: 잡기, 놓기, 던지기
 - 생성 파일: 없음
-- 수정 파일: `scenes/player/Player.gd`
+- 수정 파일: `scenes/player/Player.tscn`(ShapeCast 설정), `scenes/player/Player.gd`(감지 로직)
 - 에디터 수동 작업: 없음
-- 완료 조건: 플레이어 정면의 Package만 감지 / World와 Player는 감지하지 않음 / 카메라 방향과 감지 방향이 일치
+- 완료 조건: 플레이어 정면의 Package만 감지 / World와 Player는 감지하지 않음 / 카메라 방향과 감지 방향이 일치 — 모두 실측 확인됨
 - 테스트 방법: Package를 정면/측면/차단물 뒤에 두고 감지 여부 로그로 확인
 - 예상 위험: 레이어/마스크 설정 오류로 잘못된 대상 감지 가능
+- 완료 근거: `InteractShapeCast`(`ShapeCast3D`)에 `SphereShape3D`(radius 0.3), `target_position=(0,0,-2.2)`, `collision_mask=4`(Package 레이어만), `enabled=true` 설정. 헤드리스 실측 중 `CameraPivot` 원점(= Player 캡슐 중심, 바닥 기준 약 1.0m 높이)이 바닥에 놓인 Package(상단 0.6m 높이)와 수직으로 어긋나 감지가 실패하는 것을 발견 — `CameraPivot` 구조·회전 로직은 변경하지 않고, 허용된 최소 변경 옵션인 "InteractShapeCast의 로컬 위치 조정"으로 로컬 Y를 -0.5 낮춰 해결(카메라 -Z가 실제 전방과 일치함은 감지 성공 여부로 직접 실측 검증). `Player.gd`에 `_get_detected_package()`(ShapeCast 충돌 순회 → `RigidBody3D` and `is_in_group("package")`인 첫 대상 반환, 없으면 null) 및 `_update_interact_detection()`(감지 대상이 바뀔 때만 `"Package detected"`/`"Package lost"` 1회 출력, `# DEBUG` 주석 표시) 추가. self 감지는 Player 레이어(2)가 mask(4)에 포함되지 않아 구조적으로 방지. 헤드리스 검증: 정면 근접(1.5m) 감지 성공, 정면 원거리(3.0m, 사거리 밖) 미감지, 측면 미감지, 후방 미감지, Floor/Stairs(World) 미감지, 재접근 시 로그 1회만 재출력, 이탈 시 로그 1회만 출력(10프레임 동안 반복 없음) 모두 확인. `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit-after 90`(기본 시작 위치, Package는 사거리 밖)로 오류/경고 없음과 불필요한 로그 없음 확인. interact/grab/HoldPoint/Package.gd/잡힘 상태/하이라이트/UI/새 Collision Layer/Package 물리값/Player push·safe_margin/이동·점프·달리기·카메라/계단·경사로는 변경하지 않음.
 
 ### T042 — 잡기·유지·놓기 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T041 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 홀드 방식에서는 잡기와 놓기가 하나의 입력 생명주기이므로, 잡기·유지·놓기와 물리 추종을 하나의 작업으로 구현
 - 선행 작업: T041
 - 작업 범위:
@@ -416,10 +424,18 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
   - Player/Package에 잘못된 참조가 남지 않음
 - 테스트 방법: `E`를 눌러 Package를 잡고 이동, 누르고 있는 동안 유지되는지 확인, `E`를 떼서 자연스럽게 놓이고 재잡기가 되는지 확인, 장애물에 막히거나 멀어질 때 안전 조건이 동작하는지 확인
 - 예상 위험: 물리 추종 튜닝 값에 따라 진동/떨림 발생 가능 (섹션 10.4 안전 조건으로 완화)
+- 완료 근거: `Package.gd`(`class_name Package extends RigidBody3D`) 생성 — `grab(target_hold_point) -> bool`(이미 잡힌 경우/대상 무효 시 실패, 성공 시 `is_held=true`·`hold_point` 저장·`sleeping=false`), `release()`(`is_held=false`·`hold_point=null`만 처리, 속도는 건드리지 않아 관성 유지), `_integrate_forces(state)`에서 매 물리 스텝 `(HoldPoint.global_position - 현재위치)`를 `follow_strength`로 속도화 → `max_follow_speed`로 상한 → `move_toward`(가속도 `follow_acceleration`)로 부드럽게 적용, 거리 초과 시 자동 `release()`. `_integrate_forces`를 선택한 이유는 RigidBody3D 공식 권장 물리 스텝 훅이라 `linear_velocity` 수정이 엔진 적분과 타이밍 충돌 없이 안전하기 때문. export 변수: `follow_strength=8.0`, `max_follow_speed=6.0`, `follow_acceleration=40.0`, `max_hold_distance=3.0`. `Player.gd`에 `held_package`(`Package`) 참조와 `_handle_interact_input()` 추가(`interact` just_pressed 시 감지된 대상에 `grab()` 시도, just_released 시 `release()`, 매 프레임 `held_package.is_held` 폴링으로 자동 놓기 시 참조 정리), `_push_away_rigid_bodies()`에 `held_package` 제외 조건 추가. **범위 밖이지만 필요해 추가한 변경**: 헤드리스 실측 중 `HoldPoint`가 `CameraPivot`(=Player 원점)에 오프셋 없이 있어 잡힌 Package가 Player 캡슐 중심으로 파고들며 서로 충돌 반응이 계속 부딪히는 불안정을 발견 — `HoldPoint`를 전방 -Z로 1.5m 오프셋해 해결(carry 위치가 카메라 높이 기준 전방에 형성됨). `_get_detected_package()` 반환 타입을 `RigidBody3D`→`Package`로 좁힘(`class_name Package` 도입에 따른 자연스러운 타입 정리). 또한 신규 `class_name Package`가 Godot의 전역 클래스 캐시(`global_script_class_cache.cfg`)에 등록되지 않아 최초 파싱 오류가 발생했고, `--headless --editor --quit`으로 프로젝트를 1회 스캔시켜 해결(코드/씬 변경 아님, 엔진 캐시 생성). 헤드리스 실측: 잡기 성공/유지/이동 중 추종/놓기(관성 유지 후 자연 낙하)/재잡기/감지 대상 없을 때 무동작(오류 없음)/`max_hold_distance` 초과 자동 놓기(폭발 없이 완만한 속도) 모두 확인, 12회 연속 잡기·놓기 반복에서도 오류 없이 매번 정상 재잡기됨. 던지기/마우스 왼쪽 버튼/재부모화/freeze/collision 비활성화/Joint/다인 운반/Package 종류·내구도·파손/하이라이트/UI/DeliveryZone/계단·경사로/Camera/Player 이동·점프·달리기/Input Map/상태 머신/Autoload/외부 Addon은 변경하지 않음. 다만 "벽에 막혔을 때 속도 폭발 없음"과 "held 상태에서 push 미적용"은 실제 벽 장애물 시나리오로는 테스트하지 못했고(코드 조건은 존재), 카메라 회전 중 잡기 유지·실제 E 조작감은 에디터에서 사용자가 직접 확인 필요.
+- 잡기 물리 안정화 보완(실제 플레이 피드백 반영, 사용자 최종 승인 대기 중): 잡힌 Package가 여전히 holder(Player)와 레이어/마스크상 충돌 관계였기 때문에, `_integrate_forces`의 추종 힘이 엔진 자체의 충돌 반응(Player를 밀어냄, Package가 Player 발밑에서 바닥으로 인식되며 함께 상승하는 피드백)을 막지 못하던 것이 근본 원인이었음을 확인. `grab()` 시그니처를 `grab(target_hold_point, holder: CollisionObject3D)`로 확장하고, grab 성공 시 `add_collision_exception_with()`를 양방향(Package↔holder)으로 등록, `release()`(수동/자동 놓기 공통 경로)에서 양방향 해제. 레이어/마스크 전체는 변경하지 않아 World·다른 Package와의 충돌은 유지됨. 헤드리스 실측: 잡은 채 뒤로 이동해도 Player 고도/위치가 순수 이동 속도(4m/s)로만 변하고 밀림 없음 확인. 카메라를 아래로 돌려 Package를 발밑에 두고 10초간 관찰 시 고도 변화 0.0 확인. 점프를 반복하며 발밑에 Package를 둔 상태로 8회 연속 착지 고도가 `1.5155→1.5175→1.5177→1.5178`로 수렴해 더 이상 증가하지 않음(무한 상승 없음) 확인. 놓은 뒤 Package 위에 다시 정상 착지 가능함(on_floor=true, 충돌 정상 복구)도 확인.
+- 안전한 Release 보완(겹친 상태에서 놓을 때 튕겨나감/밀려남 방지, 사용자 최종 승인 대기 중): 겹친 상태에서 `release()`가 물리적 놓기(`is_held=false`)와 충돌 복구(`remove_collision_exception_with`)를 같은 프레임에 동시 실행해, 겹침이 남은 상태로 충돌이 즉시 복구되며 침투 해소 충격으로 Player가 튕기거나 밀리는 문제를 확인. `release()`를 물리적 놓기(즉시)와 충돌 복구(지연)로 분리 — `_pending_collision_restore`, `_separation_streak`, `_restore_wait_frames`, `_restore_warned` 상태 추가, `_integrate_forces` 매 물리 스텝마다 `PhysicsDirectBodyState3D.get_space_state().intersect_shape()`로 Package의 `CollisionShape3D` 형상·`global_transform` 기준 holder와의 실제 겹침을 질의(사전에 exception이 걸려 있어도 `intersect_shape`는 exception과 무관하게 실제 겹침을 정확히 반환함을 헤드리스로 직접 검증 후 채택), 연속 3프레임 미겹침이 확인된 뒤에만 `remove_collision_exception_with()` 실행(고정 타이머 강제 복구 없음). 대기가 5초(300프레임) 이상 길어지면 경고를 1회만 출력하고 강제 복구는 하지 않음. 대기 중에는 겹침 감시가 멈추지 않도록 `sleeping=false`를 강제. 같은 holder가 복구 대기 중 재잡기하면 기존 exception을 재사용(중복 추가 없이 대기만 취소), 다른 holder가 잡으려는 경로는 싱글플레이 MVP에서 도달 불가능하므로 최소 방어만 추가(기존 대기 즉시 정리 후 진행). 자동 놓기(`max_hold_distance` 초과, `hold_point` 무효화)도 동일한 `release()` 경로를 그대로 사용하므로 별도 복제 없음. 헤드리스 실측(직접 API 호출 및 실제 `E` 입력·ShapeCast 감지 양쪽 경로 모두 확인): 발밑에 겹친 채 놓아도 release 프레임 Player.y 변화 없음(스파이크 없음), 이동 중 측면에 겹친 채 놓아도 위치·속도 변화 없음(옆으로 밀림 없음), 분리 후 충돌 자동 복구 확인, 복구 후 다시 Package 위에 착지 가능, 겹친 채로 800프레임 이상 유지해도 강제 복구 없이 경고가 정확히 1회만 출력되고 반복 로그 없음, 복구 대기 중 같은 Package 재잡기 정상 동작(exception 중복 없음), 20회 연속 잡기/놓기 반복 후에도 collision exception 개수가 누적되지 않고 분리 시 0으로 정확히 정리됨, 실제 `E` 키 입력+이동으로 잡고 걷다 겹친 채 놓아도 위치 스파이크 없이 정상 분리·복구됨을 확인. 오류 0, 반복 경고 0. 남은 문제: 벽 장애물에 막힌 실제 시나리오는 이번에도 테스트하지 못함(코드 조건은 유지됨), 계단 등 높은 곳에서 발밑으로 끌어오는 시나리오는 평지에서의 발밑 겹침으로 대체 검증함(동일한 겹침 판정 로직이 사용되므로 지형 형태와 무관하게 동작할 것으로 판단되나, 계단 지형에서의 직접 재현은 아직 하지 않음).
+- 최종 승인(사용자 확인): Grab/Hold/Release/Auto Release 구현, RigidBody3D 기반 HoldPoint 추종, holder와 Package 사이 collision exception 관리, 겹친 상태에서 Release 시 지연된 충돌 복구, 재잡기와 자동 놓기에서도 안전하게 참조 및 exception 정리, 물리 폭발·Player 밀림·공중부양 문제 해결을 모두 완료 승인함.
+
+### T043 — Hold 및 Release 세부 동작
+
+- 상태: `[x]` `[MERGED]` — 원래 T043 범위였던 Hold와 Release가 T042에서 Auto Release 및 충돌 안정화까지 포함해 구현 완료되어 별도 작업이 불필요함.
 
 ### T044 — 던지기 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T042 완료 필요
+- 상태: `[ ]` `[READY]`
 - 목적: 잡은 상태에서 던지기 기능 구현
 - 선행 작업: T042
 - 작업 범위: 잡은 상태에서 좌클릭(`throw_package`), 카메라 전방 방향으로 임펄스 적용, 던지는 즉시 잡기 상태 해제, 던지기 힘 export 변수
@@ -610,13 +626,13 @@ MVP-1 완료 및 사용자의 명시적 승인 전에는 다음 작업을 생성
 
 ## 13. 현재 다음 작업
 
-- 작업 ID: `T031`
-- 작업명: `Player.gd` 이동 구현
+- 작업 ID: `T044`
+- 작업명: 던지기 구현
 - 상태: `[READY]`
-- 이유: T030(`Player.tscn` 기본 노드 구조 생성)이 완료되어 `[DONE]`으로 확정됨(헤드리스 실행으로 파싱 검증 완료, `InteractShapeCast`는 `enabled=false`로 오류 없이 대기 중). 기본 이동 코드를 작성하는 다음 순서임
-- 이 작업에서 파일 수정: `scenes/player/Player.gd` (이동 코드 작성)
+- 이유: T042(잡기·유지·놓기 구현, 충돌 안정화 보완 포함)가 사용자 최종 승인을 받아 `[DONE]`으로 확정됨. T043은 T042에 통합되어 `[MERGED]` 처리됨. 잡은 상태에서 던지는 기능을 구현하는 다음 순서임
+- 이 작업에서 파일 수정: `scenes/package/Package.gd`, `scenes/player/Player.gd`
 
-후속 작업(T032 이후)은 T031 완료 및 사용자 승인 전까지 `[READY]`로 지정하지 않는다. 변경된 순서: T030 → T031 → T032 → T033 → T034 → T022 → T023 → T040 (이하 기존 순서 유지).
+후속 작업(T041 이후)은 T040 완료 및 사용자 승인 전까지 `[READY]`로 지정하지 않는다. 변경된 순서: T030 → T031 → T032 → T033 → T034 → T040 → (T041~) → T022 → T023 (T022는 이미 완료, T023은 별도 일정으로 대기).
 
 ## 작업별 작성 형식
 

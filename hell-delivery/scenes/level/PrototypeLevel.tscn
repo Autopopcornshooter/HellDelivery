@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://degy551ayoeo7"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/package/Package.tscn" id="2_package"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(20, 1, 20)
@@ -90,5 +91,9 @@ mesh = SubResource("BoxMesh_2")
 [node name="Gameplay" type="Node3D" parent="." unique_id=163921615]
 
 [node name="Player" parent="Gameplay" unique_id=1913023321 instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="Package" parent="Gameplay" unique_id=473718712 instance=ExtResource("2_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1, 0)
 
 [node name="UI" type="Node3D" parent="." unique_id=549853222]
