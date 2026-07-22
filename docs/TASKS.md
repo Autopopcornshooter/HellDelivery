@@ -435,7 +435,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T044 — 던지기 구현
 
-- 상태: `[ ]` `[READY]`
+- 상태: `[x]` `[DONE]`
 - 목적: 잡은 상태에서 던지기 기능 구현
 - 선행 작업: T042
 - 작업 범위: 잡은 상태에서 좌클릭(`throw_package`), 카메라 전방 방향으로 임펄스 적용, 던지는 즉시 잡기 상태 해제, 던지기 힘 export 변수
@@ -446,6 +446,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 잡지 않은 상태에서는 무동작 / 던진 뒤 다시 잡기 가능 / 과도한 속도나 오류 없음
 - 테스트 방법: 잡은 상태에서 좌클릭으로 던지고 재잡기 시도
 - 예상 위험: 낮음
+- 완료 근거: `Package.gd`에 `throw(direction, impulse_strength) -> bool` 추가 — `is_held`가 아니면 실패, 성공 시 기존 `release()`를 그대로 호출(hold 종료 + T042의 지연된 collision restore 흐름 자동 적용)한 뒤 `apply_central_impulse(direction.normalized() * impulse_strength)` 적용. `Player.gd`에 `throw_impulse_strength`(export) 추가, `_handle_throw_input()`(held_package 유효성 확인 → `throw_package` just_pressed 확인 → `-camera_pivot.global_transform.basis.z`로 피치 포함 3D 방향 계산 → `throw()` 호출 → 성공 시 참조 정리) 추가. **튜닝**: 최초 impulse=12.0(질량 15 기준 이론상 Δv≈0.8m/s)로는 실측 수평 비행거리가 1m 미만으로 "던지기"보다 "드롭"에 가깝다는 실제 플레이 피드백을 받아, `linear_damp=2.0`·`friction=0.7`은 변경하지 않고 impulse 값만 재탐색(45/60/75/100/150/200/300/450 측정) — impulse=200.0에서 수평 비행거리 약 4.11m로 목표(3~6m) 중간값 확보, 최종값으로 채택. 헤드리스 실측: 정면 던지기 비행거리 목표 구간 확인, 카메라 피치 상/하에 따라 실제로 위/아래로 던져짐(기존 검증된 피치 부호 규칙과 일치), Stairs 장애물 충돌 시 속도가 초기 던지기 속도 이상으로 증폭되지 않음(폭발 없음), Player 몸에 겹친 채 던져도 위치 스파이크 없이 T042의 지연된 충돌 복구가 그대로 적용됨, 던진 뒤 착지한 Package를 실제 감지·`E` 입력으로 재잡기 성공(1회 및 4회 반복 모두 exception 누적 없음 확인), 잡지 않은 상태에서 좌클릭은 완전 무동작. 오류 0, 반복 경고 0. 남은 문제: 실제 벽·좁은 공간을 향한 던지기, 계단 지형에서의 던지기는 별도로 재현하지 못함(코드 조건은 지형과 무관하게 동일하게 동작). 사용자가 실제 에디터 플레이로 조작감을 확인 후 최종 승인함.
 
 ### T045 — 계단 및 경사로 운반 테스트
 
@@ -465,7 +466,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T050 — `DeliveryZone.tscn` 생성
 
-- 상태: `[ ]` `[BLOCKED]` — T045 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 배송 구역 오브젝트 생성
 - 선행 작업: T045
 - 작업 범위: `Area3D`, `CollisionShape3D`, 확인용 Mesh, DeliveryZone 충돌 레이어/마스크 설정 (`docs/ARCHITECTURE.md` 섹션 12, 16)
@@ -476,10 +477,12 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: Package만 감지 / Player와 World는 무시
 - 테스트 방법: Player/Package가 각각 진입할 때 감지 로그로 구분 확인
 - 예상 위험: 낮음
+- 완료 근거: `DeliveryZone.gd`(`class_name DeliveryZone extends Area3D`) 생성 — `_ready()`에서 `body_entered` 시그널을 `_on_body_entered`에 연결, `body.is_in_group("package")`가 아니면 무시, 맞으면 `print("Delivery Success")` 1회 출력(영구 `is_delivered` 플래그 없이 `body_entered`가 진입마다 정확히 1회 발생하는 Godot 기본 동작을 그대로 사용해 재진입 시 다시 출력되도록 함 — 이번 작업 범위는 "감지"만이므로 성공 판정의 영구 상태·중복 방지는 다음 작업(T051)으로 미룸). `DeliveryZone.tscn`(`Area3D`, `collision_layer=8`, `collision_mask=4`, 자식 `CollisionShape3D`(`CylinderShape3D` radius=1.2, height=1.0) + `MeshInstance3D`(대응 `CylinderMesh`)) 생성 — `ARCHITECTURE.md` 섹션 16의 레이어 설계(DeliveryZone=8, Package만 마스크) 그대로 적용, World/Player는 마스크에서 제외해 구조적으로 무시. `PrototypeLevel.tscn`의 `Gameplay` 아래 `DeliveryZone` 인스턴스를 `(5, 0.5, 3)`에 배치(바닥 범위 내, Package를 들고 걸어갈 수 있는 거리). 헤드리스 실측: Package를 Zone으로 낙하시키면 정확히 1회 "Delivery Success" 출력(Package의 `linear_damp=2.0`으로 낙하가 느려 충분한 대기 프레임 필요했음 — 확인 후 대기 시간만 조정, 코드 변경 아님), Zone 안에 머무는 동안 추가 출력 없음, Zone 밖으로 나갔다가 재진입 시 다시 1회 출력, Player가 직접 Zone에 들어가도 무출력(레이어/마스크로 구조적 차단), Package를 Throw로 Zone에 던져 넣어도 정상 감지. 오류 0, 경고 0. 기존 Grab/Hold/Release/Throw 기능 영향 없음.
+- 최종 승인(사용자 확인, 실제 플레이 테스트 통과): `DeliveryZone.tscn`/`DeliveryZone.gd` 생성, `Area3D` 기반 Package 진입 감지, `package` 그룹 확인, 진입 이벤트당 성공 로그 1회, 재진입 시 재감지를 모두 실제 에디터 플레이로 확인 후 완료 승인함.
 
 ### T051 — 배송 성공 판정 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T050 완료 필요
+- 상태: `[ ]` `[READY]`
 - 목적: 배송 성공 판정 로직 구현
 - 선행 작업: T050
 - 작업 범위: `package` 그룹 확인, 최초 1회 성공, `is_delivered` 중복 방지, `package_delivered` 시그널 발생 (`docs/ARCHITECTURE.md` 섹션 12)
@@ -626,11 +629,11 @@ MVP-1 완료 및 사용자의 명시적 승인 전에는 다음 작업을 생성
 
 ## 13. 현재 다음 작업
 
-- 작업 ID: `T044`
-- 작업명: 던지기 구현
+- 작업 ID: `T051`
+- 작업명: 배송 성공 판정 구현
 - 상태: `[READY]`
-- 이유: T042(잡기·유지·놓기 구현, 충돌 안정화 보완 포함)가 사용자 최종 승인을 받아 `[DONE]`으로 확정됨. T043은 T042에 통합되어 `[MERGED]` 처리됨. 잡은 상태에서 던지는 기능을 구현하는 다음 순서임
-- 이 작업에서 파일 수정: `scenes/package/Package.gd`, `scenes/player/Player.gd`
+- 이유: T050(`DeliveryZone` 생성 및 배달 감지)이 사용자 최종 승인을 받아 `[DONE]`으로 확정됨. 감지된 Package 진입을 실제 배송 성공으로 판정(최초 1회, `is_delivered` 중복 방지, `package_delivered` 시그널)하는 다음 순서임
+- 이 작업에서 수정 파일: `scenes/delivery/DeliveryZone.gd`
 
 후속 작업(T041 이후)은 T040 완료 및 사용자 승인 전까지 `[READY]`로 지정하지 않는다. 변경된 순서: T030 → T031 → T032 → T033 → T034 → T040 → (T041~) → T022 → T023 (T022는 이미 완료, T023은 별도 일정으로 대기).
 
