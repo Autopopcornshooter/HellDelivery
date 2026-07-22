@@ -1,16 +1,18 @@
 extends CharacterBody3D
 
-@export var walk_speed: float = 4.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var acceleration: float = 20.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var deceleration: float = 25.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var jump_velocity: float = 6.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var sprint_speed: float = 7.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var mouse_sensitivity: float = 0.003 # TODO: 프로토타입 값, 튜닝 필요
-@export var min_pitch: float = -80.0 # degrees, TODO: 프로토타입 값, 튜닝 필요
-@export var max_pitch: float = 55.0 # degrees, TODO: 프로토타입 값, 튜닝 필요
-@export var push_force: float = 220.0 # TODO: 프로토타입 값, 튜닝 필요 (Package 정지마찰 저항 ≈103N을 확실히 넘도록 설정)
-@export var max_push_speed: float = 2.0 # TODO: 프로토타입 값, 튜닝 필요
-@export var throw_impulse_strength: float = 200.0 # TODO: 프로토타입 값, 튜닝 필요
+@export var walk_speed: float = 4.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var acceleration: float = 20.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var deceleration: float = 25.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var jump_velocity: float = 6.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var sprint_speed: float = 7.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var mouse_sensitivity: float = 0.003 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var min_pitch: float = -80.0 # degrees, 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var max_pitch: float = 55.0 # degrees, 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var push_force: float = 220.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료 — Package 정지마찰 저항 ≈103N을 확실히 넘도록 설정)
+@export var max_push_speed: float = 2.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)
+@export var throw_impulse_strength: float = 200.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료 — 수평 비행거리 약 4m)
+
+const _INTERACT_LOS_MASK: int = 21 # World(1) + Package(4) + PhysicsObject(16). Package.gd의 _HOLD_LOS_MASK와 동일한 값을 별도 상수로 중복 선언(공용 시스템 신설 방지, T065).
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var interact_shape_cast: ShapeCast3D = $CameraPivot/InteractShapeCast
@@ -92,9 +94,20 @@ func _get_detected_package() -> Package:
 		return null
 	for i in interact_shape_cast.get_collision_count():
 		var collider := interact_shape_cast.get_collider(i)
-		if collider is Package:
+		if collider is Package and _has_line_of_sight_to(collider):
 			return collider
 	return null
+
+
+func _has_line_of_sight_to(target: Node3D) -> bool:
+	# ShapeCast는 사거리 안 후보만 찾는다. 벽 등 물리적 차단물이 먼저 막고 있으면
+	# 후보에서 제외하기 위한 별도 Ray Query(T065, 벽 너머 Package 잡기 버그 수정).
+	var space_state := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(interact_shape_cast.global_position, target.global_position, _INTERACT_LOS_MASK, [get_rid()])
+	var result := space_state.intersect_ray(query)
+	if result.is_empty():
+		return true
+	return result.get("collider") == target
 
 
 func _update_interact_detection() -> void:

@@ -256,11 +256,13 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 충돌이 있는 단순 계단 / 지나치게 복잡한 메시 사용 금지 / 플레이스홀더 지오메트리 사용 — 모두 확인됨
 - 테스트 방법: 임시 오브젝트로 계단 충돌 확인 (Player 구현 전이므로 시각적/충돌 확인 위주)
 - 예상 위험: 계단 단차가 이후 `CharacterBody3D` 이동에 걸릴 가능성 (T045에서 검증)
-- 완료 근거: `Environment/Stairs`(`Node3D`) 하위에 `Step1`~`Step5`(각각 `StaticBody3D` + `CollisionShape3D`[공유 `BoxShape3D` 1×0.4×4] + `MeshInstance3D`[공유 `BoxMesh` 1×0.4×4]) 5단을 X방향 1m 간격, Y방향 0.4m씩 상승하도록 배치. `Floor`(X -10~10)와 겹치지 않도록 X=11부터 시작(1m 간격). Player/Camera/Package/DeliveryZone/경사로/UI/Navigation은 생성하지 않았고 단일 Mesh나 외부 모델도 사용하지 않음. `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit`으로 검증 — 엔진 버전 배너 외 오류 없이 종료 코드 0으로 정상 종료됨.
+- 완료 근거(최초): `Environment/Stairs`(`Node3D`) 하위에 `Step1`~`Step5`(각각 `StaticBody3D` + `CollisionShape3D`[공유 `BoxShape3D` 1×0.4×4] + `MeshInstance3D`[공유 `BoxMesh` 1×0.4×4]) 5단을 X방향 1m 간격, Y방향 0.4m씩 상승하도록 배치. `Floor`(X -10~10)와 겹치지 않도록 X=11부터 시작(1m 간격). Player/Camera/Package/DeliveryZone/경사로/UI/Navigation은 생성하지 않았고 단일 Mesh나 외부 모델도 사용하지 않음. `Godot_v4.7.1-stable_win64.exe --headless --path hell-delivery --quit`으로 검증 — 엔진 버전 배너 외 오류 없이 종료 코드 0으로 정상 종료됨.
+- 계단 형상 재작업(T062 재검토에서 "계단을 걸어서 오를 수 없음" 발견, 사용자 승인 후 T022 Reopen으로 진행): 원인은 두 가지였음을 헤드리스 실측으로 확인 — (1) 기존 단 높이 0.4m가 `CharacterBody3D`(기본 `CapsuleShape3D`, radius=0.5)가 점프 없이 넘을 수 있는 한계(단일 단 기준 실측 0.18m까지 성공, 0.19m부터 실패)를 크게 초과했음, (2) `Floor`(X 끝 10.0)와 `Stairs` 시작(X 11.0) 사이에 실제로는 바닥이 없는 1m 간격이 있어, 걷기 속도(4.0m/s)로 접근하면 그 틈에서 낙하하며 계단 앞면에 아래쪽에서 부딪혀 절대 오를 수 없었음(Sprint는 속도가 빨라 우연히 틈을 뛰어넘어 통과했던 것 — 애초에 걸려서 멈춘 게 아니라 빠지고 있었던 것). 해결: 기존 5단(각 0.4m)을 13단(각 높이 0.15m, 깊이 0.385m, 폭 4m 동일)으로 재구성해 전체 높이(1.95m, 기존 2.0m와 거의 동일)와 전체 길이(약 5.0m, 기존과 동일)를 유지, 계단 전체 위치를 X방향으로 1.05m 이동시켜 `Floor`와의 간격을 완전히 제거(0.05m 미세 중첩으로 이음매 문제 방지). 계단 끝에 낙하 없이 착지 가능하도록 `TopLanding`(`StaticBody3D`, 2m×0.3m×4m) 최소 발판 1개 추가. `Player.gd`/`Package.gd`는 전혀 수정하지 않음(step-up 로직, 이동 로직, CollisionShape, export 값 모두 미변경). 헤드리스 실측(모두 실제 `Player.gd`/`Package.gd` 코드로 확인, 점프 입력 없이): 걷기로 계단 상승/하강 성공, Sprint 상승/하강 성공, Package를 든 채 걷기로 상승/하강 성공(점프 없이), Sprint+Package 동시 통과 성공, 계단 중간에서 정지 후 방향 전환해 되돌아가기 성공, 계단 중간에서 Release(정착, 관통 없음) 후 재Grab 성공, 계단에서 위/아래 방향 Throw 모두 속도 폭발 없음, 계단→경사로 연속 통과 성공, 이후 DeliveryZone 배송·HUD 표시·Restart·재시작 후 재배달·재시작 후 계단 재통과 모두 정상. 오류 0, 반복 경고 0.
+- 최종 승인(사용자 확인): 계단 형상 재작업 완료, Floor와 계단 사이 공백 제거, 단 높이를 실제 통과 가능한 수준으로 조정, 단 수 증가로 전체 높이 유지, 상단 착지 발판 추가, Player 코드 수정 없음, Package 코드 수정 없음(PrototypeLevel 계단 Geometry만 수정), 점프 없이 Player가 계단을 오를 수 있음, Sprint 통과 가능, Package를 든 상태로 점프 없이 통과 가능, Release/재Grab/Throw 정상, Delivery 및 Restart 회귀 테스트 정상, 오류 및 반복 경고 없음을 모두 확인해 완료 승인함.
 
 ### T023 — 경사로 추가
 
-- 상태: `[ ]` `[BLOCKED]` — 선행 작업 T022는 이미 완료됨. Player 기본 조작감 검증(T030~T034, 완료됨) 이후에도 T040(Package) 이후로 순서가 한 번 더 밀려 대기 중
+- 상태: `[x]` `[DONE]`
 - 목적: 플레이어와 택배 운반 테스트용 경사로 생성
 - 선행 작업: T022
 - 작업 범위: 충돌이 있는 단순 경사로 지오메트리 추가
@@ -271,6 +273,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 충돌이 있는 단순 경사로 / 계단과 서로 간섭하지 않음
 - 테스트 방법: 시각적/충돌 확인
 - 예상 위험: 낮음
+- 완료 근거: `Environment` 아래 `Ramp`(`StaticBody3D` + `CollisionShape3D`[`BoxShape3D` 4×0.5×4] + `MeshInstance3D`[대응 `BoxMesh`]) 1개 추가 — 약 18° 경사(`CharacterBody3D` 기본 `floor_max_angle` 45°보다 완만), 낮은 끝이 바닥 표면(y=0.5)과 맞닿고 높은 끝은 y≈1.74. 위치는 `Stairs`(X=11.5~15.5)와 겹치지 않는 X=-9~-5, Z=4~8 구간. 기존 `Floor`/`Stairs`는 수정하지 않음. 헤드리스 실측: Player가 걷기·달리기로 경사로를 정상적으로 오르내림(관통·걸림 없음), Package를 든 상태로 통과해도 폭발적 속도나 튕김 없이 안정적으로 함께 상승, 경사로 위에서 Grab/Hold/Release 정상 동작, Release 후 경사면에 잔류 속도 거의 0으로 정상 착지(관통 없음), 경사로 위에서 Throw해도 속도가 초기값 이상으로 증폭되지 않음, 경사로 사용 후 DeliveryZone 배송 성공 및 Restart(재시작 후 Ramp 노드 포함 전체 상태 복구) 모두 정상 동작. 오류 0, 반복 경고 0. Player/Package/DeliveryZone/HUD/Restart 로직과 물리 파라미터는 변경하지 않음.
 
 ## 8. Stage 3 — 플레이어 기본 구현
 
@@ -450,7 +453,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T045 — 계단 및 경사로 운반 테스트
 
-- 상태: `[ ]` `[BLOCKED]` — T044 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: 기능 통합 검증 (신규 기능 추가 아님)
 - 선행 작업: T044
 - 작업 범위: 평지 운반 / 계단 상승·하강 / 경사로 상승·하강 / 벽에 택배가 걸렸을 때 물리 안정성 / 택배가 멀어졌을 때 자동 놓기 / 카메라 상하 회전 시 `HoldPoint` 동작 확인
@@ -461,6 +464,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 치명적인 진동이나 폭발적 속도 없음 / 조작 불가능한 문제가 없거나 문제 목록이 기록됨 / 필요한 튜닝 값이 보고됨
 - 테스트 방법: 위 작업 범위 항목을 순서대로 수동 플레이
 - 예상 위험: 계단/경사로 형상에 따라 추가 튜닝 필요 가능
+- 완료 근거(순수 검증, 코드/Geometry 변경 없음): 헤드리스 통합 테스트로 확인 — 평지 운반 정상, 계단 상승·하강 정상, 경사로 상승·하강 정상(최초 경사로 하강 테스트는 시작 위치가 경사로 끝단에 지나치게 가까워 실패했으나 여유 있는 위치로 재검증해 정상 확인), Grab/Hold/Release 정상, Throw 정상, Delivery 정상, Restart 정상, 자동 놓기(`max_hold_distance` 초과 시 정확히 해제) 정상, HoldPoint 동작 정상, 카메라 상하 회전(±30°) 중 Hold 유지 정상. 차단 수준 문제 없음, 오류 및 반복 경고 0건. **Notes**: "벽에 택배가 걸렸을 때 물리 안정성"은 현재 `PrototypeLevel`에 실제 수직 벽이 존재하지 않아(Floor/Stairs/Ramp뿐) 미검증 상태로 남음(환경 부재, FAIL 사유 아님) — 경사로 측면을 대체 장애물로 시도했으나 평평한 벽이 아닌 기울어진 면이라 신뢰할 수 있는 결과를 얻지 못함.
 
 ## 10. Stage 5 — 배송 및 완료 흐름
 
@@ -482,7 +486,7 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T051 — 배송 성공 판정 구현
 
-- 상태: `[ ]` `[READY]`
+- 상태: `[x]` `[DONE]`
 - 목적: 배송 성공 판정 로직 구현
 - 선행 작업: T050
 - 작업 범위: `package` 그룹 확인, 최초 1회 성공, `is_delivered` 중복 방지, `package_delivered` 시그널 발생 (`docs/ARCHITECTURE.md` 섹션 12)
@@ -493,10 +497,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 잘못된 물체는 무시 / Package 진입 시 한 번만 시그널 발생 / UI 로직 포함 금지
 - 테스트 방법: Package를 여러 번 넣었다 빼며 시그널 발생 횟수 확인
 - 예상 위험: `Area3D` 겹침으로 인한 중복 호출 가능성 (`is_delivered` 플래그로 방지)
+- 완료 근거: `DeliveryZone.gd`에 `signal package_delivered(package: RigidBody3D)`, `var is_delivered: bool = false`, `var delivered_package: RigidBody3D = null` 추가. `_on_body_entered`에서 `package` 그룹 확인 후 `if is_delivered: return`으로 중복 방지, 최초 통과 시에만 `is_delivered=true`·`delivered_package=body` 설정하고 `print("Delivery Success")` 후 `package_delivered.emit(body)`. Autoload/GameManager 없이 `DeliveryZone.gd` 자신이 상태를 소유(설계 원칙 준수). 헤드리스 실측: 최초 진입 시 시그널 1회 발생 및 상태 정확히 저장, 이후 3회 반복 이탈→재진입에도 추가 시그널 없음(T050의 "재진입마다 재출력"에서 "최초 1회만"으로 의도적으로 전환), Player 진입 시 시그널 없음, 최종 시그널 총 발생 횟수 정확히 1회. 오류 0, 경고 0. UI 로직은 포함하지 않음(다음 작업 범위).
 
 ### T052 — `Hud.tscn` 생성
 
-- 상태: `[ ]` `[BLOCKED]` — T051 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: MVP UI 생성
 - 선행 작업: T051
 - 작업 범위: 목표 안내, 성공 메시지, 재시작 안내 레이블, 시작 시 성공/재시작 안내 숨김 (`docs/ARCHITECTURE.md` 섹션 4.5, 13)
@@ -507,10 +512,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 세 요소(목표/성공/재시작 안내) 존재 / 시작 시 성공·재시작 안내 숨김 상태
 - 테스트 방법: 씬 실행 시 목표 안내만 보이는지 확인
 - 예상 위험: 낮음
+- 완료 근거: 파일명은 `docs/ARCHITECTURE.md`의 `Hud.tscn`/`Hud.gd` 대신 사용자의 명시적 지시에 따라 `scenes/ui/DeliveryHUD.tscn`/`DeliveryHUD.gd`로 생성. `DeliveryHUD(CanvasLayer)` → `SuccessPanel(Control, 초기 `visible=false`)` → `SuccessLabel(Label, "DELIVERY COMPLETE")` 구조. `DeliveryHUD.gd`는 `show_success()`만 제공(스스로 상태를 검사하지 않음). **범위 축소(사용자 명시적 지시)**: 원 작업 범위의 `GoalLabel`(목표 안내)·`RestartLabel`(재시작 안내)은 이번 라운드에서 "성공 표시만 구현"하라는 별도 지시에 따라 구현하지 않음 — 재시작 안내는 T054에서 추가 예정. **버그 수정**: `SuccessPanel`이 전체 화면을 덮는 `Control`인데 `mouse_filter` 기본값(`STOP`)이 마우스 이동 이벤트를 GUI 단계에서 소비해 `Player._unhandled_input`의 카메라 회전이 멈추는 문제를 발견 — `SuccessPanel`/`SuccessLabel`에 `mouse_filter = MOUSE_FILTER_IGNORE` 적용해 해결. 헤드리스 실측: 초기 숨김 상태 확인, 성공 시 표시 확인, Player만 진입 시 미표시 확인. 마우스 캡처/회전 관련 실제 동작은 헤드리스로 검증 불가능해(이 프로젝트의 다른 카메라 작업들과 동일한 한계) 사용자가 에디터에서 직접 확인 후 최종 승인함.
 
 ### T053 — 배송 성공과 HUD 연결
 
-- 상태: `[ ]` `[BLOCKED]` — T052 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: `DeliveryZone` 성공 신호를 `Hud`에 연결
 - 선행 작업: T052
 - 작업 범위: `PrototypeLevel.gd`가 `DeliveryZone`의 `package_delivered` 시그널 수신, `Hud.show_success()` 호출, 책임 관계가 `docs/ARCHITECTURE.md`와 일치 (섹션 12, 13, 17)
@@ -521,10 +527,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 배송 성공 시 메시지 표시 / 중복 호출 문제 없음 / UI가 직접 배송 상태를 검사하지 않음
 - 테스트 방법: Package를 DeliveryZone에 넣고 성공 메시지 표시 및 중복 여부 확인
 - 예상 위험: 낮음
+- 완료 근거: `PrototypeLevel.gd` 신규 생성 — `_ready()`에서 `$Gameplay/DeliveryZone.package_delivered`를 `_on_package_delivered`에 연결, 콜백에서 `$UI/DeliveryHUD.show_success()`만 호출(배송 판정 로직 없음, UI가 직접 상태를 검사하지 않음). `DeliveryZone.gd`의 `is_delivered` 플래그(T051)가 이미 중복 호출을 방지하므로 별도 방어 로직 불필요. 헤드리스 실측: Package가 DeliveryZone에 진입하면 HUD가 정상 표시됨, Player만 진입 시 미표시. 오류 0, 경고 0.
 
 ### T054 — 재시작 구현
 
-- 상태: `[ ]` `[BLOCKED]` — T053 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: `restart` 입력으로 씬 재로드 구현
 - 선행 작업: T053
 - 작업 범위: `PrototypeLevel.gd`가 `restart` 입력 처리, `get_tree().reload_current_scene()` 호출, Player가 재시작 입력을 처리하지 않음 (`docs/ARCHITECTURE.md` 섹션 12, 17)
@@ -535,12 +542,13 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: `R` 입력 시 전체 레벨 초기화 / 성공 전후 모두 재시작 가능 / Package, Player, DeliveryZone, UI 상태 초기화
 - 테스트 방법: 성공 전/후 각각 `R` 입력 후 초기 상태 확인
 - 예상 위험: 낮음
+- 완료 근거: `PrototypeLevel.gd`의 `_unhandled_input(event)`에서 `event.is_action_pressed("restart")` 시 조건 분기 없이 항상 `get_tree().reload_current_scene()` 호출(Player는 재시작 입력을 처리하지 않음, 기존 InputMap `restart`(R, T012에서 이미 추가됨) 그대로 사용, 새 액션 추가 없음). `DeliveryHUD.tscn`의 `SuccessPanel`에 `RestartLabel`("Press R to Restart") 추가 — 이 문구는 성공 후에만 보이지만 재시작 기능 자체는 항상 동작. 씬 전체 재로드 방식이라 Player/Package/DeliveryZone/HUD 상태, 잡기 참조, collision exception, pending collision restore가 모두 새 인스턴스로 자동 초기화됨(개별 리셋 로직 없음). 헤드리스 실측(인스턴스 ID로 실제 재로드 확인): 시작 직후 재시작, Package를 잡은 채 재시작(잡기 참조·is_held 모두 초기화), 배달 성공 후 재시작(`is_delivered`/HUD 모두 초기화), 재시작 후 재배달 성공, 5회 연속 반복 재시작 모두 오류 없이 정상 동작. 마우스 캡처·카메라 조작은 헤드리스로 검증 불가능해 사용자가 에디터에서 직접 확인 후 최종 승인함. 오류 0, 반복 경고 0.
 
 ## 11. Stage 6 — 통합 테스트와 MVP 완료
 
 ### T060 — 전체 코어 루프 통합 테스트
 
-- 상태: `[ ]` `[BLOCKED]` — T054 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: MVP-1 전체 흐름 연속 검증
 - 선행 작업: T054
 - 작업 범위:
@@ -564,10 +572,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 전체 흐름을 연속 수행 가능 / Godot 디버거에 치명적 오류 없음 / 반복 재시작 가능
 - 테스트 방법: 위 흐름을 처음부터 끝까지 수동 플레이, 3회 이상 반복
 - 예상 위험: 개별 기능은 정상이어도 통합 시 예상치 못한 상호작용 문제 가능
+- 완료 근거: 사용자가 Godot 에디터에서 전체 코어 루프(실행→이동→점프→달리기→카메라 조작→Package 감지→Grab→Hold→계단/경사로 통과→Release/Auto Release→겹친 상태 안전 충돌 복구→Throw→DeliveryZone 진입→성공 판정→DeliveryHUD 표시(마우스 조작 정상 유지 포함)→성공 전/후 R 재시작→재시작 후 재배달)를 최소 3회 이상 연속 수동 플레이로 직접 검증. 전 항목 문제 없음 확인, 오류·반복 경고 없음. 코드 변경 없는 순수 검증 작업이므로 파일 생성/수정 없음.
 
 ### T061 — 기본 튜닝
 
-- 상태: `[ ]` `[BLOCKED]` — T060 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: export 변수 수치를 프로토타입 테스트로 확정
 - 선행 작업: T060
 - 작업 범위: 걷기 속도, 달리기 속도, 점프 속도, 가감속, 마우스 감도, 카메라 제한, 상호작용 거리, `HoldPoint` 거리, 추종 반응, 최대 추종 속도, 자동 놓기 거리, 던지기 힘
@@ -578,10 +587,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 각 값의 최종 프로토타입 수치 기록 / 조작 불가능하거나 지나치게 불안정한 값 제거 / 변경 이유 요약
 - 테스트 방법: 각 값 조정 후 재생 테스트 반복
 - 예상 위험: 낮음
+- 완료 근거: 실제 플레이 3회 이상 검증 완료, 조작 불가능하거나 지나치게 불안정한 값 없음. export 변수 수치 변경 없이 프로토타입 기준값으로 동결(Baseline Freeze), `Player.gd`/`Package.gd`의 관련 주석만 Baseline Freeze 상태로 정리(`# TODO: 프로토타입 값, 튜닝 필요` → `# 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료)`). 로직 변경 없음. 오류 및 경고 0. 최종 확정값: `walk_speed=4.0`, `sprint_speed=7.0`, `jump_velocity=6.0`, `acceleration=20.0`, `deceleration=25.0`, `mouse_sensitivity=0.003`, `min_pitch=-80.0`, `max_pitch=55.0`, `push_force=220.0`, `max_push_speed=2.0`, `follow_strength=8.0`, `follow_acceleration=40.0`, `max_follow_speed=6.0`, `max_hold_distance=3.0`, ShapeCast `radius=0.3`, ShapeCast `target distance=2.2m`, `throw_impulse_strength=200.0`.
 
 ### T062 — MVP-1 완료 검토
 
-- 상태: `[ ]` `[BLOCKED]` — T061 완료 필요
+- 상태: `[x]` `[DONE]`
 - 목적: `GAME_DESIGN.md` MVP 완료 조건과 실제 결과 대조
 - 선행 작업: T061
 - 작업 범위: 섹션 3의 완료 조건을 하나씩 대조해 `충족` / `부분 충족` / `미충족` / `범위 제외`로 분류
@@ -592,10 +602,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 모든 필수 조건 검토 / 남은 버그 목록 작성 / MVP-1 완료 여부를 사용자가 판단할 수 있는 보고서 제공
 - 테스트 방법: 섹션 3 체크리스트 전체 재확인
 - 예상 위험: 없음
+- 완료 근거(재검토, 최종 판정 **PASS**): T022 계단 재작업과 T045 검증 완료 이후 현재 코드·씬 기준으로 재판단. `GAME_DESIGN.md` 섹션 28의 MVP 완료 조건 10개(안정적 이동/카메라 동작/박스 물리/Grab/Release/Throw/박스를 들고 계단·경사로 통과/배송 구역 성공/반복 플레이/치명적 오류 없음) **모두 충족**. 전체 코어 루프(이동→점프→달리기→Grab→계단 통과(소지)→Release→재Grab→경사로 통과(소지)→Throw→배송→성공 HUD→재시작)를 2회 연속 헤드리스로 반복 실행해 모두 정상 통과, 오류·반복 경고 0건. 차단 수준 문제 없음. **PASS Notes(경미, MVP 완료에 영향 없음)**: `PrototypeLevel.tscn`의 `Gameplay`/`UI` 그룹 노드가 `ARCHITECTURE.md` 다이어그램(루트 직계 자식 구조)과 다름, HUD 파일명이 `Hud`(문서) 대신 `DeliveryHUD`(실제 구현, 사용자 승인된 의도적 변경), `GoalLabel`(목표 안내) 미구현(`GAME_DESIGN.md` 완료 조건에는 없음), World(`Floor`/`Stairs`)의 `collision_mask`가 문서상 "없음"이 아닌 엔진 기본값(1)으로 남아있음(실질적 영향 없음), `Player.gd`의 T041 `# DEBUG` 감지 로그 잔존(상태 변경 시에만 출력), "벽 물리 안정성"은 `PrototypeLevel`에 실제 벽이 없어 미검증(환경 부재, FAIL 사유 아님, T045에서 이미 기록됨), 계단이 5단(0.4m)에서 13단(0.15m)으로 재작업되어 문서에 구체적 수치가 있다면 대조 필요(현재 두 문서 모두 구체적 단 높이 수치 없어 충돌 없음).
 
 ### T063 — 문서 동기화
 
-- 상태: `[ ]` `[BLOCKED]` — T062 완료 필요 (조건부 작업, 구현 결과가 문서와 달라진 경우에만 수행)
+- 상태: `[x]` `[DONE]`
 - 목적: 구현 결과와 설계 문서의 불일치 해소
 - 선행 작업: T062
 - 작업 범위: `docs/ARCHITECTURE.md`, `docs/TASKS.md`, 필요한 경우 `docs/GAME_DESIGN.md` 검토 및 수정
@@ -606,6 +617,11 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 - 완료 조건: 구현과 문서 간 불일치 해소 (불일치가 없으면 이 작업은 생략 가능)
 - 테스트 방법: 문서와 실제 씬/스크립트 대조
 - 예상 위험: 없음
+- 완료 근거: `docs/ARCHITECTURE.md`를 실제 구현 기준으로 동기화(씬/스크립트는 수정하지 않음) — `Hud`→`DeliveryHUD` 명칭 전체 치환, `Gameplay`/`UI` 그룹 노드 구조 반영, `DeliveryHUD` 실제 노드 구조(`GoalLabel` 미구현 명시)와 `mouse_filter` 버그 수정 기록, `Player`/`Package`의 실제 물리값(`safe_margin`, `collision_layer`/`mask`, mass/friction/damp 등)과 T042의 holder collision exception·지연된 충돌 복구 메커니즘(원 설계에 없던 내용) 기록, T061 최종 확정값 전체를 데이터/튜닝 표에 반영(`push_force`/`max_push_speed` 행 포함). `docs/GAME_DESIGN.md`/`CLAUDE.md`는 확인 결과 구현 세부사항을 언급하지 않아 수정 대상이 없었음. `docs/TASKS.md`는 각 작업 승인 시점마다 이미 실시간으로 기록해 와서 추가 변경 불필요. 게임 기획·MVP 범위·Phase 구조·TASK 번호·완료 정의는 변경하지 않음. **MVP-1 문서 동기화 완료, 문서와 실제 구현 일치 확인, 남은 문서 불일치 없음, MVP-1 문서화 완료.**
+
+## Stage 6 완료
+
+T060(전체 코어 루프 통합 테스트, PASS) → T061(기본 튜닝, Baseline Freeze) → T062(MVP-1 완료 검토, 최종 판정 PASS) → T063(문서 동기화, 문서-구현 일치 확인) 모두 사용자 최종 승인을 받아 `[DONE]`으로 확정됨. **Stage 6 — 통합 테스트와 MVP 완료 전체 완료.**
 
 ## 12. MVP-1 이후 금지 작업
 
@@ -629,13 +645,86 @@ MVP-1 완료 및 사용자의 명시적 승인 전에는 다음 작업을 생성
 
 ## 13. 현재 다음 작업
 
-- 작업 ID: `T051`
-- 작업명: 배송 성공 판정 구현
-- 상태: `[READY]`
-- 이유: T050(`DeliveryZone` 생성 및 배달 감지)이 사용자 최종 승인을 받아 `[DONE]`으로 확정됨. 감지된 Package 진입을 실제 배송 성공으로 판정(최초 1회, `is_delivered` 중복 방지, `package_delivered` 시그널)하는 다음 순서임
-- 이 작업에서 수정 파일: `scenes/delivery/DeliveryZone.gd`
+- 작업 ID: 없음
+- 작업명: 없음
+- 상태: T064(환경 물리 오브젝트), T065(벽 지오메트리+물리 안정성 검증+가시선 버그 수정) 모두 `[DONE]`. `ROADMAP.md` EPIC-01의 FEATURE-01-A/B 완료. 다음 작업 없음 — 사용자 승인 대기.
+- 이유: T065가 사용자 최종 승인을 받아 `[DONE]`으로 확정되었다. EPIC-01의 나머지(FEATURE-01-C/D, 좁은 문)와 EPIC-02~04, 그 외 후보는 `ROADMAP.md`에 계획으로만 남아있으며, 다음 착수는 사용자의 명시적 승인이 있을 때 시작한다.
 
-후속 작업(T041 이후)은 T040 완료 및 사용자 승인 전까지 `[READY]`로 지정하지 않는다. 변경된 순서: T030 → T031 → T032 → T033 → T034 → T040 → (T041~) → T022 → T023 (T022는 이미 완료, T023은 별도 일정으로 대기).
+변경된 순서(기록용): T030 → T031 → T032 → T033 → T034 → T040 → (T041~T054) → T022 → T023 → T060 → T061 → T023(경사로, T062 FAIL 이후 순서를 되돌려 완료) → T045(재검증) → T062(재검토, PASS) → T063(문서 동기화).
+
+## 14. MVP-1 완료 선언
+
+**MVP-1이 완료되었다.**
+
+- **모든 Task 완료**: `T000`~`T063` 전체 `[DONE]`(`T043`은 `T042`에 `[MERGED]`).
+- **MVP-1 구현 완료**: `docs/GAME_DESIGN.md` 섹션 27 MVP 필수 기능(플레이어 3D 이동/달리기/점프/카메라, 일반 박스 물리·잡기·놓기·던지기, 평지·짧은 경사로·계단, 배송 목적지 감지 및 성공, 재시작)이 모두 구현됨.
+- **MVP-1 QA 완료**: T060(전체 코어 루프 통합 테스트, 사용자 3회 이상 수동 플레이 PASS), T045(계단·경사로 운반 통합 검증, PASS WITH NOTES)를 거침.
+- **MVP-1 문서화 완료**: T063에서 `docs/ARCHITECTURE.md`를 실제 구현 기준으로 동기화, 문서와 구현이 일치함을 확인.
+- **차단 수준 문제**: 없음.
+- **Known Notes만 존재**(MVP-1 완료 판정에 영향 없는 경미한 항목, T062에서 최종 확인):
+  - `PrototypeLevel.tscn`의 `Gameplay`/`UI` 그룹 노드 구조(문서에 반영 완료, 기능 영향 없음)
+  - `DeliveryHUD`에 `GoalLabel`(목표 안내) 미구현(`GAME_DESIGN.md` 완료 조건에는 없음)
+  - `Player.gd`의 T041 `# DEBUG` 감지 로그(`Package detected`/`Package lost`) 잔존(상태 변경 시에만 출력)
+  - "벽에 택배가 걸렸을 때 물리 안정성"은 `PrototypeLevel`에 실제 벽이 없어 미검증(환경 부재, FAIL 사유 아님)
+- **현재 브랜치를 MVP-1 기준선(Baseline)으로 표시한다.** 이후 새로운 기능(Phase 5 이후, `GAME_DESIGN.md` 섹션 29)은 사용자의 명시적 승인 없이 시작하지 않는다(`CLAUDE.md` 섹션 6, 본 문서 섹션 12).
+
+## 15. Documentation System & Project Management System 확립
+
+MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관리 체계를 구축했다. 코드/씬/스크립트/리소스/Project 설정 변경은 없음(순수 문서 작업).
+
+- **Documentation System Complete**: `docs/ROADMAP.md`, `docs/CHANGELOG.md`, `docs/VERSION.md`, `docs/KNOWN_ISSUES.md`, `docs/TECH_DEBT.md`, `docs/MILESTONES.md`, `docs/DESIGN_DECISIONS.md`, `docs/PROJECT_STRUCTURE.md` 8종을 공식 프로젝트 문서로 채택.
+- **Project Management System Established**: Task 중심 단일 계층 관리에서 **Epic → Feature → Task** 계층 구조로 전환(`docs/PROJECT_STRUCTURE.md`에 계층 정의, 각 계층의 역할·생성 기준·완료 조건·문서 갱신 순서·버전 릴리스 절차 수록).
+- **MVP-1 Closed**: `T000`~`T063` 전체 완료 상태로 종료. 이후 신규 작업은 `docs/ROADMAP.md`의 Epic/Feature로 먼저 계획된 뒤, 사용자 승인을 받아 `docs/TASKS.md`에 Task(T064~)로 추가하는 절차를 따른다.
+- **Baseline Established**: 현재 저장소 상태(v0.1.0)를 프로젝트 기준선으로 확정. `docs/VERSION.md`의 Current Status가 `Project Baseline Established`, Current Phase가 `Gameplay Expansion Planning`으로 갱신됨.
+- **v0.2.0(Gameplay Expansion) 계획 수립**: `docs/ROADMAP.md`에 Epic 4개(장애물 확장/물리 감각 재조정/다수 Package 안정성/재미 검증), Task 후보 22개를 설계함. **아직 구현하지 않았고, 어떤 Task도 본 문서에 추가하지 않았다** — 착수는 사용자의 명시적 승인 필요.
+
+## 16. T064 — Interactive Physics Objects (PhysicsBarrel / PhysicsCrate / SmallPhysicsBox)
+
+- 상태: `[x]` `[DONE]`
+- 목적: `PrototypeLevel`에 Player·Package와 물리적으로 상호작용하는 환경 오브젝트(드럼통/나무 상자/작은 상자)를 추가해, 스크립트 연출이 아닌 실제 물리 시뮬레이션으로 연쇄 충돌·적층 붕괴·배송 경로 간섭 상황이 발생하도록 한다(`docs/DESIGN_PILLARS.md` Pillar 1 "Unscripted Physics Chaos"와 직결).
+- 선행 작업: T063(MVP-1 문서 동기화), `docs/ROADMAP.md`/`docs/PROJECT_STRUCTURE.md` 확립(섹션 15)
+- 작업 범위: `scenes/objects/PhysicsBarrel.tscn`, `scenes/objects/PhysicsCrate.tscn`, `scenes/objects/SmallPhysicsBox.tscn` 신규 생성(스크립트 없는 순수 씬), `PrototypeLevel.tscn`에 `PhysicsObjects` 그룹 노드 및 인스턴스 6개 배치, 신규 collision layer 16(PhysicsObject) 도입
+- 제외 범위: 데미지/체력/파괴/폭발/내구도, Spawn Manager, 오브젝트별 스크립트, 새 Input Map 액션, `Player.gd`/`Package.gd`/`DeliveryZone.gd` 수정
+- 생성 파일: `hell-delivery/scenes/objects/PhysicsBarrel.tscn`, `hell-delivery/scenes/objects/PhysicsCrate.tscn`, `hell-delivery/scenes/objects/SmallPhysicsBox.tscn`
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(ext_resource 3개 + `PhysicsObjects` 그룹 노드 + 인스턴스 6개 추가만, 기존 노드 변경 없음)
+- 에디터 수동 작업: 없음(전부 `.tscn` 텍스트로 직접 작성, Godot headless import로 파싱 검증)
+- 완료 조건: 세 오브젝트가 독립 재사용 씬으로 존재, 서로·World·Player·Package와 물리적으로 충돌, Package로 오인식되지 않음(잡기·배송 판정 모두 제외), 기존 MVP 기능(이동/잡기/운반/던지기/배송/재시작) 회귀 없음, 물리적으로 안정(NaN·관통·폭발적 가속 없음)
+- 테스트 방법: Godot headless(`--import`, `--headless --quit-after`)로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트로 노드 구조·collision layer/mask·물리 안정성(정지 후 위치/속도)·적층(CrateB가 CrateA 위에 유지)·Player 밀기 반응(Barrel 변위 발생, 속도 폭주 없음)·Package 잡기/놓기/재잡기/던지기 회귀·DeliveryZone 성공 판정·씬 재인스턴스화(재시작 대응) 자동 검증(검증 후 임시 스크립트 삭제). 물리 체감(구르는 느낌, 적층이 자연스러운지 등)은 자동 검증 불가 — **사용자 수동 테스트 필요**.
+- 예상 위험: 물리 파라미터(mass/friction/damp)는 Player/Package 기존 스케일에서 상대적으로 추론한 초기값으로, 실측 재탐색(T044/T061 방식) 없이 결정됨 — 실제 플레이에서 조정이 필요할 수 있음(`docs/TECH_DEBT.md` TD-010 참고).
+- 완료 근거(구현): 헤드리스 자동 검증 27개 항목 전부 PASS(노드 구조/collision 설정/물리 안정성/적층/Player 밀기 반응/Package 회귀 6종/배송 판정/재인스턴스화). Godot `--headless --import` 및 `--headless --quit-after 60` 모두 오류·경고 0건. 물리 체감(구르는 느낌, 적층 자연스러움, 밀림 강도)은 사용자 수동 확인 대기 중이며 승인 전에는 `[DONE]`으로 표시하지 않는다.
+- **사용자 수동 테스트 결과(1차): 문제 발견.** PhysicsCrate를 계속 밀 때 이동 버벅임과 화면·카메라 떨림 보고(Barrel/SmallBox 대비 뚜렷). 원인 조사 및 수정 진행(아래 안정성 수정 근거 참고).
+- 완료 근거(안정성 수정): 헤드리스로 `Player._push_away_rigid_bodies()`를 `push_force=0`으로 격리해도 Crate/Barrel/SmallBox가 동일하게 Player 속도로 "carry"되는 것을 확인 — 밀기 보조 로직은 이 현상의 원인이 아님(기존 DD-006 서술과 달리 `CharacterBody3D.move_and_slide()`의 kinematic-vs-dynamic 접촉 해석 자체가 RigidBody를 이동시킴, `DESIGN_DECISIONS.md` DD-006 정정 완료). `await process_frame` 기반 진단은 이 프로젝트에 이미 기록된 타이밍 아티팩트로 인해 "정지 후 급발진" 패턴을 잘못 시사했으나, `await physics_frame`(실제 물리 틱 신호)로 재측정한 결과 Player 위치는 5초 연속 푸시 동안 stall·급점프 0건으로 완전히 안정적임을 확인 — 즉 물리 시뮬레이션 자체는 불안정하지 않았다. 근본 원인은 렌더링 쪽: `physics/common/physics_interpolation`이 기본값(꺼짐)이라 물리 틱(60Hz)과 렌더 프레임 사이에 보간이 없어, 카메라에 가깝고 오래 접촉하며 회전이 섞이는 Crate에서 이 렌더링 격차가 가장 두드러지게 보인 것으로 판단(Barrel은 구름으로 흡수, SmallBox는 접촉이 짧아 덜 체감). 이에 따라 `project.godot`에 `physics/common/physics_interpolation=true` 1줄만 추가(전역 렌더링 보간, 카메라 전용 스무딩 아님, 로직/수치 무변경, `DESIGN_DECISIONS.md` DD-014 참고). Crate의 mass/friction/damp는 변경하지 않음(회귀 테스트로 값 불변 확인). 회귀 스위트(collision 유지/5초 연속 푸시 stall·jump 0건/Crate 실제 밀림/Package 잡기·놓기·던지기/배송/재시작 동등) 전부 PASS.
+- **사용자 수동 테스트 결과(2차, 최종): 승인.** Physics Interpolation 적용 후 Crate를 밀 때의 화면 떨림이 눈에 띄게 개선되어 현재 플레이 기준 수정 완료로 승인됨.
+- **완료 근거 요약**:
+  - 환경 물리 오브젝트 3종(PhysicsBarrel/PhysicsCrate/SmallPhysicsBox) 구현 완료(스크립트 없는 재사용 씬, 신규 collision layer 16)
+  - 자동·정적 검증 통과(헤드리스 노드/collision/물리 안정성/회귀 검증 전항목 PASS, `--headless --import`·`--headless --quit-after` 오류 0건)
+  - 사용자 수동 테스트 통과(1차 문제 발견 → 원인 조사 → 수정 → 2차 재테스트 승인)
+  - Crate 밀기 화면 떨림 개선 확인(사용자 승인)
+  - Physics Interpolation 활성화(`project.godot`, `common/physics_interpolation=true`)
+
+## 17. T065 — Wall Geometry and Physics Stability Validation
+
+- 상태: `[x]` `[DONE]`
+- 목적: `PrototypeLevel`에 실제 수직 벽 테스트 구역을 추가하고, Player·Package(놓인 상태/잡은 상태)가 벽에 접촉·끼임 상황에서 기존 물리 로직이 안정적인지 검증한다. `docs/KNOWN_ISSUES.md` KI-001("벽에 물체가 걸렸을 때의 물리 안정성 미검증")을 실제 환경에서 확인하기 위함.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-01(Obstacle Course Expansion) — FEATURE-01-A(벽 지오메트리 추가), FEATURE-01-B(벽 물리 안정성 검증)
+- 선행 작업: T064(환경 물리 오브젝트, `[DONE]`)
+- 작업 범위: `PrototypeLevel.tscn`에 `Environment/WallTestArea/TestWall`(`StaticBody3D`) 추가, 기존 World collision layer 사용, 벽 충돌 시나리오 헤드리스 검증
+- 제외 범위: 좁은 문(별도 Task), `Player.gd`/`Package.gd` 수정, Collision Layer 체계 재설계, 새 스크립트/범용 시스템
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(`WallTestArea`/`TestWall` 노드 및 관련 sub_resource 추가만)
+- 에디터 수동 작업: 없음(`.tscn` 텍스트로 직접 작성, headless import/boot로 파싱 검증)
+- 완료 조건: 벽이 기존 계단·경사로·DeliveryZone·PhysicsObjects·배송 경로와 간섭하지 않음, Player 단독/오블리크/모서리 접촉 시 관통·NaN·폭주 없음, 놓인 Package가 벽에 밀리거나 끼여도 관통·NaN·폭주 없음, 잡은 Package로 벽에 접근해도 Player·Package가 튕기거나 발사되지 않음, Auto Release와 collision exception 복구가 벽 근처에서도 정상 동작, 기존 MVP 기능(이동/잡기/운반/던지기/배송/재시작) 및 T064 환경 오브젝트 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 TestWall 노드/collision 확인 + Player(정면 4초 연속 접촉/오블리크/모서리) + Package(놓인 상태로 밀림/샌드위치/던지기) + Package(잡은 상태로 3초 연속 벽 접근/max_hold_distance Auto Release) + 기존 기능 회귀(감지/잡기/놓기/배송/재시작-동등/환경 오브젝트 6개 유지) 자동 검증. 벽에 부딪히는 실제 조작감·시각적 안정성은 자동 검증 불가 — **사용자 수동 테스트 필요**.
+- 예상 위험: 벽이 T064의 PhysicsObjects·배송 경로·계단/경사로 접근 동선과 겹치지 않도록 기존 좌표를 전부 확인한 뒤 빈 공간(Environment 그룹, X≈6, Z≈-8, 크기 6×3×0.6)에 배치함 — 헤드리스로는 이 배치가 실제 플레이 동선에 자연스러운지까지는 확인 불가.
+- 완료 근거(구현): 헤드리스 자동 검증 33개 항목 전부 PASS(TestWall 노드/타입/collision(World 레이어 유지, 스크립트 없음), Player 4초 연속 정면 접촉·오블리크 슬라이드·모서리 접근 시 관통·NaN·속도 폭주 없음, 놓인 Package가 벽에 밀려도 관통·NaN 없음(속도 상승 미미), Player-벽 사이 Package 샌드위치 시 NaN 없음, Package를 벽 방향으로 던졌을 때 관통·폭주 없음, 잡은 Package로 3초 연속 벽 접근 시 Player·Package 모두 안정(속도<15, 서로 거리<10, 튕겨나가지 않음), 벽 근처에서도 `max_hold_distance` 초과 시 Auto Release 정상 동작, 기존 Player/Package/DeliveryZone collision 무변경, 환경 물리 오브젝트 6개 유지, Package 감지/잡기/놓기/배송 회귀 정상, 씬 재인스턴스화 시 TestWall과 물리 오브젝트 모두 유지). `godot --headless --import`, `--headless --quit-after 60` 모두 오류·경고 0건. 벽 충돌의 실제 체감(관통감, 접촉 안정성)은 자동 검증 불가 — 사용자 수동 확인 대기 중이며 승인 전에는 `[DONE]`으로 표시하지 않는다.
+- **사용자 수동 테스트 결과(1차): 문제 2건 발견.** (1) 벽 너머 Package가 InteractShapeCast 사거리 안에 있으면 감지·잡기가 그대로 가능함. (2) Package를 잡은 뒤 벽이 Player-Package 사이에 들어와도 Hold가 계속 유지됨. 원인: 기존 감지·유지 로직이 거리/사거리만 검사하고 물리적 가시선(차단 여부)은 검사하지 않았음. **상태 `[REVIEW]` 유지.**
+- 완료 근거(가시선 검사 추가): `Player.gd`에 `_has_line_of_sight_to()` 추가 — `_get_detected_package()`가 ShapeCast 후보를 확정하기 전에, 상호작용 기준점(`interact_shape_cast.global_position`)에서 후보 Package 중심까지 Ray Query(mask=World(1)+Package(4)+PhysicsObject(16)=21, Player 자신 exclude)를 수행해 첫 충돌이 그 Package 자신이 아니면(=벽 등이 먼저 막으면) 후보에서 제외한다. `_detected_package`가 매 프레임 이 결과로 갱신되므로 `_handle_interact_input()`은 코드 변경 없이 자동으로 차단된 대상을 무시한다. `Package.gd`에는 `_is_hold_path_blocked()`를 추가해 `_integrate_forces()`에서 기존 `max_hold_distance` 검사 다음 단계로 HoldPoint↔Package 중심 Ray Query(동일 mask 21, holder+자기 자신 exclude)를 매 물리 프레임 수행 — 연속 `_HOLD_BLOCKED_RELEASE_FRAMES=3` 프레임 차단되면 기존 공용 `release()` 경로를 그대로 호출(지연 collision 복구 로직 재사용, 우회·중복 없음), 가시선이 회복되면 차단 카운터를 0으로 리셋한다. 새 Collision Layer는 만들지 않고 기존 World/Package/PhysicsObject(T064) 레이어만 재사용했다. 헤드리스 자동 검증 33개 항목 전부 PASS: 벽 너머 Package 미감지·미잡기, 벽 없는 정상 상태 감지·잡기·놓기, 잡은 상태에서 벽이 끼어들 때 자동 Release(연속 3프레임 이상에서만), 자동 Release 후 계속 잡기 시도해도 벽 너머로 재잡기 안 됨, 벽 옆으로 이동해 가시선 회복 시 재잡기 정상, 3프레임 미만의 짧은 스침은 Release 안 됨, 기존 감지/잡기/유지/놓기/재잡기/던지기/`max_hold_distance` 자동 놓기/collision exception 지연 복구/배송/재시작-동등/환경 오브젝트 6개 전부 회귀 없음. `--headless --import`, `--headless --quit-after 60` 오류 0건.
+- **사용자 수동 테스트 결과(2차, 최종): 승인.** 벽 물리 체감(Player 단독/오블리크/모서리, 놓인 Package, 잡은 Package, 벽 너머 잡기 차단, 차단 시 자동 Release, 재잡기 방지, 가시선 회복 후 재잡기, 기존 기능 회귀) 전체 승인됨.
+- **완료 근거 요약**:
+  - TestWall(`StaticBody3D`) 벽 지오메트리 추가 완료, 기존 World collision layer 재사용, 기존 계단·경사로·DeliveryZone·PhysicsObjects·배송 경로와 비간섭 확인
+  - 벽 물리 안정성 자동 검증 전항목 PASS(관통·NaN·폭주 없음), 사용자 수동 테스트 승인 완료
+  - 벽 관련 상호작용 버그 2건(벽 너머 잡기, 벽 너머 Hold 유지) 발견 → 물리적 가시선(Ray Query) 검사 추가로 수정, 자동 검증 및 사용자 재테스트 모두 승인
+  - `docs/KNOWN_ISSUES.md` KI-001("벽에 물체가 걸렸을 때의 물리 안정성 미검증") 해소
 
 ## 작업별 작성 형식
 

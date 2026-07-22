@@ -62,10 +62,12 @@ res://
 │  │  ├─ PrototypeLevel.tscn
 │  │  └─ PrototypeLevel.gd
 │  └─ ui/
-│     ├─ Hud.tscn
-│     └─ Hud.gd
+│     ├─ DeliveryHUD.tscn
+│     └─ DeliveryHUD.gd
 └─ icon.svg (기존 파일)
 ```
+
+실제 구현에서는 `ui/Hud.tscn`/`Hud.gd` 대신 `ui/DeliveryHUD.tscn`/`DeliveryHUD.gd`로 명명했다(사용자 명시적 지시, T052). 이 문서의 이후 섹션도 이 이름을 사용한다.
 
 - 저장소 루트의 `docs/`(`GAME_DESIGN.md` 등)와 이 표의 `res://` 경로는 서로 다른 폴더다. `res://docs/`는 Godot 프로젝트 내부 경로이며, 설계 문서는 이미 저장소 루트 `docs/`에 있으므로 **`res://docs/`는 만들지 않는다** (중복 및 혼동 방지).
 - `res://tests/`도 MVP-1에서 만들지 않는다. 자동 테스트 프레임워크를 아직 도입하지 않기 때문이다 (섹션 20).
@@ -79,8 +81,8 @@ res://
 | `Player.tscn` | 이동, 카메라 조작, 상호작용 감지, 잡은 물체 요청 | `CharacterBody3D` | |
 | `Package.tscn` | 물리 충돌, 잡힘/놓임/던져짐 상태와 그에 따른 물리 반응 | `RigidBody3D` | |
 | `DeliveryZone.tscn` | 올바른 Package 도착 감지, 배송 성공 판정 및 통지 | `Area3D` | |
-| `PrototypeLevel.tscn` | 지형 배치, 하위 씬 조립, 배송 성공 신호를 UI로 연결, MVP-1에서 Main 역할 겸임 | `Node3D` | 프로젝트의 `run/main_scene`으로 지정 |
-| `Hud.tscn` | 목표/성공/재시작 안내 텍스트 표시만 담당 | `CanvasLayer` | 게임 상태를 직접 판정하지 않음 |
+| `PrototypeLevel.tscn` | 지형 배치, 하위 씬 조립, 배송 성공 신호를 UI로 연결, `restart` 입력 처리, MVP-1에서 Main 역할 겸임 | `Node3D` | 프로젝트의 `run/main_scene`으로 지정 |
+| `DeliveryHUD.tscn` | 성공/재시작 안내 텍스트 표시만 담당 | `CanvasLayer` | 게임 상태를 직접 판정하지 않음. 목표 안내(`GoalLabel`)는 아직 구현되지 않음(섹션 13 참고) |
 
 ### 4.1 `Player.tscn`
 
@@ -99,7 +101,8 @@ res://
   `HoldPoint`와 `InteractShapeCast`를 `CameraPivot`의 자식으로 둔 이유는 카메라 방향과 상호작용/잡기 방향을 일치시키기 위해서다 (이전 버전에서는 `CameraPivot`의 형제 노드였고, 이 경우 카메라를 돌려도 상호작용 방향이 따라가지 않는 불일치가 있었다). 수직 회전(위/아래를 볼 때) 때문에 `HoldPoint`가 함께 위아래로 움직여 운반 조작이 불편해지는 경우가 확인되면, 구현 테스트 후 `HoldPoint`/`InteractShapeCast`만 수평 회전만 따르는 별도 피벗으로 분리하는 것을 검토한다. MVP-1 설계 단계에서는 분리하지 않는다.
 - **연결 스크립트**: `Player.gd` (루트에 부착).
 - **다른 씬과의 관계**: `PrototypeLevel.tscn`이 자식으로 인스턴스화. `Package`는 직접 자식으로 삼지 않고(재부모화하지 않음) 참조만 보유한다 — 이유는 섹션 10 참고.
-- **직접 소유하면 안 되는 책임**: `Package`의 물리 상태 전환(그 책임은 `Package.gd`), 배송 성공 판정(그 책임은 `DeliveryZone.gd`), UI 표시(그 책임은 `Hud.gd`), `restart` 입력 처리와 씬 재로드(그 책임은 `PrototypeLevel.gd` — 섹션 12, 17 참고).
+- **직접 소유하면 안 되는 책임**: `Package`의 물리 상태 전환(그 책임은 `Package.gd`), 배송 성공 판정(그 책임은 `DeliveryZone.gd`), UI 표시(그 책임은 `DeliveryHUD.gd`), `restart` 입력 처리와 씬 재로드(그 책임은 `PrototypeLevel.gd` — 섹션 12, 17 참고).
+- **실제 구현에서 추가된 책임**: `_handle_throw_input()`(잡은 `Package`에 `throw()` 요청, 섹션 10 참고), `_push_away_rigid_bodies()`(이동 중 부딪힌 `RigidBody3D`를 제한된 힘으로 밀어내는 보조 — 잡고 있는 `Package`는 제외). `collision_layer=2`, `collision_mask=5`(World+Package), `safe_margin=0.08`(기본값 0.001에서 상향 — `RigidBody3D` 위에 설 때 매 프레임 겹침 보정이 과도해 폭발적으로 튕기는 문제의 근본 원인이었음, T040에서 실측 확인).
 
 ### 4.2 `Package.tscn`
 
@@ -113,6 +116,8 @@ res://
 - **연결 스크립트**: `Package.gd`. `package` 그룹에 추가한다 (상호작용 대상 식별용, 섹션 11·17).
 - **다른 씬과의 관계**: `PrototypeLevel.tscn`이 시작 위치에 인스턴스화. `Player`가 참조를 들고 있는 동안에도 씬 트리 소속은 그대로 유지한다(재부모화하지 않음).
 - **직접 소유하면 안 되는 책임**: 입력 처리(그 책임은 `Player.gd`), 배송 성공 판정(그 책임은 `DeliveryZone.gd`).
+- **실제 물리값**(T040 실측 튜닝, T061 Baseline Freeze로 확정): `collision_layer=4`, `collision_mask=7`(World+Player+Package), `mass=15.0`, `PhysicsMaterial`(`friction=0.7`, `bounce=0.0`), `linear_damp=2.0`, `angular_damp=2.0`.
+- **잡힌 동안의 충돌 예외 처리**: 원래 설계(섹션 10.1)만으로는 잡힌 `Package`가 여전히 holder(`Player`)와 물리적으로 충돌 관계라, 추종 힘이 엔진 충돌 반응과 부딪혀 `Player`가 밀리거나 공중부양하는 문제가 실측으로 확인됨(T042). 해결책으로 `grab()`/`release()`에서 `add_collision_exception_with()`/`remove_collision_exception_with()`를 holder와 양방향으로 관리하는 로직을 추가했다. 자세한 내용은 섹션 10.4 참고.
 
 ### 4.3 `DeliveryZone.tscn`
 
@@ -121,7 +126,7 @@ res://
   ```text
   DeliveryZone (Area3D)
   ├─ CollisionShape3D            (트리거 볼륨)
-  └─ MeshInstance3D              (반투명 시각 표시용)
+  └─ MeshInstance3D              (시각 확인용 — 실제 구현은 반투명이 아닌 기본 불투명 재질의 `CylinderMesh`/`CylinderShape3D` 사용, `collision_layer=8`, `collision_mask=4`)
   ```
 - **연결 스크립트**: `DeliveryZone.gd`.
 - **다른 씬과의 관계**: `PrototypeLevel.tscn`이 목적지 위치에 인스턴스화. 성공 시 시그널로 `PrototypeLevel.gd`에 통지한다.
@@ -129,25 +134,25 @@ res://
 
 ### 4.4 `PrototypeLevel.tscn`
 
-- **책임**: 지형(바닥, 계단, 경사로) 배치, `Player`/`Package`/`DeliveryZone`/`Hud` 조립, `DeliveryZone`의 성공 신호를 받아 `Hud`에 전달, `restart` 입력을 감지해 씬을 재로드, MVP-1 한정으로 `Main`의 역할(진입점) 겸임.
-- **예상 노드 구조**: 섹션 5 참고.
+- **책임**: 지형(바닥, 계단, 경사로) 배치, `Player`/`Package`/`DeliveryZone`/`DeliveryHUD` 조립, `DeliveryZone`의 성공 신호를 받아 `DeliveryHUD`에 전달, `restart` 입력을 감지해 씬을 재로드, MVP-1 한정으로 `Main`의 역할(진입점) 겸임.
+- **예상 노드 구조**: 섹션 5 참고. 실제 구현은 루트 아래 `Environment`(지형)/`Gameplay`(`Player`/`Package`/`DeliveryZone`)/`UI`(`DeliveryHUD`) 3개 그룹 노드로 나뉘어 있다(초기 씬 뼈대 단계에서 도입, 섹션 5 참고).
 - **연결 스크립트**: `PrototypeLevel.gd` — 신호 연결과 재시작 입력 처리만 담당하는 얇은 스크립트.
 - **직접 소유하면 안 되는 책임**: 이동/카메라/상호작용 세부 로직(각 하위 씬의 책임), 배송 판정 세부 로직(`DeliveryZone`의 책임).
 
-### 4.5 `Hud.tscn`
+### 4.5 `DeliveryHUD.tscn`
 
-- **책임**: 현재 목표 안내, 배송 성공 메시지, 재시작 안내 텍스트를 표시.
-- **예상 노드 구조**:
+- **책임**: 배송 성공 메시지와 재시작 안내 텍스트를 표시. (목표 안내는 아직 구현되지 않음 — 아래 참고)
+- **실제 노드 구조**:
   ```text
-  Hud (CanvasLayer)
-  └─ MarginContainer
-     └─ VBoxContainer
-        ├─ GoalLabel (Label)
-        ├─ SuccessLabel (Label, 시작 시 숨김)
-        └─ RestartLabel (Label, 시작 시 숨김)
+  DeliveryHUD (CanvasLayer)
+  └─ SuccessPanel (Control, 시작 시 숨김, mouse_filter=IGNORE)
+     ├─ SuccessLabel (Label, "DELIVERY COMPLETE")
+     └─ RestartLabel (Label, "Press R to Restart")
   ```
-- **연결 스크립트**: `Hud.gd` — `show_success()` 같은 표시 전용 함수만 제공.
-- **직접 소유하면 안 되는 책임**: 배송 성공 여부 판정, 재시작 실행 자체(입력 처리는 `PrototypeLevel.gd`가 담당하고 `Hud`는 표시만 한다).
+  원래 설계는 `MarginContainer`/`VBoxContainer`와 `GoalLabel`을 포함했으나, 실제 구현에서는 "성공 표시만 구현"하라는 사용자의 명시적 지시(T052)에 따라 `GoalLabel`(목표 안내)은 만들지 않았고, 컨테이너 없이 `SuccessPanel` 하나에 두 `Label`을 직접 배치했다. `GoalLabel`은 `GAME_DESIGN.md`의 MVP 완료 조건에 포함되어 있지 않아 MVP-1 완료 판정에는 영향이 없다(T062에서 확인).
+- **연결 스크립트**: `DeliveryHUD.gd` — `show_success()` 표시 전용 함수만 제공.
+- **주의(실제 발견된 버그와 수정, T052)**: `SuccessPanel`이 전체 화면을 덮는 `Control`인데 기본 `mouse_filter`(`STOP`)가 마우스 이동 이벤트를 GUI 단계에서 소비해, `Player`의 카메라 회전(`_unhandled_input`)이 HUD 표시 후 멈추는 문제가 있었다. `SuccessPanel`/각 `Label`에 `mouse_filter = MOUSE_FILTER_IGNORE`를 설정해 해결했다 — 비상호작용 UI를 화면에 표시할 때는 이 설정이 필수임을 기록해 둔다.
+- **직접 소유하면 안 되는 책임**: 배송 성공 여부 판정, 재시작 실행 자체(입력 처리는 `PrototypeLevel.gd`가 담당하고 `DeliveryHUD`는 표시만 한다).
 
 ## 5. 메인 실행 구조
 
@@ -161,11 +166,15 @@ res://
 ```text
 PrototypeLevel   (프로젝트 실행 씬, MVP-1에서 Main 역할 겸임)
 ├─ Environment    (바닥, 계단, 경사로 — StaticBody3D 모음)
-├─ Player
-├─ Package
-├─ DeliveryZone
-└─ Hud
+├─ Gameplay
+│  ├─ Player
+│  ├─ Package
+│  └─ DeliveryZone
+└─ UI
+   └─ DeliveryHUD
 ```
+
+(실제 구현은 `Player`/`Package`/`DeliveryZone`을 `Gameplay` 그룹 노드 아래, `DeliveryHUD`를 `UI` 그룹 노드 아래 배치한다 — 최초 씬 뼈대 생성 시점의 구조가 그대로 유지되었다. 기능상 차이는 없다.)
 
 ## 6. 플레이어 구조
 
@@ -177,6 +186,7 @@ PrototypeLevel   (프로젝트 실행 씬, MVP-1에서 Main 역할 겸임)
 | 카메라 회전 (마우스 입력 → `CameraPivot` 회전) | `Player.gd` (`CameraPivot`/`SpringArm3D`/`Camera3D` 노드를 직접 참조) |
 | 상호작용 감지 (`InteractShapeCast` 결과 확인) | `Player.gd` |
 | 잡은 물체 관리 (어떤 `Package`를 잡고 있는지 참조 보유, 놓기/던지기 요청) | `Player.gd` |
+| (실제 추가) 부딪힌 `RigidBody3D` 밀어내기 보조 (`_push_away_rigid_bodies()`, 잡은 `Package`는 제외) | `Player.gd` |
 
 `HoldPoint`와 `InteractShapeCast`는 `CameraPivot`의 자식이므로 카메라 회전을 그대로 따라간다 (섹션 4.1 참고). `restart` 입력 처리는 `Player.gd`의 책임이 아니다 — `PrototypeLevel.gd`가 담당한다 (섹션 12, 17).
 
@@ -282,6 +292,11 @@ Player: throw_package 누르는 순간 & 잡은 것 있음
 
 정확한 수치(최대 추종 속도, 가속도 제한, 최대 허용 거리)는 이 문서에서 확정하지 않는다. 모두 `Package.gd`의 export 변수로 두고 프로토타입 테스트로 조정한다 (섹션 18).
 
+**실제 구현에서 추가된 안전 조건(T042, 원래 설계에 없던 내용)**:
+
+- **holder와의 충돌 예외**: `grab()` 성공 시 `Package`와 holder(`Player`) 사이에 `add_collision_exception_with()`를 양방향으로 걸어, 추종 힘이 엔진의 충돌 반응과 충돌해 `Player`가 밀리거나 발밑의 `Package`를 바닥으로 오인해 함께 상승하는 문제를 막는다. World·다른 `Package`와의 충돌은 그대로 유지된다.
+- **겹친 상태에서의 지연된 충돌 복구**: `release()`(수동/자동 공통)는 물리적 놓기(`is_held=false`, 즉시)와 충돌 예외 해제(지연)를 분리한다. holder와 겹쳐 있는 동안 즉시 충돌을 복구하면 침투 해소 충격으로 `Player`가 튕기거나 밀리는 문제가 있었기 때문이다. `_integrate_forces()`에서 매 물리 스텝 `intersect_shape()`로 holder와의 실제 겹침을 검사해, 연속 3프레임 미겹침이 확인된 뒤에만 `remove_collision_exception_with()`를 실행한다. 겹침이 5초 이상 지속되면 경고를 1회만 출력하고 강제 복구는 하지 않는다.
+
 ## 11. 상호작용 감지 방식
 
 | 방식 | 특징 |
@@ -307,7 +322,7 @@ Player: throw_package 누르는 순간 & 잡은 것 있음
 - `Area3D` + `CollisionShape3D`(트리거) + `MeshInstance3D`(시각 확인용).
 - **감지 방법**: `body_entered(body: Node3D)` 시그널을 연결한다.
 - **성공 조건**: `body.is_in_group("package")`이고 아직 `is_delivered`가 `false`인 경우.
-- **성공 이벤트 전달**: `DeliveryZone.gd`가 커스텀 시그널 `package_delivered`를 발생시킨다. `PrototypeLevel.gd`가 이 시그널을 구독해 `Hud.show_success()`를 호출한다. (발신: `DeliveryZone` / 수신: `PrototypeLevel`)
+- **성공 이벤트 전달**: `DeliveryZone.gd`가 커스텀 시그널 `package_delivered`를 발생시킨다. `PrototypeLevel.gd`가 이 시그널을 구독해 `DeliveryHUD.show_success()`를 호출한다. (발신: `DeliveryZone` / 수신: `PrototypeLevel`)
 - **중복 성공 방지**: `DeliveryZone.gd` 내부의 `var is_delivered: bool = false` 플래그를 최초 성공 시 `true`로 바꾸고, 이후 진입은 무시한다.
 - **다시 시작 흐름**: `restart` 액션 입력은 `DeliveryZone.gd`가 아니라 `PrototypeLevel.gd`가 감지한다. `PrototypeLevel.gd`가 `get_tree().reload_current_scene()`을 호출해 현재 씬(`PrototypeLevel.tscn`)을 다시 로드한다. MVP-1에는 저장해야 할 영속 상태가 없으므로 씬 재로드만으로 충분하다. (별도의 수동 리셋 로직을 만들지 않는다.)
 
@@ -315,11 +330,11 @@ Player: throw_package 누르는 순간 & 잡은 것 있음
 
 MVP UI 요소 (`docs/GAME_DESIGN.md` MVP UI 범위와 동일):
 
-- 현재 목표 안내 (`GoalLabel`, 고정 텍스트로 시작 시 표시)
-- 배송 성공 메시지 (`SuccessLabel`, 성공 시에만 표시)
-- 다시 시작 안내 (`RestartLabel`, 성공 시 `SuccessLabel`과 함께 표시)
+- 현재 목표 안내 (`GoalLabel`, 고정 텍스트로 시작 시 표시) — **아직 구현되지 않음**(T052에서 "성공 표시만 구현"으로 범위 축소, `GAME_DESIGN.md` 완료 조건에는 포함되지 않아 MVP-1 판정에는 영향 없음)
+- 배송 성공 메시지 (`SuccessLabel`, 성공 시에만 표시) — 구현됨
+- 다시 시작 안내 (`RestartLabel`, 성공 시 `SuccessLabel`과 함께 표시) — 구현됨
 
-`Hud.gd`는 `show_success()`처럼 표시 상태를 바꾸는 함수만 제공한다. 배송 성공 여부를 스스로 확인(폴링)하지 않고, `PrototypeLevel.gd`가 `DeliveryZone`의 시그널을 받아 호출해줄 때만 반응한다. 별도의 UI Manager(Autoload)는 만들지 않는다.
+`DeliveryHUD.gd`는 `show_success()`처럼 표시 상태를 바꾸는 함수만 제공한다. 배송 성공 여부를 스스로 확인(폴링)하지 않고, `PrototypeLevel.gd`가 `DeliveryZone`의 시그널을 받아 호출해줄 때만 반응한다. 별도의 UI Manager(Autoload)는 만들지 않는다.
 
 ## 14. 게임 흐름 및 상태
 
@@ -329,7 +344,7 @@ MVP UI 요소 (`docs/GAME_DESIGN.md` MVP UI 범위와 동일):
 
 MVP-1은 사실상 "성공 전 / 성공 후" 두 상태뿐이다. 이는 이미 `DeliveryZone.gd`의 `is_delivered: bool` 하나로 표현된다. 재시작은 상태를 이어가는 것이 아니라 씬 자체를 새로 로드하는 방식(섹션 12)이므로, 별도의 "재시작 상태"도 필요 없다.
 
-**결정**: 정식 상태 머신(State Machine)을 도입하지 않는다. `PrototypeLevel.gd`는 자체 상태 변수를 두지 않고, `DeliveryZone`의 시그널만 받아 `Hud`를 갱신하는 얇은 연결 역할만 한다.
+**결정**: 정식 상태 머신(State Machine)을 도입하지 않는다. `PrototypeLevel.gd`는 자체 상태 변수를 두지 않고, `DeliveryZone`의 시그널만 받아 `DeliveryHUD`를 갱신하는 얇은 연결 역할만 한다.
 
 ## 15. Input Map
 
@@ -361,7 +376,7 @@ MVP-1은 사실상 "성공 전 / 성공 후" 두 상태뿐이다. 이는 이미 
 
 | 노드 | 소속 레이어 | 충돌/감지 마스크 |
 |---|---|---|
-| `PrototypeLevel` 지형 | World(1) | 없음 (정적 지형은 스스로 감지할 필요 없음) |
+| `PrototypeLevel` 지형 | World(1) | 없음 (정적 지형은 스스로 감지할 필요 없음). 실제로는 `collision_mask`를 명시적으로 설정하지 않아 엔진 기본값(1)이 남아있으나, `StaticBody3D`는 스스로 감지 질의를 하지 않으므로 실질적 영향은 없음 |
 | `Player` | Player(2) | World(1), Package(3) |
 | `Player`의 `InteractShapeCast` | (물리 바디 아님) | Package(3) |
 | `Package` | Package(3) | World(1), Player(2), Package(3) |
@@ -369,7 +384,7 @@ MVP-1은 사실상 "성공 전 / 성공 후" 두 상태뿐이다. 이는 이미 
 
 ## 17. 신호와 참조 관계
 
-- **직접 참조가 적절한 경우**: 소유 관계가 명확한 부모-자식 (`Player.gd`가 자신의 `CameraPivot`/`SpringArm3D`/`Camera3D`/`InteractShapeCast`/`HoldPoint`를 `@onready var`로 참조, `PrototypeLevel.gd`가 자신이 배치한 `Player`/`Package`/`DeliveryZone`/`Hud`를 참조).
+- **직접 참조가 적절한 경우**: 소유 관계가 명확한 부모-자식 (`Player.gd`가 자신의 `CameraPivot`/`SpringArm3D`/`Camera3D`/`InteractShapeCast`/`HoldPoint`를 `@onready var`로 참조, `PrototypeLevel.gd`가 자신이 배치한 `Player`/`Package`/`DeliveryZone`/`DeliveryHUD`를 참조).
 - **Signal이 적절한 경우**: 서로 다른 책임을 가진 씬 간 통지 (`DeliveryZone` → `PrototypeLevel`의 `package_delivered`). 발신자는 자신의 상태 변화만 알리고, 수신자가 무엇을 할지는 관여하지 않는다.
 - **그룹 검색이 적절한 경우**: 타입을 강하게 결합하지 않고 여러 대상 중 식별만 하면 될 때 (`InteractShapeCast` 결과가 `package` 그룹인지, `DeliveryZone`에 들어온 `body`가 `package` 그룹인지).
 - **`get_node()` 경로 의존성 축소**: `@onready var` + `%UniqueName`(고유 이름 노드)을 우선 사용한다. `../../..` 같은 깊은 상대 경로 탐색은 사용하지 않는다.
@@ -381,29 +396,31 @@ Player --(ShapeCast 감지)--> Package
 Player --(grab / release / throw 호출)--> Package
 Package --(body_entered)--> DeliveryZone
 DeliveryZone --(signal: package_delivered)--> PrototypeLevel
-PrototypeLevel --(직접 호출: show_success())--> Hud
+PrototypeLevel --(직접 호출: show_success())--> DeliveryHUD
 PrototypeLevel --(restart 입력)--> get_tree().reload_current_scene()
 ```
 
 ## 18. 데이터와 튜닝 값
 
-아래 값은 모두 export 변수로 두어 Inspector에서 조정한다. 정확한 수치는 이 문서에서 확정하지 않는다.
+아래 값은 모두 export 변수로 두어 Inspector에서 조정한다. **T061에서 실제 플레이 검증을 거쳐 아래 값으로 최종 동결(Baseline Freeze)되었다.**
 
-| 값 | 소속 스크립트 |
-|---|---|
-| 걷기 속도 | `Player.gd` |
-| 달리기 속도 | `Player.gd` |
-| 점프 속도 | `Player.gd` |
-| 마우스 감도 | `Player.gd` |
-| 카메라 수직 회전 제한(최소/최대) | `Player.gd` |
-| 상호작용 감지 거리 | `Player.gd` |
-| 잡기 반응 속도(추종 속도) | `Package.gd` |
-| 잡기 최대 추종 속도 | `Package.gd` |
-| 추종 가속도(반응 강도) 제한 | `Package.gd` |
-| 플레이어-`Package` 최대 허용 거리(초과 시 자동 놓기) | `Package.gd` |
-| 던지기 힘 | `Player.gd` (던질 때 `Package.throw()`에 전달) |
+| 값 | 소속 스크립트 | 최종값(T061) |
+|---|---|---|
+| 걷기 속도(`walk_speed`) | `Player.gd` | 4.0 |
+| 달리기 속도(`sprint_speed`) | `Player.gd` | 7.0 |
+| 점프 속도(`jump_velocity`) | `Player.gd` | 6.0 |
+| 가속도(`acceleration`) / 감속도(`deceleration`) | `Player.gd` | 20.0 / 25.0 |
+| 마우스 감도(`mouse_sensitivity`) | `Player.gd` | 0.003 |
+| 카메라 수직 회전 제한(`min_pitch`/`max_pitch`) | `Player.gd` | -80.0 / 55.0 |
+| (실제 추가) 밀기 힘(`push_force`) / 최대 밀림 속도(`max_push_speed`) | `Player.gd` | 220.0 / 2.0 |
+| 던지기 힘(`throw_impulse_strength`) | `Player.gd` (던질 때 `Package.throw()`에 전달) | 200.0 |
+| 상호작용 감지 거리/형태 | `Player.tscn`의 `InteractShapeCast`(export 변수 아닌 노드 속성) | radius 0.3, target distance 2.2m |
+| 잡기 반응 속도(추종 속도, `follow_strength`) | `Package.gd` | 8.0 |
+| 잡기 최대 추종 속도(`max_follow_speed`) | `Package.gd` | 6.0 |
+| 추종 가속도(반응 강도, `follow_acceleration`) | `Package.gd` | 40.0 |
+| 플레이어-`Package` 최대 허용 거리(`max_hold_distance`, 초과 시 자동 놓기) | `Package.gd` | 3.0 |
 
-MVP-1에서는 별도의 설정 Resource나 데이터 테이블을 만들지 않는다 — 값이 10개 미만이고 스크립트별 소속이 명확하다.
+MVP-1에서는 별도의 설정 Resource나 데이터 테이블을 만들지 않는다 — 값의 개수가 적고 스크립트별 소속이 명확하다.
 
 ## 19. 오류 처리와 방어 조건
 
@@ -453,7 +470,7 @@ MVP-1은 자동 테스트 프레임워크나 외부 Addon(GUT 등)을 도입하�
 8. 던지기
 9. 계단과 경사로 통과 테스트
 10. `DeliveryZone`
-11. 성공 UI (`Hud`)
+11. 성공 UI (`DeliveryHUD`)
 12. 재시작
 13. 통합 테스트와 튜닝
 
