@@ -399,6 +399,8 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T042 — 잡기·유지·놓기 구현
 
+> 참고: 이 작업 당시 입력 방식은 홀드(hold) 방식이었다. T067에서 토글(toggle) 방식으로 변경되었다 — 아래 기록은 당시 구현 이력이므로 수정하지 않는다.
+
 - 상태: `[x]` `[DONE]`
 - 목적: 홀드 방식에서는 잡기와 놓기가 하나의 입력 생명주기이므로, 잡기·유지·놓기와 물리 추종을 하나의 작업으로 구현
 - 선행 작업: T041
@@ -576,6 +578,8 @@ MVP 제외 항목(`docs/GAME_DESIGN.md` 섹션 27, `CLAUDE.md` 섹션 6)은 완�
 
 ### T061 — 기본 튜닝
 
+> 참고: `max_follow_speed`는 이 작업 당시 6.0으로 동결되었다. T068에서 확장된 환경 재검증 중 `sprint_speed`(7.0)보다 낮아 순수 스프린트만으로 Auto Release가 발생하는 객관적 문제가 발견되어 7.5로 조정되었다 — 아래 기록은 당시 이력이므로 수정하지 않는다.
+
 - 상태: `[x]` `[DONE]`
 - 목적: export 변수 수치를 프로토타입 테스트로 확정
 - 선행 작업: T060
@@ -645,10 +649,10 @@ MVP-1 완료 및 사용자의 명시적 승인 전에는 다음 작업을 생성
 
 ## 13. 현재 다음 작업
 
-- 작업 ID: 없음
-- 작업명: 없음
-- 상태: T064(환경 물리 오브젝트), T065(벽 지오메트리+물리 안정성 검증+가시선 버그 수정) 모두 `[DONE]`. `ROADMAP.md` EPIC-01의 FEATURE-01-A/B 완료. 다음 작업 없음 — 사용자 승인 대기.
-- 이유: T065가 사용자 최종 승인을 받아 `[DONE]`으로 확정되었다. EPIC-01의 나머지(FEATURE-01-C/D, 좁은 문)와 EPIC-02~04, 그 외 후보는 `ROADMAP.md`에 계획으로만 남아있으며, 다음 착수는 사용자의 명시적 승인이 있을 때 시작한다.
+- 작업 ID: T073
+- 작업명: First-Person Camera Transition and Grab Usability
+- 상태: `[REVIEW]` — 구현·자동 검증(128개 항목) 완료, 사용자 수동 테스트 대기 중.
+- 이유: 3인칭 카메라가 캐릭터로 잡은 물체와 조준 대상을 가리는 문제를 해결하기 위해 사용자 지시로 1인칭 시점 전환을 진행했다(섹션 25 참고). T072의 Force-Based Grab 구조는 그대로 유지하고, 카메라·조준점·Grab 판정 정렬만 재설계했다. T070(Final Playtest and Fun Validation)은 조작·시점이 다시 바뀌었으므로 T073 승인 전까지 다시 `[BLOCKED]`다(섹션 22 참고).
 
 변경된 순서(기록용): T030 → T031 → T032 → T033 → T034 → T040 → (T041~T054) → T022 → T023 → T060 → T061 → T023(경사로, T062 FAIL 이후 순서를 되돌려 완료) → T045(재검증) → T062(재검토, PASS) → T063(문서 동기화).
 
@@ -725,6 +729,208 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
   - 벽 물리 안정성 자동 검증 전항목 PASS(관통·NaN·폭주 없음), 사용자 수동 테스트 승인 완료
   - 벽 관련 상호작용 버그 2건(벽 너머 잡기, 벽 너머 Hold 유지) 발견 → 물리적 가시선(Ray Query) 검사 추가로 수정, 자동 검증 및 사용자 재테스트 모두 승인
   - `docs/KNOWN_ISSUES.md` KI-001("벽에 물체가 걸렸을 때의 물리 안정성 미검증") 해소
+
+## 18. T066 — Narrow Doorway Geometry and Traversal Validation
+
+- 상태: `[x]` `[DONE]`
+- 목적: `PrototypeLevel`에 정적인 좁은 문틀을 추가해 Player 단독/놓인 Package/잡은 Package가 좁은 통로를 통과·접촉·걸리는 상황에서 기존 물리·상호작용 로직(T065의 가시선 검사, Hold 차단 자동 Release 포함)이 안정적인지 검증한다. `docs/ROADMAP.md` EPIC-01의 FEATURE-01-C(좁은 문 추가)/FEATURE-01-D(좁은 문 통과 검증)에 대응.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-01(Obstacle Course Expansion) — FEATURE-01-C, FEATURE-01-D
+- 선행 작업: T065(벽 지오메트리+물리 안정성 검증+가시선 버그 수정, `[DONE]`)
+- 작업 범위: `PrototypeLevel.tscn`의 `Environment` 아래 `NarrowDoorwayTestArea`(`LeftWall`/`RightWall`/`Lintel`, 모두 `StaticBody3D`) 추가, 기존 World collision layer 사용, 문 통과 시나리오 헤드리스 검증
+- 제외 범위: 실제 문짝·문 애니메이션·문 열기 입력, `Player.gd`/`Package.gd` 핵심 로직 수정, Collision Layer 재설계, 새 스크립트/범용 시스템, 카메라 설정 변경, Package/Player 크기·HoldPoint 위치 변경
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(`NarrowDoorwayTestArea` 노드 및 관련 sub_resource 추가만)
+- 에디터 수동 작업: 없음(`.tscn` 텍스트로 직접 작성, headless import/boot로 파싱 검증)
+- 완료 조건: 문이 기존 계단·경사로·DeliveryZone·PhysicsObjects·TestWall·배송 경로와 간섭하지 않음, Player 단독(중앙/오블리크/좌우 문틀 접촉) 통과 시 관통·고착·NaN·비정상 속도 없음, 놓인 Package(밀기/정면충돌/모서리충돌) 시 관통·폭발적 가속 없음, 잡은 Package(중앙/좌우 문틀에 걸림)로 통과 시도 시 Player·Package 모두 안정, 차단·거리초과 시 Auto Release 정상, Auto Release 후 벽 너머 재잡기 차단·가시선 회복 후 재잡기 정상, 지연된 collision exception 복구 정상, 기존 MVP 기능·T064 환경 오브젝트·T065 벽/가시선 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 문틀 노드/collision 확인 + Player 단독 4개 시나리오(중앙 통과/오블리크 접근/좌측 문틀 접촉/우측 문틀 접촉) + 놓인 Package 3개 시나리오(밀기/정면 충돌/모서리 충돌) + 잡은 Package 5개 시나리오(중앙 통과/좌측 문틀 걸림/우측 문틀 걸림/TestWall Auto Release/재잡기 차단·회복) + 지연된 collision 복구 + 기존 기능·T064·T065 회귀(TestWall 유지, 가시선 차단, 이동/점프, Package 감지·잡기·놓기·던지기, 환경 오브젝트 6개, 배송·HUD, 재시작-동등, Physics Interpolation 설정) 자동 검증. 실제 문 통과 난이도 체감("조심하면 통과 가능한가")은 자동 검증 불가 — **사용자 수동 테스트 필요**.
+- 예상 위험: 문 폭(clear width 1.4m)은 Player capsule(지름 1.0m)·Package(폭 0.8m) 실측 크기에서 상대적으로 추론해 결정한 값으로, T044/T061처럼 여러 후보값을 헤드리스로 비교 실측하지는 않았다 — 사용자 수동 테스트에서 "너무 쉽다"/"너무 빡빡하다"로 판단되면 조정이 필요할 수 있다.
+- 완료 근거(구현): 실제 크기 조사 결과 — Player `CapsuleShape3D`(기본값, radius 0.5/height 2.0), Package `BoxShape3D`(0.8×0.6×0.8), `HoldPoint`는 `CameraPivot`의 자식으로 전방(-Z) 1.5m 오프셋, 기존 `TestWall`(6,2,-8)·`PhysicsObjects`(X≈-3 및 X≈3.7~4.9 두 구역)·Stairs(X≈10.1~16)·Ramp(-7.02,6)·DeliveryZone(5,0.5,3) 좌표를 전부 확인한 뒤, 빈 공간(Environment 그룹, X=-7 평면, Z≈-4.2~2.2, 문 중심 Z=-1)에 배치해 어떤 기존 지오메트리와도 간섭하지 않음을 확인. `NarrowDoorwayTestArea`는 `LeftWall`/`RightWall`(각 0.6×3×2.5, Z축을 따라 분리 배치)과 `Lintel`(0.6×0.8×1.4, 문 상단)로 구성해 clear width 1.4m·clear height 2.2m(바닥~문틀 사이 틈 없음)를 만들었다. 헤드리스 자동 검증 44개 항목 전부 PASS: 문틀 노드/타입/collision(World 레이어 유지, 스크립트 없음) 확인, Player 단독 중앙 통과 성공(문을 가로질러 반대편 도달) 및 오블리크·좌우 문틀 접촉 시나리오 모두 NaN·폭주 없음, 놓인 Package 밀기·정면충돌·모서리충돌 모두 NaN·폭발적 가속 없음, 잡은 Package로 중앙 통과 성공 및 좌우 문틀에 걸리는 상황 모두 Player·Package 안정, 기존 `TestWall`에서 Hold 경로 차단 시 Auto Release 정상 작동 및 벽 너머 재잡기 차단(가시선 검사, T065 재사용)·가시선 회복 후 재잡기 정상, 지연된 collision exception 복구 정상, 기존 이동/점프/Package 전 기능/환경 오브젝트 6개/배송·HUD/재시작-동등/Physics Interpolation 설정 전부 회귀 없음. `--headless --import`, `--headless --quit-after 60` 모두 오류·경고 0건.
+- **사용자 수동 테스트 결과: 승인.** "좁은 문 통과 및 문틀 충돌 동작 정상", "Package 걸림 및 벽 차단 Auto Release 정상", "가시선 확보 후 재잡기 정상" 확인됨(T067의 Toggle 방식 적용 후 최종 조작으로 재검증 포함).
+
+## 19. T067 — Package Interaction Toggle
+
+- 상태: `[x]` `[DONE]`
+- 목적: 기존 Hold 입력 방식(DD-001)을 Toggle 입력 방식으로 변경한다. 이동키(WASD)와 `E`를 동시에 계속 눌러야 하는 조작 부담을 완화하기 위한 사용자 승인 사항.
+- 소속: `docs/ROADMAP.md` Epic 분해 외 추가 구현(T064·T066과 동일 성격 — 사용자가 직접 지정한 별도 범위)
+- 선행 작업: T066(`[DONE]`, 이번 변경 후 최종 조작 방식으로 재검증 완료)
+- 작업 범위: `Player.gd`의 `_handle_interact_input()`을 `E` `just_pressed` 엣지 기반 토글 로직으로 변경
+- 제외 범위: `interact` Input Map 바인딩 변경, 새 입력 액션 추가, Package 물리 추종 방식, `HoldPoint` 위치, 기존 물리 파라미터, 가시선·Hold 차단 검사 로직, Toggle 전용 별도 상태 변수, 새 상태 머신/범용 Interaction 시스템
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/player/Player.gd`(`_handle_interact_input()` 함수 본문만 수정, 나머지 함수·export 변수·다른 스크립트 무변경)
+- 에디터 수동 작업: 없음
+- 완료 조건: `E` 한 번으로 잡기, 다시 눌러 놓기, `E`를 놓는 동작 자체는 무반응, 이동 중에도 `E`를 누르고 있지 않아도 정상 운반, 자동 Release(가시선 차단·`max_hold_distance`·`HoldPoint` 무효화) 이후 새 `E` `just_pressed` 없이는 재잡기되지 않음, 던지기 이후 새 `E`로 정상 재상호작용, 빠른 연속 `E` 입력에서도 참조·collision exception 오염 없음, 기존 회귀(이동/카메라/벽/좁은 문/계단/경사로/배송/HUD/재시작) 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 실제 `Input` 이벤트(`action_press`/`action_release`, 마우스 버튼 `InputEventMouseButton`)를 통해 사용자 요구 12개 시나리오(단일 `E` 잡기/놓기 무반응/이동 중 유지/두 번째 `E` 놓기/대상 없을 때 `E`/벽 너머 `E`/Hold 차단 자동 Release/자동 Release 후 재잡기 방지 및 가시선 회복 후 재잡기/`max_hold_distance` 자동 Release 후 재잡기 방지/던지기 연동/빠른 연속 `E`/전체 회귀) 자동 검증. 조작감 자체(토글 방식이 실제로 더 편한지)는 자동 검증 불가 — **사용자 수동 테스트 필요**.
+- 예상 위험: 헤드리스 하네스에서 `E`를 빠르게 연속으로 누르는 시나리오는 idle 프레임과 물리 틱이 1:1로 대응하지 않아(기존에 문서화된 하네스 아티팩트) 입력 사이 간격이 너무 좁으면 엣지를 놓칠 수 있음을 발견 — 실제 게임 플레이(입력 사이 여러 렌더 프레임 간격이 자연히 존재)에는 영향 없는 테스트 환경 한정 이슈로 판단, 테스트 스크립트에 프레임 여유만 추가했다(게임 코드는 무변경).
+- 완료 근거(구현): `Player.gd`의 `_handle_interact_input()`을 다음과 같이 변경 — 기존 유효성 정리 로직(잡은 대상이 무효화되면 `held_package = null`)은 유지, `Input.is_action_just_pressed("interact")`가 아니면 즉시 반환(놓는 동작에는 완전히 무반응), 이후 `held_package != null`이면 `release()` 후 참조 정리, 아니면(`elif`) `_detected_package`가 있을 때만 `grab()` 시도. `if/elif` 단일 분기 구조라 같은 입력 프레임에서 놓기와 잡기가 동시에 일어날 수 없어 "같은 입력으로 다른 대상을 즉시 재잡기하지 않음" 요구를 자연스럽게 만족한다. Toggle 전용 상태 변수는 추가하지 않았다 — 기존 `held_package`/`Package.is_held`가 곧 현재 상태다. `Package.gd`의 벽 차단·`max_hold_distance` 자동 Release 로직은 `E` 입력과 무관하게 동작하므로 전혀 수정하지 않았고, 자동 재잡기 방지는 토글 로직이 `is_action_just_pressed`(엣지)만 검사할 뿐 `is_action_pressed`(레벨 상태)를 검사하지 않기 때문에 별도 로직 없이 보장된다. 헤드리스 자동 검증 40개 항목 전부 PASS(단일 `E` 잡기·유지·이동 중 추종·두 번째 `E` 놓기, 대상 없을 때 무반응, 벽 너머 `E` 무반응, `TestWall` Hold 차단 자동 Release, 자동 Release 후 재잡기 방지(가시선 회복 전)와 가시선 회복 후 새 `E`로 재잡기 성공, `max_hold_distance` 자동 Release 후 재잡기 방지, 마우스 왼쪽 버튼 던지기 및 이후 새 `E` 재상호작용, 빠른 연속 6~7회 `E` 토글 정상 전환, 기존 이동/점프/좁은 문(T066)/벽(T065)/계단/경사로/환경 오브젝트 6개(T064)/배송·HUD/재시작-동등 전부 회귀 없음). `--headless --import`, `--headless --quit-after 60` 모두 오류·경고 0건.
+- **사용자 수동 테스트 결과: 승인.** "E 한 번으로 잡기, 다시 E를 눌러 놓는 Toggle 방식 정상", "E에서 손을 떼어도 운반 유지", "자동 Release 이후 자동 재잡기 없음", "기존 던지기 및 배송 기능 정상" 확인됨.
+
+## 20. T068 — Expanded Environment Physics Feel Tuning
+
+- 상태: `[x]` `[DONE]`
+- 목적: 확장된 테스트 환경(평지/계단/경사로/`TestWall`/`NarrowDoorway`/`PhysicsBarrel`/`PhysicsCrate`/`SmallPhysicsBox`)에서 현재 물리 수치가 안정적이고 조작하기 편한지 재검토한다. `docs/ROADMAP.md` EPIC-02(Physics Feel Tuning)의 FEATURE-02-A(충돌·밀기)/FEATURE-02-B(잡기·운반)/FEATURE-02-C(던지기)에 대응.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-02(Physics Feel Tuning) — FEATURE-02-A, FEATURE-02-B, FEATURE-02-C
+- 선행 작업: T066·T067(`[DONE]`, EPIC-01 완료)
+- 작업 범위: 현재 물리값 조사, 확장 환경에서 충돌·밀기/잡기·운반/던지기 헤드리스 검증, 객관적으로 재현되는 문제 발견 시 최소 범위 수정
+- 제외 범위: 새 기능 추가, 여러 값 동시 변경, 감각(주관적 판단) 기준의 값 변경, Toggle 상호작용을 Hold로 되돌리는 것, Physics Interpolation 설정 변경
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/package/Package.gd`(`max_follow_speed` export 값 1개만 수정)
+- 에디터 수동 작업: 없음
+- 완료 조건: 확장 환경 전체에서 관통·고착·NaN·비정상 속도·지속적 진동·정상 이동만으로 반복되는 Auto Release가 없음, 발견된 객관적 문제는 최소 범위로만 수정, 값 변경 없이 유지한 항목은 그 근거를 기록, 감각 판단이 필요한 항목은 사용자 수동 테스트로 남김
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 충돌·밀기 8개 시나리오(평지 정면/오블리크 밀기, `TestWall`·`NarrowDoorway` 방향 밀기, Crate 5초 연속 밀기, Barrel 굴리기, SmallBox 밀기)/잡기·운반 6개 시나리오(스프린트 중 무동력 운반, 급격한 카메라 회전, 계단·경사로·좁은 문 통과, `TestWall` Auto Release)/던지기 5개 시나리오(수평/위쪽/스프린트 중/`TestWall` 방향/던진 뒤 재잡기)와 전체 회귀(기존 지오메트리·환경 오브젝트·배송·HUD·Physics Interpolation)를 자동 검증. 물리 파라미터는 각 씬/스크립트에서 직접 읽어 문서 서술보다 우선 확인. 조작감(빠름/적당함/과함 등 주관적 판단)은 자동 검증 대상이 아님 — **사용자 수동 테스트 필요**.
+- 예상 위험: 헤드리스 하네스의 idle-프레임/물리-틱 비정렬 특성상, 고정된 프레임 수로 장거리 이동을 가정한 테스트는 실제로는 맵 경계 밖으로 나가거나 의도한 지점에 도달하지 못할 수 있음을 재확인 — 위치 기반 종료 조건(목표 좌표 도달 또는 프레임 상한)으로 테스트를 설계해 우회함(게임 코드와 무관, 테스트 방법론 문제).
+- 완료 근거(조사 및 검증): 현재 값 전수 조사 — Player(`walk_speed=4.0`, `sprint_speed=7.0`, `acceleration=20.0`, `deceleration=25.0`, `push_force=220.0`, `max_push_speed=2.0`, `throw_impulse_strength=200.0`, `safe_margin=0.08`), Package Hold(`follow_strength=8.0`, `max_follow_speed`, `follow_acceleration=40.0`, `max_hold_distance=3.0`, Hold 차단 유예 3프레임), Package Throw(`throw_impulse_strength` 재사용, 방향은 `-camera_pivot.basis.z` 정규화, 위쪽 보정 없음, 던지기는 `release()`를 경유해 기존 collision exception 지연 복구 로직을 그대로 재사용). 헤드리스 자동 검증 34개 항목 실행 — **객관적으로 재현되는 문제 1건 발견**: `max_follow_speed`(기존 6.0)가 `sprint_speed`(7.0)보다 낮아, 장애물 없이 순수하게 직선으로 스프린트만 지속해도 HoldPoint와 Package 사이 거리가 계속 벌어지다 `max_hold_distance`(3.0)를 초과해 **정상 이동만으로 Auto Release가 발생**함을 확인(약 18m 직선 스프린트 구간에서 최대 지연 거리 3.16~3.21m 관측, 3.0 초과). 이는 섹션 8의 "정상 이동만으로 반복되는 Auto Release" 허용 조건에 해당하는 객관적 문제로 판단해, 문제와 직접 관련된 값 하나만 수정: `max_follow_speed`를 `sprint_speed`를 웃도는 최소값인 **6.0 → 7.5**로 조정. 재검증 결과 동일한 약 18m 직선 스프린트 구간에서 최대 지연 거리가 1.02m로 감소했고, Auto Release가 더 이상 발생하지 않음을 확인. 이 외의 검증(충돌·밀기 8종, 계단/경사로/좁은 문/`TestWall` 운반, 던지기 5종, 회귀)은 전부 PASS — 추가로 발견된 객관적 문제 없음, 나머지 값은 전부 유지. `--headless --import` 오류 0건, `--headless --quit-after 60`(2회 실행) 및 헤드리스 스크립트 재실행 모두 결과 안정적(0건 실패 재현).
+- **사용자 수동 테스트 결과: 승인.** "현재 밀기·잡기·운반·던지기 감각에 별도의 문제나 수치 조정 필요성이 없다"고 판단, `max_follow_speed=7.5`(T068에서 수정된 값) 포함 현재 물리값 전체를 그대로 유지하기로 승인함. 이번 승인으로 추가 값 변경은 없었음.
+
+## 21. T069 — Multi-Package Stability Validation
+
+- 상태: `[x]` `[DONE]`
+- 목적: 싱글 Package 기준으로 구현된 잡기·물리·배송 시스템이 여러 Package가 동시에 존재할 때도 안정적으로 동작하는지 확인한다. `docs/ROADMAP.md` EPIC-03(Multi-Package Stability)의 FEATURE-03-A(2~3개 배치)/FEATURE-03-B(충돌·적재 안정성)/FEATURE-03-C(순차 배송 검증)에 대응.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-03(Multi-Package Stability) — FEATURE-03-A, FEATURE-03-B, FEATURE-03-C
+- 선행 작업: T068(`[DONE]`, EPIC-02 완료)
+- 작업 범위: `PrototypeLevel.tscn`의 `Gameplay`에 `PackageB`/`PackageC` 인스턴스 추가(기존 `Package`는 유지), 다수 Package 감지·잡기·물리·순차 배송 헤드리스 검증
+- 제외 범위: 배송 개수 목표, 미션/점수/카운터 시스템, Package별 ID·목적지·완료 UI, Package Manager/Spawn Manager, `DeliveryZone`의 최초 1회 성공 규칙 변경, 새 Input Map, 기존 Package 크기·물리 파라미터 변경
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(`PackageB`/`PackageC` 인스턴스 2개 추가만)
+- 에디터 수동 작업: 없음
+- 완료 조건: 세 Package가 초기에 서로 겹치지 않음, 여러 후보가 감지 범위 안에 있어도 실제로 막히지 않은(가시선 확보된) 대상만 정확히 선택됨, 잡은 Package 외 다른 Package와는 정상적으로 물리 충돌함, 나란히 배치/2단/3단 적층/충돌/붕괴/벽 샌드윙치/좁은 문 인근/Barrel 충돌 상황에서 관통·NaN·폭발적 속도·지속 진동 없음, 하나를 놓거나 던져도 다른 Package 상태가 오염되지 않음, 홀드 중 다른 Package에 E를 눌러도 참조가 교체되지 않음, 여러 Package를 순서대로 배송해도 성공 시그널·HUD가 중복 실행되지 않음, Restart 시 세 Package 모두 초기 위치로 복구, 기존 MVP 기능·T064~T068 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 구조·그룹·collision 일치성/초기 비겹침/정지 안정성(9개 항목), 감지·잡기(단일 대상, 두 대상 중 가까운 쪽만 감지·가려진 대상 자동 배제·치운 뒤 재감지, 홀드 중 다른 대상에 E를 눌러도 교체되지 않음, 5개 시나리오), 물리 안정성(나란히 배치, 2단 적층, 3단 적층, 하단을 밀어 붕괴, 다른 더미로 던지기, 하나를 잡은 채 다른 것과 충돌, TestWall 샌드위치, NarrowDoorway 인근, Barrel 충돌, 9개 시나리오), 순차 배송(첫 Package 성공 시 시그널 1회, 이후 Package 진입 시 재발화 없음, 2회 확인), Restart-동등(완전히 새 씬 인스턴스에서 3개 모두 초기 위치·미배송 상태로 복구) 및 기존 기능 회귀를 자동 검증.
+- 예상 위험: 헤드리스 테스트 중 이전 씬 인스턴스를 완전히 해제하지 않고 새 인스턴스를 만들면(실제 `reload_current_scene()`과 달리) 두 씬이 동일한 물리 공간을 공유해 좌표가 같은 `DeliveryZone`끼리 서로의 Package를 잘못 감지하는 테스트 아티팩트를 발견 — 실제 재시작은 이전 씬을 완전히 제거하므로 재현되지 않음, 테스트에서는 새 인스턴스 생성 전 이전 씬을 명시적으로 해제해 우회함(게임 코드와 무관).
+- 완료 근거(구현 및 검증): `PrototypeLevel.tscn` `Gameplay`에 `PackageB`(2.5,1,-2.5)·`PackageC`(-4.5,1,-1) 추가(기존 `Package`는 2.5,1,0 그대로 유지, 세 위치 모두 서로 1.0m 이상 이격, DeliveryZone·PhysicsObjects·기존 배송 경로와 비간섭). `Package.gd`/`Player.gd`/`DeliveryZone.gd` 모두 무수정 — 검증 과정에서 실제 다수 Package 버그가 발견되지 않았다. 핵심 발견: 기존 T065 가시선 검사(`_INTERACT_LOS_MASK`)가 World(1)+Package(4)+PhysicsObject(16)를 포함해, 가려진 뒤 Package를 향한 Ray Query가 앞 Package에 먼저 막혀 자동으로 실패하는 구조라 "가장 가까운/보이는 대상만 감지"가 코드 변경 없이 이미 성립했다. Toggle 로직(`if held_package != null: release() / elif`)도 같은 입력에서 놓기와 잡기가 동시에 발생하지 않는 구조라 "홀드 중 다른 대상에 E를 눌러도 교체되지 않음"이 이미 보장되었다. `DeliveryZone.gd`의 최초 1회 판정도 Package 개수와 무관하게 그대로 동작한다. 헤드리스 자동 검증 55개 항목 전부 PASS: 구조/그룹/collision 일치, 초기 비겹침, 정지 안정성, 단일·복수 대상 감지(가까운 것 우선, 가려진 것 배제, 치운 뒤 재감지), 홀드 중 교체 방지, 나란히 배치·2단·3단 적층(수직 순서 유지)·붕괴·더미로 던지기·홀드 중 비홀드 대상과 충돌·벽 샌드위치·좁은 문 인근·Barrel 충돌 전부 NaN·관통·폭발적 속도 없음, 순차 배송 3회(B→C→A) 모두 성공 시그널 정확히 1회만 발화, Restart-동등 시 세 Package 모두 초기 위치(X/Z 정확히 일치, Y는 정지 상태 미세 오차 이내)로 복구 및 미배송 상태 확인, 기존 TestWall·NarrowDoorway·환경 오브젝트 6개 전부 유지. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+- **사용자 수동 테스트 결과: 승인.** 세 Package 각각 잡고 놓기, 앞뒤 Package 중 앞만 잡힘, 적층 붕괴, 홀드 중 다른 Package와 충돌, 더미로 던지기, 임의의 Package 배송 및 나머지 진입 시 중복 성공 없음, Restart 후 3개 복구 모두 확인됨.
+
+## 22. T070 — Final Playtest and Fun Validation
+
+- 상태: `[BLOCKED]` (T072 완료로 잠시 해제되었다가, T073 착수로 재차단)
+- **차단 이력**: 선행 조건이던 EPIC-05(Generalized Object Interaction)가 T072(Force-Based Physics Grab) 및 두 차례의 Player 밀림/관통 결함 수정을 거쳐 사용자 수동 테스트 승인을 받아 완료되면서 한 차례 `[BLOCKED]`가 해제되었다(섹션 24 "T072 사용자 수동 테스트 승인(최종)" 참고). 그러나 곧이어 사용자 지시로 T073(1인칭 시점 전환 및 Grab 조작성 개선)이 착수되어 조작·시점 자체가 다시 바뀌므로, T073이 사용자 승인을 받기 전까지는 최종 재미 평가를 진행할 수 없어 `[BLOCKED]`로 되돌렸다(섹션 25 참고). T073 승인 후 재개하며, 그때 아래 평가 항목도 필요 시 다시 검토한다.
+- 목적: "Package를 직접 잡고 운반하며 물리적 사고를 수습하는 행동이 재미있는가?"라는 핵심 질문에 사용자의 실제 플레이 결과로 답한다. `docs/ROADMAP.md` EPIC-04(Playtest & Fun Validation)의 FEATURE-04-A(확장된 전체 루프 플레이 테스트)/FEATURE-04-B(재미 판정 및 로드맵 재검토 여부 결정)에 대응.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-04(Playtest & Fun Validation) — FEATURE-04-A, FEATURE-04-B
+- 선행 작업: T069(`[DONE]`, EPIC-01~03 전부 완료), EPIC-05/T072(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 실제 씬 좌표 기준 전체 루프 플레이 경로 작성, 현재 조작 방식(좌클릭 Hold + Force-Based Grab, T072)에 맞춘 평가 항목 12개 작성, 경량 자동 점검(구조 존재 확인)만 수행
+- 제외 범위: 게임 코드·씬·물리값 수정, 새 기능 구현, 대규모 회귀 스크립트, Claude에 의한 재미 판정(반드시 사용자 응답 근거)
+- 생성 파일: 없음
+- 수정 파일: 없음(코드/씬 무변경, 이번 문서 갱신만)
+- 에디터 수동 작업: 사용자가 직접 플레이(Claude 대행 불가)
+- 완료 조건: 사용자가 전체 루프 플레이를 완료하고 아래 평가 항목 12개에 답변, 그 응답을 근거로 PASS/PASS WITH NOTES/FAIL 중 하나로 판정
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 스크립트(검증 후 삭제)로 Player/Package 3개/TestWall/NarrowDoorwayTestArea/PhysicsObjects 6개/DeliveryZone/DeliveryHUD 존재와 Physics Interpolation 활성화만 경량 점검(대규모 회귀 스크립트 미작성). 재미 여부는 자동 검증 대상이 아님 — **사용자 실제 플레이 결과 필요**.
+- 예상 위험: 낮음(코드 변경 없음). 유일한 위험은 판정 자체가 100% 사용자 응답에 의존한다는 점 — 응답이 오기 전까지 EPIC-04와 v0.2.0을 완료 처리할 수 없다.
+- 완료 근거(준비 단계): 실제 씬 좌표를 기준으로 전체 루프 경로를 작성했다(Spawn(0,1.5,0) → Package/환경 오브젝트 밀집 구역 → Stairs(X10.1~16) → Ramp(-7.02,6) → NarrowDoorway(X=-7, gap Z -1.7~-0.3) → TestWall(6,2,-8) → 던지기 → DeliveryZone(5,0.5,3) → Restart). 경량 자동 점검 10개 항목 전부 PASS(`--headless --import`, `--headless --quit-after 60` 오류 0건). 대규모 회귀 스크립트는 작성하지 않았다(T069까지 이미 충분히 검증됨, 이번 Task는 재미 판정이 목적). 코드·씬·물리값은 전혀 수정하지 않았다.
+- **평가 항목(T072 최종 조작 방식 기준으로 갱신, 각 항목 1~5점 + 자유 코멘트)**:
+  1. 좌클릭 Hold Grab과 Release가 직관적인가
+  2. SmallBox, Package, Barrel, Crate의 무게감 차이가 잘 느껴지는가
+  3. 중앙과 모서리를 잡았을 때 회전 차이(torque)가 자연스러운가
+  4. 느린 이동과 빠른 카메라 스윙 모두에서 물체 반응이 자연스러운가
+  5. Release 후 운동량이 자연스럽게 유지되는가(별도 Throw 없이도 만족스러운가)
+  6. Player 관통이나 Player가 밀리는 현상이 없는가
+  7. 잡은 물체로 다른 물체를 밀 때 감각이 적절한가(무한한 힘처럼 느껴지지 않는가)
+  8. 좁은 문, 벽, 계단, 경사로를 물체를 든 채로 통과하기 편한가
+  9. 여러 Package를 동시에/순차적으로 운반하기 불편함이 없는가
+  10. Package를 DeliveryZone에 배송하는 흐름이 매끄러운가
+  11. Restart 이후 Grab과 배송이 다시 정상 동작하는가
+  12. 전체 플레이 흐름이 재미있는가, 불편하거나 어색한 지점은 무엇인가(자유 서술)
+  - 평가 양식: 각 항목 1~5점(1=매우 불만족, 5=매우 만족) + 필요 시 한 줄 코멘트. 12번은 자유 서술.
+  - 플레이 경로: 위 완료 근거(준비 단계)의 좌표 경로를 그대로 사용한다(Spawn → 환경 오브젝트 밀집 구역 → Stairs → Ramp → NarrowDoorway → TestWall → DeliveryZone → Restart 후 재검증).
+
+## 23. T071 — Generalized Grabbable Objects, Swing Release, Mass-Consistent Carrying
+
+- **T072에서 후속 대체됨**: 사용자 승인 전(REVIEW 상태) 단계에서, 아래 서술된 속도 추종(`move_toward` 기반 HoldPoint 추종) + 스윙 릴리즈 impulse 방식은 T072(Force-Based Physics Grab)에서 Spring-Damper 힘 기반 방식으로 전면 대체되었다. 이 절의 내용은 당시 구현 이력으로 그대로 남겨 두고, 실제 현재 동작은 섹션 24(T072)를 기준으로 한다. T071에서 도입한 범용 `GrabbableBody` 클래스 구조·4종 오브젝트 공용화·`E` 완전 분리·정적/동적 충돌 분리 원칙 자체는 T072에서도 그대로 유지된다.
+- 상태: `[x]` `[DONE]` (과거 구현으로 종료 — 사용자 승인(REVIEW 단계) 전 T072가 이동 방식을 전면 대체했고, T072가 사용자 수동 테스트 승인을 받아 완료되었다. 이 문서 체계에는 별도 `SUPERSEDED` 상태가 없어(섹션 "작업별 작성 형식" 참고) T071은 완료된 과거 구현 이력으로 닫는다 — **실제 현재 동작 기준은 섹션 24(T072)뿐이다.**)
+- 목적: Package 전용으로 구현되어 있던 잡기·이동·놓기 구조를 `GrabbableBody` 범용 클래스로 확장해 PhysicsBarrel/PhysicsCrate/SmallPhysicsBox도 잡을 수 있게 하고, 질량 기반 이동 속도, 좌클릭 Hold 방식, 카메라 스윙 기반 릴리즈, `E` 상호작용 완전 분리, 동적/정적 충돌 Hold 안정성 개선을 구현한다. 사용자 플레이 피드백(고정 Throw 어색함, 잡은 Package가 Crate를 비현실적으로 쉽게 밈, 동적 오브젝트 접촉만으로 Release되는 문제)에 따른 재설계.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-05(Generalized Object Interaction, 신규) — EPIC-04(Playtest & Fun Validation) 착수 전 선행 조건으로 편입
+- 선행 작업: T069(`[DONE]`), T070(`[BLOCKED]`, T071 완료 후 재개)
+- 작업 범위: `GrabbableBody.gd` 신규(잡기/놓기/자동 놓기/HoldPoint 추종/스윙 릴리즈/충돌 예외/지연 복구 전체 소유), `Package.gd`를 `GrabbableBody` 상속으로 축소, PhysicsBarrel/Crate/SmallBox에 스크립트·`grabbable` 그룹 추가, `Player.gd` 상호작용 입력 전면 재작성(좌클릭 Hold, `GrabShapeCast` 개명, `E` 완전 분리), `project.godot` Input Map(`grab_object` 추가, `throw_package` 제거)
+- 제외 범위: 대규모 구조 재작성/재구성, 저장·네트워크 구조, `DeliveryZone` 판정 규칙 변경, Collision Layer 전체 재설계, Grabbable/Interaction/Carry Manager, Autoload, 실제 버튼·문·레버 구현
+- 생성 파일: `hell-delivery/scenes/objects/GrabbableBody.gd`
+- 수정 파일: `hell-delivery/scenes/package/Package.gd`, `hell-delivery/scenes/package/Package.tscn`(groups), `hell-delivery/scenes/objects/PhysicsBarrel.tscn`, `hell-delivery/scenes/objects/PhysicsCrate.tscn`, `hell-delivery/scenes/objects/SmallPhysicsBox.tscn`(스크립트+groups 추가), `hell-delivery/scenes/player/Player.gd`, `hell-delivery/scenes/player/Player.tscn`(`GrabShapeCast` 개명, mask 4→20), `hell-delivery/project.godot`(Input Map)
+- 에디터 수동 작업: 없음(전부 텍스트 편집, headless import/boot로 검증)
+- 완료 조건: Package 외 3종도 정상 잡기/이동/놓기, 질량이 무거울수록 이동·스윙 반응이 느림(SmallBox>Package>Barrel>Crate 순서 실측 확인), 동적 오브젝트 접촉만으로는 Release되지 않고 정적 World 장애물에서만 Auto Release, 스윙 릴리즈가 카메라 회전 속도에 비례(정지 릴리즈는 거의 추가 속도 없음), Auto Release에는 스윙 impulse 미적용, `E`는 Grabbable 상태에 전혀 영향 없음, `DeliveryZone`은 Package만 성공, 기존 MVP·T064~T069 기능 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 구조(9)/Input Map(3)/4종 오브젝트 잡기-이동-놓기-재잡기(20)/질량 기반 이동 순서(1)/동적 충돌 비차단(3)/정적 차단 Auto Release 및 재잡기 방지(4)/스윙 릴리즈 5종 시나리오+무게별 순서+Auto Release 무임펄스(9)/몸 대 held object 밀기 일관성(4)/배송 Package 전용(4)/회귀(7) 총 60개 이상 항목 자동 검증.
+- 예상 위험: 헤드리스 하네스에서 여러 오브젝트를 같은 테스트 차선에 반복 배치하면 이전 오브젝트가 남아 물리적으로 겹쳐 ShapeCast 감지가 꼬이는 테스트 아티팩트, 그리고 장시간 스크립트 뒤쪽에서 시뮬레이션된 클릭 엣지가 간헐적으로 유실되는 아티팩트를 발견 — 둘 다 테스트 스크립트에서 오브젝트를 매번 먼 곳으로 격리시키고 일부 검증은 `grab()` API를 직접 호출하는 방식으로 우회했다(게임 코드와 무관, 테스트 방법론 문제). 스윙 릴리즈의 정확한 게인(`_SWING_IMPULSE_GAIN=8.0`, `_MAX_SWING_SPEED=12.0`)과 `max_carry_force=600.0`은 실측 후보 비교가 아닌 기존 Package 값에서 역산한 초기값으로, 사용자 수동 테스트 후 조정이 필요할 수 있다.
+- 완료 근거(구현 및 검증): `GrabbableBody.gd`(`class_name GrabbableBody extends RigidBody3D`)를 신설해 `grab()`/`release(apply_swing)`/HoldPoint 추종/`max_hold_distance` 자동 놓기/holder collision exception/지연된 충돌 복구를 전부 이관하고, 질량 기반 추종(`effective_acceleration = max_carry_force / mass`, 공유 `max_carry_force=600.0`을 기존 Package `follow_acceleration(40.0)×mass(15.0)`에서 역산해 Package 체감을 그대로 보존)과 스윙 릴리즈(최근 HoldPoint 위치를 지수평활로 추적해 `_rotational_hold_velocity` 산출, holder 자신의 이동 속도는 차감해 중복 가산 방지, release 시 기존 `linear_velocity`는 보존한 채 측정된 스윙 속도만큼만 순수 가산 impulse 적용 — 질량으로 나누지 않아 무거운 물체일수록 동일 impulse에서 속도 변화가 자연히 작음)를 추가했다. Hold 차단 판정(`_is_hold_path_blocked`)의 마스크를 기존 World+Package+PhysicsObject(21)에서 **World만(1)**으로 좁혀, 동적 Grabbable끼리의 접촉이 더 이상 Auto Release를 유발하지 않게 했다(사용자가 지적한 핵심 버그 수정). `Package.gd`는 `class_name Package extends GrabbableBody` 두 줄로 축소되고 `package`/`grabbable` 그룹만 씬에서 유지, PhysicsBarrel/Crate/SmallBox는 `GrabbableBody.gd`를 스크립트로 붙이고 `grabbable` 그룹을 추가했다(물리 파라미터·collision layer/mask는 전부 무변경). `Player.gd`는 `interact_shape_cast`를 `grab_shape_cast`(`GrabShapeCast`, mask 4→20=Package|PhysicsObject)로 개명하고, 감지 로직을 "가장 가까운 LOS 확보 후보 우선"으로 일반화했으며, `_handle_interact_input()`을 제거하고 `_handle_grab_input()`(좌클릭 `just_pressed`=잡기, `just_released`=수동 release+스윙)으로 교체, `_handle_throw_input()`과 `throw_impulse_strength`를 완전히 삭제했다. `E`(`interact`)는 코드 경로에서 완전히 분리되어 아무 동작도 하지 않는다(향후 버튼/문/레버용으로 예약, 주석으로 명시). `project.godot`에 `grab_object`(좌클릭) 액션을 추가하고 `throw_package` 액션은 삭제했다. `DeliveryZone.gd`는 무수정(여전히 `package` 그룹만 성공 판정). 헤드리스 자동 검증 60개 이상 항목 3회 연속 실행 전부 PASS(0건 실패, 안정적 재현 확인): 4종 오브젝트 감지·잡기·이동·놓기·재잡기, 질량 순서(SmallBox>Package>Barrel>Crate, horizontal-only 측정), 동적 접촉 비차단, 정적 벽 차단 Auto Release(스윙 무임펄스, 재잡기 방지, 가시선 회복 후 재잡기), 스윙 릴리즈(정지 시 거의 무속도, 빠른 회전>느린 회전, 무게 역순 비행 속도), 몸 밀기 대 held object 밀기 일관성(둘 다 안정적, 후자가 비정상적으로 강하지 않음), 배송 Package 전용, 기존 계단·경사로·좁은 문·벽·HUD·Physics Interpolation·재시작-동등 전부 회귀 없음. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건. 물리 체감(무게감, 스윙 던지기 손맛 등)은 자동 검증 불가 — 사용자 수동 확인 대기 중이며 승인 전에는 `[DONE]`으로 표시하지 않는다.
+
+## 24. T072 — Force-Based Physics Grab
+
+- 상태: `[x]` `[DONE]` (구현·자동 검증·사용자 수동 테스트 승인 모두 완료 — 아래 "T072 사용자 수동 테스트 승인(최종)" 참고)
+- 목적: T071에서 구현한 범용 `GrabbableBody` 구조는 유지하되, 물체 운반 방식을 `move_toward()` 기반 속도 강제 추종에서 **실제 Grab Point에 제한된 힘(Spring-Damper)을 가하는 방식**으로 전환한다. 플레이어는 물체의 위치나 속도를 직접 제어하지 않고, 잡은 표면 지점에 물리적으로 힘만 가한다. 사용자 지시(design philosophy: "플레이어의 손이 물체의 실제 잡힌 지점에 제한된 힘을 지속적으로 가한다")에 따른 재설계이며, 향후 멀티플레이 협동 운반(여러 명이 한 물체를 동시에 잡아 힘이 합산되는 구조)의 물리적 기반을 겸한다.
+- 소속: `docs/ROADMAP.md` v0.2.0 EPIC-05(Generalized Object Interaction) — T071의 FEATURE-05-B(질량 기반 이동)·FEATURE-05-C(좌클릭 Hold 이동)·FEATURE-05-D(카메라 스윙 기반 릴리즈)·FEATURE-05-F(동적/정적 충돌 Hold 안정성)를 대체하는 신규 FEATURE-05-H(Force-Based Physics Grab)로 편입
+- 선행 작업: T071(`[REVIEW]`, 범용 `GrabbableBody` 구조·4종 오브젝트 공용화·`E` 분리는 그대로 승계, 내부 이동 방식만 대체)
+- 작업 범위: `GrabbableBody.gd` 전면 재작성(단일 holder → 다중 Grab Connection 구조, `move_toward` 속도 추종·스윙 impulse·Player collision exception 제거, 실제 Grab Point에 `apply_force()` 적용), `Player.gd`의 그랩 입력 로직 수정(클릭 표면 충돌 지점 캡처, `add_grabber`/`remove_grabber` 호출로 전환)
+- 제외 범위: 실제 멀티플레이·네트워크 구현(물리 구조만 다중 Grabber를 전제로 준비), `DeliveryZone` 판정 규칙 변경, Collision Layer 전체 재설계, Input Map 변경(기존 `grab_object`/`interact` 그대로 재사용), `PrototypeLevel.tscn` 좌표 변경, Grabbable/Interaction/Carry Manager, Autoload, 실제 버튼·문·레버 구현
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/objects/GrabbableBody.gd`(전면 재작성), `hell-delivery/scenes/player/Player.gd`(`_update_grab_detection()`이 실제 충돌 지점도 함께 기록, `_handle_grab_input()`이 `add_grabber`/`remove_grabber` 호출로 전환)
+- 에디터 수동 작업: 없음(전부 텍스트 편집, headless import/boot로 검증)
+- 완료 조건: 물체가 항상 정상 `RigidBody3D`로 gravity/mass/충돌 영향을 그대로 받음, 위치·Transform·`linear_velocity` 직접 변경 없음, 실제 클릭 표면 지점(`local_grab_point`)에 `apply_force()` 적용, Grab Point가 무게중심에서 벗어나면 torque 발생, Grabber별 힘 상한 존재 및 여러 Grabber의 힘이 독립 계산 후 합산 적용, Player collision exception 없이도 관통 없음, 동적 물체 접촉만으로 Release 안 됨(정적 World 장애물에서만), 한 Grabber 조건에서 SmallBox>Package>Barrel>Crate 순서로 운반 난이도 성립, 2 Grabber가 1 Grabber보다 Crate를 더 빠르게 들어올림, 마지막 연결 해제 시 현재 운동량 유지(별도 impulse 없음), `DeliveryZone`은 Package 전용 유지, 기존 MVP·T064~T071 기능 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 구조(다중 Connection·중복 연결 거부·그룹 유지, 9개)/Force 처리(텔레포트 없음·점진적 힘 적용·gravity 유지, 5개)/Torque(무게중심 대조군, 모서리 실험군, 2개)/Player 충돌(collision exception 없음, 3초 연속 접근·좌우 스윙 시 관통 없음, 6개)/동적 접촉 비차단·정적 차단 자동 해제(4개)/질량 순서(1 Grabber 조건 SmallBox·Package·Barrel·Crate 초기 상승 속도 비교, 8개)/다중 Grabber(Crate 1인 vs 2인 비교, 한쪽 연결 해제 후 유지, 마지막 해제 시 운동량 보존, 6개)/회귀(좌클릭 Grab/Release, E 무동작, 벽 너머 차단, 가까운 대상 우선, Barrel 그랩, 배송 Package 전용, 이동, Physics Interpolation, Restart-동등, 11개) 총 59개 항목 자동 검증.
+- 예상 위험: `grab_spring_strength`(500.0)·`grab_damping`(60.0)·`max_force_per_grabber`(300.0)는 여러 후보를 실측 비교한 값이 아니라, 각 오브젝트의 실제 mass×gravity(중력 저항력)를 기준으로 "한 명이 Crate를 들면 겨우 버티는 수준(무게 245N에 여유힘 55N)", "두 명이면 확실히 빠름(합산 600N, 여유힘 355N)"이 되도록 역산한 초기값이다. 자동 검증으로 "무게 순서가 올바른가", "관통·NaN·폭주가 없는가", "2인 협동이 실제로 더 빠른가"까지는 확인했지만 "손맛"은 자동 검증 불가 — 사용자 수동 테스트 후 조정이 필요할 수 있다. 헤드리스 하네스에서 `Input.action_press()`가 실제 `is_action_just_pressed()`로 반영되기까지 1프레임 지연이 있는 아티팩트를 새로 발견(테스트 스크립트에 "상태가 바뀔 때까지 최대 N프레임 대기" 헬퍼를 추가해 우회, 게임 코드와 무관).
+- 완료 근거(구현): `GrabbableBody.gd`를 전면 재작성했다. 기존 `holder`/`hold_point`/`is_held`/`follow_strength`/`max_follow_speed`/`max_carry_force`/`_rotational_hold_velocity`/`_apply_swing_release_impulse()`/`_pending_collision_restore` 등 속도 추종·스윙 임펄스·collision exception 복구 관련 필드·함수를 전부 삭제했다. 새 구조: `grab_connections: Dictionary`(Node3D grabber → `_GrabConnection`, 각 연결이 `grabber`/`target_point`/`local_grab_point`/`max_force`/`prev_target_position`/`smoothed_target_velocity`/`block_streak`를 개별 보유)로 다중 Grabber를 전제한다. `add_grabber(grabber, target_point, world_grab_position)`은 클릭 시점의 실제 월드 충돌 지점을 `to_local()`로 물체 로컬 좌표(`local_grab_point`)로 변환해 저장하고, 같은 Grabber의 중복 연결은 거부한다. `remove_grabber(grabber)`는 `linear_velocity`/`angular_velocity`를 전혀 건드리지 않고 Dictionary에서 제거만 하므로, 놓는 순간 물체는 Spring-Damper 힘이 이미 만들어 둔 운동량을 그대로 유지한다(별도 release impulse 완전히 제거). `_integrate_forces()`에서 각 연결마다: 매 프레임 `to_global(local_grab_point)`로 현재 Grab Point의 월드 위치를 재계산(텔레포트 없이 물체가 움직인 만큼 자동 추적)하고, `displacement = to_target.limit_length(max_spring_distance)`, `grab_point_velocity = linear_velocity + angular_velocity.cross(offset)`(회전을 포함한 실제 Grab Point 속도), `relative_velocity = smoothed_target_velocity - grab_point_velocity`로 `desired_force = displacement*grab_spring_strength + relative_velocity*grab_damping`를 계산한 뒤 `limit_length(max_force_per_grabber)`로 Grabber 1명분 힘 상한을 적용하고 `state.apply_force(force, offset)`으로 실제 Grab Point(무게중심에서 벗어난 오프셋)에 힘을 가한다. `apply_force()`의 `position` 인자가 로컬이 아닌 무게중심 기준 글로벌 오프셋이라는 점을 실제 헤드리스 실측으로 확인했고(`state.center_of_mass`가 실제로는 로컬 좌표를 반환한다는 것도 실측으로 발견해 대신 `state.transform.origin`을 사용— 모든 Grabbable이 원점 대칭 단일 Shape라 두 값이 항상 일치함), 이 오프셋 덕분에 모서리를 잡으면 자연스럽게 torque(회전)가 발생한다. 정적 장애물 차단(`_is_connection_path_blocked`)은 연결별로 HandPoint→Grab Point Ray Query(mask=World만)를 수행해 연속 3프레임 이상 차단되면 그 연결만 해제하고, 거리 초과(`max_grab_distance`, 기존 `max_hold_distance` 3.0 값 승계)도 연결별로 개별 판정한다 — 여러 Grabber 중 하나만 막히거나 멀어져도 다른 연결은 영향받지 않는다. Player collision exception 관련 코드(`add_collision_exception_with`/`remove_collision_exception_with`/지연 복구 로직)를 전부 삭제했다 — 이제 Grab 중에도 물체와 Player가 항상 정상 충돌한다. `Player.gd`는 `_update_grab_detection()`이 `GrabShapeCast.get_collision_point(i)`로 실제 충돌 표면 지점을 함께 기록하도록 수정했고(감지 로직·가시선 검사·"가까운 대상 우선" 로직 자체는 T065/T071에서 이미 검증된 것을 그대로 재사용), `_handle_grab_input()`은 `grab()`/`release()` 대신 `add_grabber(self, hold_point, _detected_grab_point)`/`remove_grabber(self)`를 호출하도록 바꿨다. `grab_spring_strength=500.0`/`grab_damping=60.0`/`max_force_per_grabber=300.0`/`max_spring_distance=2.5`/`max_grab_distance=3.0`/`max_target_speed=15.0`은 각 오브젝트의 실제 mass×gravity(중력)를 근거로 "한 명은 Crate를 겨우 버티는 수준, 두 명이면 확실히 빠름"이 되도록 역산한 초기값이다(`docs/TECH_DEBT.md` TD-013 참고).
+- 완료 근거(검증): 헤드리스 자동 검증 59개 항목 3회 연속 실행 전부 PASS(0건 실패, 안정적 재현 확인). 질량 순서 실측(1 Grabber, 1초간 최고 상승 속도): SmallBox 6.43m/s > Package 2.80m/s > Barrel 2.51m/s > Crate 1.27m/s — 이론상 힘 여유(300N에서 각 물체의 mass×gravity를 뺀 값)와 순서가 정확히 일치. Torque 검증: 무게중심을 정확히 잡고 수직으로 당기면 각속도가 거의 발생하지 않는 반면(대조군), 중심에서 0.45m 벗어난 모서리를 같은 방식으로 당기면 뚜렷한 각속도(회전)가 발생함을 확인. Player 충돌: Grab 중에도 `get_collision_exceptions()`가 항상 빈 배열(예외가 전혀 생성되지 않음)이면서, Player가 3초간 계속 접근하거나 좌우로 빠르게 스윙해도 물체가 Player 몸 안으로 들어가지 않고(최소 거리 0.35m 이상 유지) NaN·속도 폭주 없음을 확인. 동적 접촉 비차단: 잡은 Package를 다른 Crate에 3초 이상 계속 밀착시켜도 연결이 끊기지 않고 NaN도 없음. 정적 차단: TestWall이 HandPoint-Grab Point 사이에 끼면 연결이 자동으로 해제됨. 다중 Grabber: 서로 다른 지점을 잡은 2 Grabber가 1 Grabber보다 동일 시간 후 더 높은 위치에 도달했고, 한쪽 연결(Grabber A)만 제거해도 나머지(Grabber B) 연결은 유지되었으며, 마지막 연결을 제거한 직후 속도가 급변하지 않아(운동량 보존) 별도 release impulse가 없음이 확인됨. 회귀: 좌클릭 Grab/Release(누르는 동안 유지, 놓으면 해제) 정상, `E` 입력이 Grab 상태에 전혀 영향 없음, 벽 너머 Grab 차단, 여러 Package 중 가까운 것 우선 감지, PhysicsBarrel도 동일하게 좌클릭으로 정상 Grab, PhysicsCrate가 DeliveryZone에 들어가도 배송 성공에 영향 없음(Package만 성공), 이동 입력 정상, `physics/common/physics_interpolation` 설정 유지, Restart-동등(새 씬 인스턴스에서 초기 위치·미배송 상태로 복구) 전부 회귀 없음. `--headless --import`, `--headless --quit-after 60` 모두 오류·경고 0건.
+
+### T072 결함 수정 — 잡은 물체가 Player를 미는 문제
+
+- **결함**: 위 구현에서 Player collision exception을 완전히 제거한 결과, 잡은 물체가 Spring 힘으로 Player 캡슐에 눌리면 `move_and_slide()`의 충돌 해석이 Player를 반대 방향으로 밀어내는 반작용이 발생함(사용자 재현 보고).
+- **원인**: Grab 중에도 물체와 실제 Player `CharacterBody3D`가 여전히 직접 충돌 관계였다. Spring 힘이 물체를 Player 쪽으로 계속 압박하면, `move_and_slide()`가 이를 겹침으로 해석해 Player를 밀어내는 방향으로 재배치했다(T064 DD-006에서 확인된 kinematic-vs-dynamic 접촉 해석 특성의 역방향 사례).
+- **수정**: 실제 Player 충돌과 "잡은 물체 차단"을 분리했다. `Player.tscn`에 `GrabCollisionBarrier`(`AnimatableBody3D`, Player 캡슐보다 약간 큰 `CapsuleShape3D`, `collision_layer=32`(신규 layer 6, GrabBarrier), `collision_mask=0`, `HoldPoint`(1.5m)보다 작은 반경 0.55m)를 Player의 자식으로 추가해 항상 Player를 따라다니게 했다. `GrabbableBody.gd`의 `add_grabber()`가 grabber가 `CollisionObject3D`이면 `add_collision_exception_with()`를 양방향으로 걸어 실제 Player 몸과의 충돌을 끄는 동시에, 자신의 `collision_mask`에 barrier 비트(32)를 추가해 대신 `GrabCollisionBarrier`와 충돌하게 한다. 여러 Grabber가 있을 수 있으므로 `_barrier_hold_count`로 관리해, 이 비트는 마지막 Grabber가 완전히 분리될 때만 제거된다. `remove_grabber()`(수동 release와 거리 초과·정적 차단 자동 해제 경로 모두 공통 `_begin_pending_restore()`를 거침)는 exception과 barrier 비트를 즉시 복구하지 않고 `_pending_restores`에 등록한 뒤, 매 물리 프레임 `intersect_shape()`로 실제 Player `CollisionShape3D`와의 겹침을 검사해 연속 3프레임 미겹침이 확인된 뒤에만 복구한다(T042~T065에 있었다가 T072에서 삭제했던 지연 복구 패턴을 이번 결함에 한해 재도입, 대상은 holder 전체가 아니라 Grabber별 개별 관리). Spring-Damper 힘 계산·질량·중력·torque·다중 Grabber 힘 합산 로직은 전혀 수정하지 않았다. `Player.gd`의 `_push_away_rigid_bodies()`가 `held_grabbable`을 건너뛰는 기존 로직도 무수정으로 유지되어 중복 밀림이 없다.
+- **검증**: 헤드리스 36개 항목 3회 연속 전부 PASS. Player 앞에 Package를 겹치도록 배치해 3초간 압착해도 Player 수평 이동량 0.05m 미만(사실상 밀리지 않음), Package와 Player 중심 거리가 항상 Barrier 반경(0.55m)보다 크게 유지(관통 없음). 빠른 좌우 스윙(진동 패턴) 후에도 Player 수평 이동량 0.1m 미만. Player 근처에서 release해도 물체 속도가 release 직전 대비 급격히 튀지 않고 Player도 튕기지 않음. 안전 분리(연속 3프레임 미겹침) 확인 후 `get_collision_exceptions()`가 다시 비고 barrier 비트도 제거되며, 그 시점에 물체를 다시 Player 위치에 겹치면 정상적으로 밀려나는 일반 충돌이 복구됨을 확인. SmallBox/Package/Barrel/Crate 4종 모두 동일하게 압착 시 Player가 밀리지 않음을 확인. 두 개의 독립된 Grabber로 같은 Crate를 잡은 뒤 하나만 release하면 그 Grabber의 exception만 복구되고 barrier 비트는 나머지 Grabber가 남아있는 동안 유지되다가, 마지막 Grabber까지 release되어야 최종 복구됨을 확인(다중 Grabber 독립성 유지). Force-Based Grab 핵심(좌클릭 Grab/Release, `E` 무동작, 모서리 grab torque, 정적 장애물 자동 해제, Package 배송)과 DeliveryZone 회귀 없음. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+- **생성 파일**: 없음. **수정 파일**: `hell-delivery/scenes/player/Player.tscn`(`GrabCollisionBarrier` 노드 추가), `hell-delivery/scenes/objects/GrabbableBody.gd`(collision exception + barrier mask 지연 복구 로직 추가, Force-Based Grab 힘 계산 자체는 무변경).
+- **신규 Collision Layer**: layer 6 = `GrabBarrier`(값 32) — `GrabCollisionBarrier` 전용, Grab 중인 Grabbable만 일시적으로 이 레이어와 충돌하도록 mask에 추가됨(`docs/ARCHITECTURE.md` 섹션 16 갱신 필요 시 참고).
+- **남은 위험**: 낮음. Barrier 반경(0.55m)은 Player capsule(0.5m)보다 "약간 크게"라는 목표로 정한 초기값 — 사용자 수동 테스트에서 너무 타이트하거나 헐렁하면 조정 가능.
+- **상태**: 이 결함 수정을 포함해도 T072/EPIC-05는 여전히 `[REVIEW]`(사용자 수동 테스트 승인 대기), T070은 계속 `[BLOCKED]`.
+
+### T072 결함 수정 후속 정정 — Barrier가 실제로는 Player를 따라다니지 않던 문제
+
+- **재보고된 증상**: 위 결함 수정 적용 후에도 사용자가 실제 플레이에서 "잡고 있는 동안(특히 카메라를 빠르게 돌리거나 스윙할 때) 4종 오브젝트 모두 여전히 Player를 관통한다"고 재현. 이전 검증(36개 항목 PASS)은 이 상황을 재현하지 못했음이 드러남.
+- **재조사로 확인한 원인**: `GrabCollisionBarrier`(`AnimatableBody3D`, `sync_to_physics=true`)를 Player의 자식 노드로만 배치하고 별도 동기화 코드를 두지 않았는데, **`sync_to_physics=true`인 물리 바디는 일반 Node3D 자식처럼 부모 Transform 변경을 자동으로 따라가지 않는다**는 것을 헤드리스로 직접 확인했다(격리 테스트: Player를 스폰 위치에서 멀리 이동시킨 뒤 `barrier.global_position`을 읽으면 Player의 새 위치가 아니라 최초 스폰 위치(Z=0)에 그대로 고정되어 있었음). 즉 Barrier는 사실상 한 번도 Player를 따라 움직이지 않는 정적 장식물이었고, 이전 검증 스크립트는 Player를 테스트 시작 시 한 번만 배치한 뒤 물체를 곧바로 그 근처(=Barrier의 실제 위치와 우연히 가까운 스폰 지점 근방)에 두고 테스트해 이 결함이 가려졌다.
+- **수정**: `Player.gd`에 `@onready var grab_collision_barrier: AnimatableBody3D = $GrabCollisionBarrier`를 추가하고, `_physics_process()`의 `move_and_slide()` 직후 `grab_collision_barrier.global_transform = global_transform`으로 매 물리 프레임 명시적으로 동기화했다(AnimatableBody3D의 정상적인 사용법 — 이동 플랫폼처럼 스크립트가 직접 옮겨줘야 함). Force-Based Grab 로직·collision exception·Barrier mask 로직 자체는 무수정.
+- **검증**: 재구성한 헤드리스 37개 항목(기존 36개 + "Barrier가 Player 이동을 실제로 따라가는지" 확인 항목 1개 신규 추가) 3회 연속 전부 PASS. 특히 사용자가 재현한 시나리오(방향키 없이 순수하게 카메라만 연속으로 빠르게 회전시키며 1초 이상 유지)를 별도로 재현해, 수정 전에는 물체가 Barrier 반경(0.55m)보다 가까이 접근(최소 0.51m)해 사실상 무방비로 통과했던 것이, 수정 후에는 최소 거리가 0.5m 밑으로 내려가지 않고(스윙 중 최소 0.98m 확인, 물체가 접근하면 속도가 실제로 꺾이며 튕겨나가는 충돌 반응 확인) Barrier에 의해 제대로 저지됨을 확인했다. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+- **수정 파일**: `hell-delivery/scenes/player/Player.gd`(barrier 참조 추가 및 매 프레임 동기화 1줄). `Player.tscn`/`GrabbableBody.gd`는 이번 후속 정정에서 추가 변경 없음(직전 결함 수정에서 만든 구조를 그대로 사용).
+- **교훈(테스트 방법론)**: `AnimatableBody3D`를 물리 바디가 아닌 일반 Node3D처럼 "부모에 매달아 두면 따라간다"고 가정한 것이 근본 원인이었다 — 향후 AnimatableBody3D를 다른 노드에 종속시켜 움직이려면 반드시 매 물리 프레임 명시적 Transform 동기화가 필요함을 기억해 둔다. 또한 이번처럼 사용자가 "고쳤다던 게 아직도 안 된다"고 재보고하면, 기존 검증 스크립트를 그대로 재실행해 보는 것으로는 부족하고 실제 신고된 조작 시퀀스(이번 경우 "가만히 압착"이 아니라 "빠르게 연속 스윙")를 별도로 재현하는 새 테스트가 필요하다.
+- **상태**: 이 후속 정정을 포함해도 T072/EPIC-05는 여전히 `[REVIEW]`, T070은 계속 `[BLOCKED]`.
+
+### T072 사용자 수동 테스트 승인(최종)
+
+- **사용자 수동 테스트 결과: 승인.** Force-Based Physics Grab과 두 차례의 Player 밀림/관통 결함 수정을 포함한 최종 상태로 실제 플레이 테스트를 진행했고, 다음을 모두 확인해 승인함:
+  - SmallBox, Package, Barrel, Crate의 질량 차이가 체감됨
+  - 물체가 중력과 관성을 유지하며 출렁이고 늦게 따라옴
+  - 중앙과 모서리 Grab의 회전 차이가 정상적임
+  - 빠른 카메라 이동 후 Release 시 현재 운동량으로 자연스럽게 날아감
+  - 별도 고정 Throw 또는 Swing impulse가 없음
+  - 잡은 물체가 Player를 관통하지 않음
+  - 잡은 물체와 충돌해도 Player가 밀리거나 튀지 않음
+  - Player 근처에서 Release해도 비정상 반발이 없음
+  - 동적 물체 충돌로 Grab이 즉시 해제되지 않음
+  - 정적 장애물 및 최대 거리 해제가 정상적임
+  - Package만 DeliveryZone 배송 성공
+  - 치명적인 떨림, 관통, NaN, 속도 폭주가 없음
+- **완료 처리**: 이 승인으로 T072는 `[DONE]`으로 확정한다(섹션 24 상단 상태 갱신). `docs/ROADMAP.md`의 EPIC-05(Generalized Object Interaction)도 이 승인을 근거로 완료 처리한다. `grab_spring_strength`/`grab_damping`/`max_force_per_grabber` 등 Force-Based Grab 수치는 이번 승인으로 **사용자 승인된 프로토타입 기준값(Baseline)**으로 확정되며, 추가 수치 조정 가능성은 남기되 완료를 막는 미해결 결함으로는 취급하지 않는다(`docs/TECH_DEBT.md` TD-013 참고).
+- **T070 재개**: EPIC-05 완료로 T070의 `[BLOCKED]` 상태를 해제한다(섹션 22 참고). T070은 아직 사용자의 실제 최종 재미 평가가 남아 있으므로 `[DONE]`으로 처리하지 않고 `[REVIEW]`(사용자 최종 플레이·평가 대기)로 전환한다.
+
+## 25. T073 — First-Person Camera Transition and Grab Usability
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 대기)
+- **T070 재차단**: 이 작업 착수로 T070의 `[REVIEW]`를 다시 `[BLOCKED]`로 되돌린다(섹션 22 참고) — 조작·시점 자체가 바뀌므로 T073 사용자 승인 전에는 최종 재미 평가를 진행할 수 없다.
+- 목적: 3인칭 카메라에서 캐릭터가 잡은 물체와 조준 대상을 가리는 문제를 해결하기 위해 플레이 시점을 1인칭으로 전환한다. 기존 T072 Force-Based Physics Grab의 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조는 그대로 유지하며, Grab 판정을 카메라 중앙(화면 조준점) 기준으로 재정렬하고 상태형 조준점 UI를 추가해 조작성을 명시적으로 검증한다. 사용자 지시(카메라/조준 관련 요청)에 따른 변경이며, `docs/GAME_DESIGN.md`가 명시하는 "3인칭 카메라를 기본으로 한다"(섹션 26, 29 등)와 정면으로 배치되지만, 사용자의 최신 명시적 지시가 `CLAUDE.md` 섹션 9 문서 우선순위상 `GAME_DESIGN.md`보다 우선하므로 진행했다. **`GAME_DESIGN.md` 자체는 이번 작업 문서 반영 범위에 포함되지 않아 수정하지 않았다 — "3인칭"이라는 서술이 실제 구현과 불일치 상태로 남아 있음을 남은 위험에 기록한다.**
+- 소속: `docs/ROADMAP.md`에 해당 Epic 없음(사용자가 T064/T067처럼 Epic 분해 외 별도 지정한 작업).
+- 선행 작업: T072(`[DONE]`, Force-Based Physics Grab 및 Player 밀림/관통 방지 구조를 그대로 사용)
+- 작업 범위:
+  - `Player.tscn`: 3인칭 `SpringArm3D` 제거, `CameraPivot`을 눈높이(로컬 y=0.7)로 이동, `Camera3D`를 `CameraPivot`의 직계 자식으로 재배치, `GrabShapeCast`를 `Camera3D`와 동일한 로컬 원점(`CameraPivot` 원점)으로 재배치, `MeshInstance3D`에 시각 레이어 2 부여, `Camera3D.cull_mask`에서 레이어 2 제외
+  - `Player.gd`: 마우스 좌우 회전을 `CameraPivot`이 아닌 Player 자신의 `rotation.y`(yaw)로, 상하 회전은 `CameraPivot.rotation.x`(pitch)로 분리. 이동 방향 계산을 `camera_pivot.global_transform.basis`에서 `transform.basis`(Player 자신)로 변경. 조준점 UI가 참조할 `grab_aim_state_changed(state: int)` 시그널 추가(0=NONE/1=TARGETING/2=HOLDING, 기존 `_detected_grabbable`/`held_grabbable` 값만 재사용, 별도 탐색 없음)
+  - `scenes/ui/Crosshair.gd` 신규(`Control`, `_draw()` 기반 상태형 조준점, 외부 이미지 Asset 없음)
+  - `DeliveryHUD.tscn`/`DeliveryHUD.gd`: `Crosshair` 노드 추가, `set_crosshair_state(state)` 위임 메서드 추가
+  - `PrototypeLevel.gd`: `player.grab_aim_state_changed`를 `delivery_hud.set_crosshair_state`에 연결(기존 `delivery_zone.package_delivered` → `delivery_hud.show_success()` 연결과 동일한 패턴)
+- 제외 범위: Force-Based Grab의 힘 계산·질량·torque·다중 Grabber·Player 관통 방지 로직 변경, `E`(`interact`) 동작 추가, Player `CollisionShape3D`/`GrabCollisionBarrier` 형상 변경, 외부 이미지/폰트 Asset 추가, `GAME_DESIGN.md` 등 기획 문서 수정, 신규 Autoload/Manager
+- 생성 파일: `hell-delivery/scenes/ui/Crosshair.gd`
+- 수정 파일: `hell-delivery/scenes/player/Player.tscn`, `hell-delivery/scenes/player/Player.gd`, `hell-delivery/scenes/ui/DeliveryHUD.tscn`, `hell-delivery/scenes/ui/DeliveryHUD.gd`, `hell-delivery/scenes/level/PrototypeLevel.gd`
+- 에디터 수동 작업: 없음(전부 텍스트 편집, headless import/boot로 검증)
+- 완료 조건: 카메라가 Player 눈높이에서 1인칭으로 동작, 좌우 회전이 Player 본체 yaw·상하 회전이 CameraPivot pitch로 분리, Grab 판정이 화면 중앙(Camera) 기준으로 수행되어 조준점과 항상 일치, 클릭 표면 지점이 여전히 `local_grab_point`로 저장되어 torque가 유지됨, 상태형 조준점이 항상 화면 정중앙에 위치하고 마우스 입력을 가로채지 않음, 로컬 Player Mesh가 자기 카메라 렌더링에서 제외됨(다른 Player에게는 보이는 구조 유지, 전역 `visible=false` 미사용), Force-Based Grab 핵심 기능(질량감, torque, 다중 Grabber, Player 관통·밀림 방지, Release 운동량 유지) 회귀 없음
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 4종 오브젝트 × 20회 Grab/Release 정확도(80회), 4종 × 4개 거리(표면 기준 0.4/1.5/2.4/2.6m) Grab 성공·실패 및 조준점 상태 동일 프레임 일치, 벽 뒤 대상 Grab 차단, 일렬 배치 앞 물체 우선 선택, 조준점-Camera Ray 화면 정렬 오차, Grab/Release/조준점 상태 변경 반응 프레임, 360도 회전+pitch 범위 자기 가림(Grab Ray 자기 감지, Mesh cull_mask 제외) 검사, 실제 `PrototypeLevel`을 이용한 4종 오브젝트별 전진/후진/좌우 이동·빠른 시점 회전·좁은 문 통과·Player 근처 Release 회귀 총 128개 항목을 자동 검증(3회 연속 실행). 조작 편안함·멀미 여부·조준점 가독성 등 주관적 항목은 자동 검증 대상이 아님 — **사용자 수동 테스트 필요**.
+- 예상 위험:
+  - 카메라 눈높이(`CameraPivot` 로컬 y=0.7)는 Player 기본 `CapsuleShape3D`(radius 0.5/height 2.0) 기준으로 추론한 프로토타입 값이며, 여러 후보를 실측 비교하지 않았다 — 사용자 수동 테스트에서 너무 낮거나 높게 느껴지면 조정이 필요할 수 있다.
+  - `HoldPoint`의 `CameraPivot` 기준 오프셋(전방 1.5m)은 T042부터 이어진 값을 그대로 유지했다 — 3인칭에서는 렌더 카메라가 4.5m 뒤로 빠져 있어 물체가 실제 화면에서 멀리 보였지만, 1인칭 전환으로 Camera가 `CameraPivot` 원점에 위치하게 되며 물체가 화면상 카메라에 훨씬 가깝게(1.5m) 보이게 되는 체감 변화가 있다 — Crate(1.0m 정육면체) 기준 화면 점유 비율을 계산상으로는 확인했으나 실제 체감은 사용자 확인이 필요하다.
+  - `docs/GAME_DESIGN.md`(섹션 26, 29, 그 외 "3인칭 시점" 서술)가 이번 변경 후에도 3인칭으로 남아 있다 — 이번 작업의 문서 반영 범위에 포함되지 않았기 때문이며, 사용자가 원하면 별도로 `GAME_DESIGN.md` 갱신을 요청해야 한다.
+  - 로컬 Player Mesh 은닉은 `MeshInstance3D.layers=2` + `Camera3D.cull_mask`에서 레이어 2 제외로 구현했다 — 향후 실제 멀티플레이 도입 시, 여러 Player 인스턴스가 전부 같은 레이어 2를 공유하면 "다른 Player도 안 보이는" 문제가 생길 수 있어(레이어는 인스턴스별이 아니라 전역 공유) 그때는 Player별로 별도 레이어를 동적 할당하는 구조가 추가로 필요하다 — 지금은 싱글플레이이므로 이 구조까지는 만들지 않았다(과도한 확장 설계 금지 원칙).
+- 완료 근거(구현): `Player.tscn`에서 `SpringArm3D`(spring_length=4.5)를 제거하고 `Camera3D`를 `CameraPivot`의 직계 자식으로 재배치했다. `CameraPivot`에 로컬 `Transform3D` y=0.7(눈높이, TODO 프로토타입 값)을 부여했다. `GrabShapeCast`를 기존 `CameraPivot` 로컬 y=-0.5 오프라인에서 `CameraPivot` 원점(=Camera3D 원점)으로 이동시켜, Grab 판정 Ray/ShapeCast가 항상 실제 렌더 카메라의 광학축과 정확히 일치하도록 만들었다(오프셋을 아예 0으로 만들어 구조적으로 정렬 오차가 발생할 수 없게 함). `HoldPoint`는 `CameraPivot` 로컬 좌표(0,0,-1.5)를 그대로 유지했다 — Camera가 `CameraPivot` 원점으로 옮겨온 결과 이제 HoldPoint는 자동으로 "Camera 정면, Camera와 동일 위치 아님, Player 캡슐(반경 0.5)·GrabCollisionBarrier(반경 0.55)보다 바깥"이라는 요구를 모두 만족하게 되어 별도 값 변경이 필요하지 않았다. `MeshInstance3D`에 `layers=2`를 부여하고 `Camera3D.cull_mask=1048573`(전체 레이어에서 레이어 2만 제외)로 설정해, 로컬 카메라가 자신의 Mesh를 렌더링하지 않도록 했다(전역 `visible=false`는 사용하지 않아 향후 다른 Player에게는 보이는 구조를 해치지 않음). `Player.gd`는 `_unhandled_input()`에서 마우스 X 이동을 `rotation.y -= ...`(Player 자신의 yaw)로, 마우스 Y 이동은 기존과 동일하게 `camera_pivot.rotation.x`(pitch, 기존 clamp 유지)로 분리했다. `_physics_process()`의 이동 방향 계산을 `camera_pivot.global_transform.basis`에서 `transform.basis`로 변경했다(yaw가 이제 Player 자신에 있으므로). `grab_aim_state_changed(state: int)` 시그널을 추가하고, 매 물리 프레임 `_update_grab_detection()`/`_handle_grab_input()`이 이미 계산해 둔 `_detected_grabbable`/`held_grabbable`만으로 상태(0/1/2)를 판정해 값이 바뀔 때만 발신한다(별도 탐색 없음). `scenes/ui/Crosshair.gd`(`class_name Crosshair extends Control`)를 신규 작성 — `_draw()`로 상태별(기본 점/조준 원/홀드 사각형) 표시, `mouse_filter=IGNORE`, anchors 0.5/0.5 고정 오프셋으로 해상도·화면비와 무관하게 항상 화면 정중앙에 위치한다. `DeliveryHUD.tscn`에 `Crosshair` 노드를 추가하고 `DeliveryHUD.gd`에 `set_crosshair_state(state)` 위임 메서드를 추가했다. `PrototypeLevel.gd`에 `player: Player` 참조를 추가하고 `player.grab_aim_state_changed.connect(delivery_hud.set_crosshair_state)`로 연결했다(기존 `DeliveryZone → PrototypeLevel → DeliveryHUD` 시그널 패턴과 동일). 이 과정에서 `Player.gd`에 `class_name Player`를 추가했다(다른 모든 씬 스크립트가 `class_name`을 갖는 기존 관례와 통일, `PrototypeLevel.gd`에서 타입 참조를 위해 필요) — 동작 변경은 없다. `GrabbableBody.gd`는 전혀 수정하지 않았다(Force-Based Grab 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조 무변경).
+- 완료 근거(검증): 헤드리스 자동 검증 128개 항목 3회 연속 전부 PASS. Grab 정확도: 4종 오브젝트(Package/PhysicsBarrel/PhysicsCrate/SmallPhysicsBox) 각 20회, 정면 중앙·일반 운반 거리(1.5m)에서 80/80(100%) 첫 클릭 성공. 거리별 Grab: 표면 거리 기준 0.4m/1.5m/2.4m(유효 사거리 내)는 4종 전부 성공, 2.6m(유효 사거리 밖, `GrabShapeCast` 감지거리 2.2m+구체 반경 0.3m=2.5m 기준)는 4종 전부 실패로 정확히 갈렸으며, 모든 경우 조준점 상태(`GRAB_AIM_HOLDING` 등)가 같은 프레임에 일치. 가시선·우선순위: 벽 뒤 대상 5회 시도 중 Grab 성공 0회, 일렬 배치 시 앞 물체 10/10(100%) 선택. 조준점 정렬 오차: `Camera3D.unproject_position()`으로 계산한 화면 투영 좌표와 화면 정중앙의 오차 0px(구조적으로 `GrabShapeCast`가 Camera 원점과 완전히 일치하므로 이론상 항상 0). 입력 반응: Grab/Release/조준점 상태 변경 모두 지연 0~1 physics frame(코드 구조상 같은 `_physics_process()` 호출 내에서 동시에 처리되어 실측으로도 확인). 자기 가림: Player를 360도 회전 + pitch 전 범위로 움직이는 동안 `GrabShapeCast`가 Player 자신을 감지한 횟수 0회, `MeshInstance3D.layers`와 `Camera3D.cull_mask`가 서로 배타적임을 확인. 운반 회귀: 실제 `PrototypeLevel`에서 4종 오브젝트 각각 전진·후진·좌우 이동, 빠른 연속 시점 회전(720도), 좁은 문(`NarrowDoorwayTestArea`) 통과, Player 근처 Release까지 전부 NaN 없음·속도 폭주 없음·Grab 유지·Player 밀림 없음·Player 관통 없음 확인. `--headless --import`, `--headless --quit-after 90` 모두 오류·경고 0건.
+  - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관, 테스트 스크립트에서만 수정): (1) 좁은 문 통과 테스트 초안에서 Player를 held 상태로 순간이동시키면 `max_grab_distance`(3.0)를 항상 초과해 자동 해제되는 것을 발견 — 실제 플레이는 걸어서 접근하므로 재현되지 않는 아티팩트이며, 테스트를 "이동 전 놓기 → 이동 → 다시 잡기"로 수정해 우회했다. (2) 좁은 문 통과 경로가 `PrototypeLevel`에 이미 배치된 `PackageC`(-4.5,1,-1)와 정확히 겹쳐, Player·held 오브젝트가 그 오브젝트와 부딪혀 속도가 급감/불안정해지는 현상을 발견 — Force-Based Grab과 무관한 테스트 동선 설계 문제로 판단해 해당 테스트에서만 `PackageC`를 제거하도록 수정했다(레벨 자체는 무수정). (3) 문을 지난 뒤 속도를 오래(200프레임) 측정하면 `Floor`(X=-10까지) 밖으로 나가 자유낙하가 "이상 속도"로 오인되는, 이 프로젝트에 기존에도 문서화된 패턴을 재확인 — 이동 프레임 수를 줄이고 수평 성분만 측정하도록 수정했다.
+- **상태**: T072/EPIC-05는 계속 `[DONE]`(무변경). T070은 이 Task 착수로 다시 `[BLOCKED]`. T073 승인 전에는 `[DONE]` 처리하지 않는다.
 
 ## 작업별 작성 형식
 

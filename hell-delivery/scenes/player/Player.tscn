@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/player/Player.gd" id="1_player"]
 
@@ -8,6 +8,10 @@
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_1"]
 radius = 0.3
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_1"]
+radius = 0.55
+height = 8.0
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -19,21 +23,27 @@ script = ExtResource("1_player")
 shape = SubResource("CapsuleShape3D_1")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+layers = 2
 mesh = SubResource("CapsuleMesh_1")
 
+[node name="GrabCollisionBarrier" type="AnimatableBody3D" parent="."]
+collision_layer = 32
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GrabCollisionBarrier"]
+shape = SubResource("CylinderShape3D_1")
+
 [node name="CameraPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+cull_mask = 1048573
 
 [node name="HoldPoint" type="Marker3D" parent="CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
-[node name="InteractShapeCast" type="ShapeCast3D" parent="CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+[node name="GrabShapeCast" type="ShapeCast3D" parent="CameraPivot"]
 shape = SubResource("SphereShape3D_1")
 target_position = Vector3(0, 0, -2.2)
-collision_mask = 4
+collision_mask = 20
 enabled = true
-
-[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
-spring_length = 4.5
-
-[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]

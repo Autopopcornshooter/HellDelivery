@@ -6,7 +6,7 @@
 
 버전 번호와 각 버전의 기능 범위는 `docs/GAME_DESIGN.md` 섹션 29(개발 단계, Phase 0~9)를 기준으로 재편성한 것이다. Phase 구조 자체는 `GAME_DESIGN.md`가 원본이며, 이 문서는 그것을 릴리스 단위(버전)로 묶어 우선순위를 제시한다. 기획 내용을 변경하지 않는다.
 
-**Current Status: Ready for Physics Playground** — MVP-1(v0.1.0) 종료, Baseline 확정. v0.2.0의 Epic/Feature/Task 후보 설계가 완료되었으며(아래 "v0.2.0 Epic 분해" 참고), 착수는 사용자 승인 대기 중이다.
+**Current Status: T073(First-Person Camera Transition and Grab Usability) 사용자 수동 테스트 대기** — MVP-1(v0.1.0) 종료, Baseline 확정. EPIC-01~03·EPIC-05 전부 완료. EPIC-05가 완료되며 한 차례 `[BLOCKED]`가 해제됐던 T070(EPIC-04)은, 뒤이어 사용자 지시로 착수된 T073(3인칭→1인칭 시점 전환 및 Grab 조작성 개선, `docs/TASKS.md` 섹션 25 — Epic 분해 외 추가 구현)이 조작·시점 자체를 바꾸므로 다시 `[BLOCKED]`로 되돌아갔다. v0.2.0(및 EPIC-04)은 T073 사용자 승인과 그 이후 실제 전체 루프 플레이·재미 평가 전까지 완료 처리하지 않는다.
 
 ---
 
@@ -41,67 +41,98 @@
 
 `ROADMAP.md`(위 Features), `docs/GAME_DESIGN.md` Phase 4, 현재 구현 상태(`VERSION.md`, `KNOWN_ISSUES.md`)를 대조해 설계했다. 계층 구조와 각 계층의 정의는 `docs/PROJECT_STRUCTURE.md` 참고.
 
-#### EPIC-01 — Obstacle Course Expansion (장애물 확장)
+#### EPIC-01 — Obstacle Course Expansion (장애물 확장) ✅ 완료
 
 - **Goal**: 좁은 문과 벽을 레벨에 추가해 운반 경로를 다채롭게 하고, 지금까지 미검증이던 물리 상호작용(KI-001)을 확인한다.
 - **Player Value**: 더 다양하고 흥미로운 실수/사고 상황(`GAME_DESIGN.md` 핵심 재미 원칙과 직결).
 - **Dependencies**: 없음 — MVP-1 위에 바로 착수 가능.
 - **Estimated Scope**: Medium(신규 지오메트리 2종 + 각각의 검증).
+- **완료**: FEATURE-01-A~D 전부 완료(`docs/TASKS.md` T065 `[DONE]`, T066 `[DONE]`). 사용자 최종 수동 테스트 승인 완료.
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
 | FEATURE-01-A 벽 지오메트리 추가 | Must | ✅ 완료(`docs/TASKS.md` T065 `[DONE]`) — `PrototypeLevel.tscn`에 `TestWall`(`StaticBody3D`) 추가, World 레이어 사용, 기존 계단/경사로/DeliveryZone/PhysicsObjects와 비간섭 확인 |
 | FEATURE-01-B 벽 물리 안정성 검증 | Must | ✅ 완료(`docs/TASKS.md` T065 `[DONE]`) — Player 단독/오블리크/모서리, Package(놓인 상태·잡은 상태·던지기·샌드위치) 전부 NaN·관통·폭주 없음 확인, 벽 관련 상호작용 버그 2건(벽 너머 잡기/Hold 유지) 발견 후 가시선 검사로 수정, 사용자 수동 테스트 승인 완료. `KNOWN_ISSUES.md` KI-001 해소 |
-| FEATURE-01-C 좁은 문 추가 | Must | (1) 문 폭 결정(Player capsule + Package 크기 기반 실측) (2) `PrototypeLevel.tscn`에 문 지오메트리 추가 |
-| FEATURE-01-D 좁은 문 통과 검증 | Must | (1) Player 단독 통과 (2) Package 미소지 통과 (3) Package 소지 통과 (4) 문에 낀 상태에서 Auto Release/충돌 안정성 검증 |
+| FEATURE-01-C 좁은 문 추가 | Must | ✅ 완료(`docs/TASKS.md` T066 `[DONE]`) — Player capsule(지름1.0)·Package(폭0.8) 실측 기반 clear width 1.4m·height 2.2m로 `NarrowDoorwayTestArea`(`LeftWall`/`RightWall`/`Lintel`) 추가, World 레이어 사용, 기존 계단/경사로/DeliveryZone/PhysicsObjects/TestWall과 비간섭 확인, 사용자 수동 테스트 승인 완료 |
+| FEATURE-01-D 좁은 문 통과 검증 | Must | ✅ 완료(`docs/TASKS.md` T066 `[DONE]`) — Player 단독(중앙/오블리크/좌우 문틀)/놓인 Package(밀기/정면/모서리 충돌)/잡은 Package(중앙 통과, 좌우 문틀 걸림, TestWall Auto Release, 재잡기 차단·회복) 헤드리스 검증 44개 항목 전부 PASS, 문 통과 체감(조심하면 통과 가능) 사용자 수동 테스트 승인 완료 |
 
-#### EPIC-02 — Physics Feel Tuning (물리 감각 재조정)
+#### EPIC-02 — Physics Feel Tuning (물리 감각 재조정) ✅ 완료
 
 - **Goal**: T061에서 동결한 export 값을 확장된 환경(벽·좁은 문 포함)에서 재검증하고 필요 시 조정한다.
 - **Player Value**: 더 나은 조작감과 "재미있는 실패"를 만드는 물리 반응.
-- **Dependencies**: EPIC-01(장애물이 있어야 확장된 환경에서 재검증 가능).
+- **Dependencies**: EPIC-01(장애물이 있어야 확장된 환경에서 재검증 가능) — `[DONE]`.
 - **Estimated Scope**: Small~Medium(신규 코드 없음, export 값 조정만 — `TECH_DEBT.md` TD-006과 직결).
+- **완료**: `docs/TASKS.md` T068 `[DONE]`. 헤드리스 자동 검증으로 객관적 문제 1건 발견·수정(`max_follow_speed` 6.0→7.5, 순수 스프린트만으로 발생하던 Auto Release 해소). 사용자 수동 테스트에서 밀기·잡기·운반·던지기 감각 전체 승인, 추가 수치 조정 불필요로 확정.
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
-| FEATURE-02-A 충돌 강도 재검토(`push_force` 등) | Should | (1) 확장된 환경에서 실제 플레이 (2) 필요 시 값 조정 |
-| FEATURE-02-B 잡기 감각 재검토(`follow_strength` 등) | Should | (1) 실제 플레이 (2) 필요 시 값 조정 |
-| FEATURE-02-C 던지기 감각 재검토(`throw_impulse_strength`) | Could | (1) 실제 플레이 (2) 필요 시 값 조정 — T044/T061에서 이미 상당히 튜닝되어 우선순위 낮음 |
+| FEATURE-02-A 충돌·밀기 감각 재검토(`push_force` 등) | Should | ✅ 완료(`docs/TASKS.md` T068 `[DONE]`) — 평지/`TestWall`/`NarrowDoorway`/Crate/Barrel/SmallBox 밀기 전부 NaN·관통·폭주·지속 진동 없음 확인, 값 변경 없음, 사용자 수동 테스트 승인 |
+| FEATURE-02-B 잡기·운반 감각 재검토(`follow_strength` 등) | Should | ✅ 완료(`docs/TASKS.md` T068 `[DONE]`) — 순수 스프린트만으로 Auto Release가 발생하는 객관적 문제를 발견해 `max_follow_speed`를 6.0→7.5로 조정(sprint_speed 7.0을 웃도는 최소값), `follow_strength`/`follow_acceleration`/`max_hold_distance`는 유지, 사용자 수동 테스트 승인 |
+| FEATURE-02-C 던지기 감각 재검토(`throw_impulse_strength`) | Could | ✅ 완료(`docs/TASKS.md` T068 `[DONE]`) — 수평/위쪽/스프린트 중/벽 방향 던지기 전부 안정적, T044/T061 튜닝값 그대로 유지, 사용자 수동 테스트 승인 |
 
-#### EPIC-03 — Multi-Package Stability (다수 Package 물리 안정성)
+#### EPIC-03 — Multi-Package Stability (다수 Package 물리 안정성) ✅ 완료
 
 - **Goal**: 여러 Package가 동시에 존재할 때의 물리 안정성을 확인한다(`KNOWN_ISSUES.md` KI-005, `TECH_DEBT.md` TD-003).
 - **Player Value**: 직접적 재미보다 향후 콘텐츠 확장(여러 택배 동시 배송)의 토대를 마련하는 검증 성격.
 - **Dependencies**: 없음 — 기존 시스템으로 바로 검증 가능, EPIC-01과 병행 가능.
 - **Estimated Scope**: Small(신규 코드 없음, 레벨에 인스턴스 추가 + 헤드리스 검증).
+- **완료**: `docs/TASKS.md` T069 `[DONE]`. `PackageB`/`PackageC` 추가 후 헤드리스 자동 검증 55개 항목 전부 PASS, `Package.gd`/`Player.gd`/`DeliveryZone.gd` 무수정(실제 다수 Package 버그 미발견). 사용자 수동 테스트 전체 승인 완료.
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
-| FEATURE-03-A 레벨에 Package 2~3개 배치 | Must | (1) `PrototypeLevel.tscn`에 Package 인스턴스 추가 |
-| FEATURE-03-B Package 간 충돌·적재 안정성 검증 | Must | (1) Package를 서로 쌓기/부딪히기 헤드리스 검증 |
-| FEATURE-03-C 여러 Package 순차 배송 시나리오 검증 | Should | (1) 각 Package를 순서대로 `DeliveryZone`에 배송, `is_delivered` 로직이 첫 Package에만 반응하지 않는지 확인(현재 `DeliveryZone`은 "임의의 package 그룹 진입"만 판정하므로 여러 개를 모두 요구하는 로직은 없음 — 이 특성을 그대로 유지할지 결정 필요) |
+| FEATURE-03-A 레벨에 Package 2~3개 배치 | Must | ✅ 완료(`docs/TASKS.md` T069 `[DONE]`) — `PrototypeLevel.tscn` `Gameplay`에 `PackageB`(2.5,1,-2.5)·`PackageC`(-4.5,1,-1) 추가, 기존 `Package`(2.5,1,0) 유지, 서로 1.0m 이상 이격·DeliveryZone/PhysicsObjects/배송 경로와 비간섭 확인, 사용자 수동 테스트 승인 |
+| FEATURE-03-B Package 간 충돌·적재 안정성 검증 | Must | ✅ 완료(`docs/TASKS.md` T069 `[DONE]`) — 나란히 배치/2단/3단 적층/붕괴/더미로 던지기/홀드 중 비홀드 대상과 충돌/벽 샌드위치/좁은 문 인근/Barrel 충돌 전부 NaN·관통·폭발적 속도 없음 확인, 사용자 수동 테스트 승인 |
+| FEATURE-03-C 여러 Package 순차 배송 시나리오 검증 | Should | ✅ 완료(`docs/TASKS.md` T069 `[DONE]`) — `DeliveryZone`의 "임의의 package 진입 시 최초 1회만 성공" 특성을 그대로 유지, 순차 배송 3회(B→C→A) 모두 성공 시그널 정확히 1회만 발화·중복 없음 확인, 사용자 수동 테스트 승인 |
 
-#### EPIC-04 — Playtest & Fun Validation (재미 검증)
+#### EPIC-04 — Playtest & Fun Validation (재미 검증) ⏸ T073 완료 후 재개 예정
 
 - **Goal**: "기본 운반이 재미있는가"를 실제 플레이로 확정한다.
 - **Player Value**: 게임의 핵심 재미 검증 — 이후 다인/온라인/차량 투자를 정당화하는 관문.
-- **Dependencies**: EPIC-01, EPIC-02, EPIC-03 전부(확장되고 튜닝되고 안정성이 확인된 상태에서 진행해야 함).
+- **Dependencies**: EPIC-01, EPIC-02, EPIC-03, EPIC-05 전부 `[DONE]`. **추가 전제조건(신규)**: T073(First-Person Camera Transition and Grab Usability, Epic 분해 외 추가 구현) — 시점과 조준 조작이 바뀌는 중이라 사용자 승인 전에는 "기본 운반이 재미있는가"를 최종 판정할 수 없다.
 - **Estimated Scope**: Small(신규 코드 없음, 순수 플레이테스트 + 기록).
+- **진행 상태**: `docs/TASKS.md` T070 `[BLOCKED]` — EPIC-05(T072) 완료로 한 차례 해제되었다가, T073 착수로 다시 `[BLOCKED]`. 플레이 경로·평가 양식은 T072 조작 방식 기준으로 갱신되어 있으나, T073 승인 후 1인칭 시점·조준점 기준으로 재검토가 필요할 수 있다.
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
-| FEATURE-04-A 확장된 전체 루프 플레이 테스트 | Must | (1) 좁은 문+벽+계단+경사로 포함 전체 루프를 최소 3회 반복 플레이 |
-| FEATURE-04-B 재미 판정 및 로드맵 재검토 여부 결정 | Must | (1) 판정 기록(`GAME_DESIGN.md` 섹션 4 핵심 질문에 대한 답) (2) 필요 시 `ROADMAP.md` v0.3.0 이후 재검토 |
+| FEATURE-04-A 확장된 전체 루프 플레이 테스트 | Must | ⏸ 보류(`docs/TASKS.md` T070 `[BLOCKED]`) — T073 승인 후 재개 |
+| FEATURE-04-B 재미 판정 및 로드맵 재검토 여부 결정 | Must | ⏸ 보류(`docs/TASKS.md` T070 `[BLOCKED]`) — T073 승인 후 재개 |
 
-**Won't(this version)**: 다인 협동(→ v0.3.0), 온라인 멀티·차량(→ v0.8.0), 콘텐츠 확장(→ v0.5.0), Steam 관련(→ v0.4.0 이후).
+#### EPIC-05 — Generalized Object Interaction (범용 오브젝트 상호작용) ✅ 완료
 
-**추천 착수 순서**: EPIC-01과 EPIC-03은 서로 의존하지 않아 병행 가능 → EPIC-02(EPIC-01 완료 후) → EPIC-04(전부 완료 후, 마지막).
+- **Goal**: Package 전용 잡기·이동·놓기 구조를 모든 물리 오브젝트(PhysicsBarrel/PhysicsCrate/SmallPhysicsBox 포함)로 일반화하고, 질량에 따라 다른 이동감·좌클릭 Hold 조작·카메라 스윙 기반 릴리즈로 재설계한다. 사용자 플레이 피드백(고정 Throw의 어색함, 잡은 Package가 무거운 Crate를 비현실적으로 쉽게 미는 문제, 동적 오브젝트 접촉만으로 Release되는 문제)에서 직접 발견된 범위다.
+- **Player Value**: 더 폭넓은 물리 사고 가능성(Barrel/Crate/SmallBox도 직접 들고 흔들고 던질 수 있음)과 더 일관되고 예측 가능한 조작감.
+- **Dependencies**: 없음 — 기존 시스템 위에 바로 진행 가능.
+- **Estimated Scope**: Medium(신규 클래스 1개, 기존 스크립트 3개 수정, 씬 5개 수정, Input Map 변경).
+- **완료**: `docs/TASKS.md` T071 `[REVIEW]`(사용자 승인 전, 아래 FEATURE-05-B/C/D/F의 내부 이동 방식) → **T072(Force-Based Physics Grab)로 후속 대체**되었고, T072가 Player 밀림·관통 결함 수정 2건을 거쳐 `[DONE]`으로 완료됨(사용자 수동 테스트 승인, `docs/TASKS.md` 섹션 24 "T072 사용자 수동 테스트 승인(최종)" 참고). 헤드리스 자동 검증(T071 60개 이상 + T072 59개 + 결함 수정 36개 + 후속 정정 37개) 모두 3회 연속 전부 PASS, 사용자 실제 플레이로 최종 승인 완료.
 
-**Task 후보 총 개수**: 22개(EPIC-01: 10, EPIC-02: 6, EPIC-03: 3, EPIC-04: 3). 이 중 FEATURE-01-A/B에 해당하는 항목이 사용자 승인을 받아 `docs/TASKS.md` T065로 전환되어 완료됨(`[DONE]`). 나머지는 아직 `docs/TASKS.md`에 추가하지 않았다 — 사용자 승인 후 개별 Task로 전환한다(`PROJECT_STRUCTURE.md`의 Task 생성 규칙 참고).
+| Feature | MoSCoW | Task 후보 |
+|---|---|---|
+| FEATURE-05-A 범용 Grabbable 구조(`GrabbableBody`) | Must | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — `Package`가 `GrabbableBody`를 상속, PhysicsBarrel/Crate/SmallBox도 동일 클래스로 잡기 가능, `grabbable`/`package` 그룹 분리 유지, 사용자 승인 |
+| FEATURE-05-B 질량 기반 이동 속도 | Must | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — T071의 `effective_acceleration = max_carry_force/mass` 방식은 폐기, T072의 Force-Based Grab(각 물체의 실제 mass×gravity 저항)으로 대체. SmallBox>Package>Barrel>Crate 순서(1 Grabber 조건, 1초간 최고 상승 속도 6.43/2.80/2.51/1.27 m/s) 재실측 확인, 사용자 승인(무게 차이 체감됨) |
+| FEATURE-05-C 좌클릭 Hold 이동 | Must | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — `grab_object`(좌클릭) `just_pressed`=잡기/`just_released`=놓기, `E` Toggle 방식 완전 대체. 내부적으로는 T072에서 `add_grabber`/`remove_grabber` 다중 연결 API로 전환, 사용자 승인 |
+| FEATURE-05-D 카메라 스윙 기반 릴리즈 | Must | **T072에서 폐기·대체, 사용자 승인 완료** — T071의 별도 스윙 속도 측정+release impulse 방식은 완전히 제거되었다. T072에서는 잡고 있는 동안 Spring-Damper 힘이 자연스럽게 만든 운동량을 release 시 그대로 유지할 뿐, 놓는 순간에 적용하는 별도 impulse가 없다(빠르게 흔들다 놓으면 그 순간의 실제 속도만큼 날아감) — "빠른 카메라 이동 후 Release 시 자연스러운 운동량" 사용자 승인 |
+| FEATURE-05-E `E` 상호작용 분리 | Should | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — `E`가 Grabbable 상태에 전혀 영향 없음, 향후 버튼/문/레버용으로 예약(미구현), 사용자 승인 |
+| FEATURE-05-F 동적/정적 충돌 Hold 안정성 | Must | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — Hold 차단 판정을 정적 World 장애물로만 제한하는 원칙 유지, 연결(Grab Connection) 단위로 개별 판정. 동적 오브젝트 접촉만으로는 Release 안 됨(3초 연속 접촉 재검증), 사용자 승인 |
+| FEATURE-05-G 스윙 이후 손맛 일관성 | Should | FEATURE-05-H로 재검증 방식이 흡수됨 — "스윙"이라는 별도 단계가 없어져 Player collision exception·`GrabCollisionBarrier` 기반 관통 방지 검증으로 대체, 사용자 승인 |
+| FEATURE-05-H Force-Based Physics Grab | Must | ✅ 완료(`docs/TASKS.md` T072 `[DONE]`) — 위치/속도 직접 제어 대신 실제 Grab Point에 Spring-Damper 힘 적용, 다중 Grab Connection 구조(향후 멀티플레이 협동 운반의 물리적 기반), 전용 `GrabCollisionBarrier`(신규 collision layer 6)로 관통·Player 밀림 방지, Grab Point 오프셋에 따른 torque 발생, 2 Grabber가 1 Grabber보다 Crate를 빠르게 들어올림 확인, 사용자 승인 |
+
+**Won't(this version)**: 다인 협동 네트워크 동기화(→ v0.3.0, 단 T072에서 다중 Grabber 물리 구조 자체는 로컬로 준비됨), 온라인 멀티·차량(→ v0.8.0), 콘텐츠 확장(→ v0.5.0), Steam 관련(→ v0.4.0 이후), 실제 버튼/문/레버 구현(EPIC-05 FEATURE-05-E는 입력 분리까지만, 향후 별도 Epic).
+
+**추천 착수 순서**: EPIC-01과 EPIC-03은 서로 의존하지 않아 병행 가능 → EPIC-02(EPIC-01 완료 후) → EPIC-05(사용자 피드백으로 EPIC-04보다 먼저 착수) → EPIC-04(EPIC-05 완료 후, 마지막). (EPIC-01·EPIC-02·EPIC-03·EPIC-05 전부 완료, EPIC-04는 T070 `[BLOCKED]` — T073(1인칭 전환) 사용자 승인 대기)
+
+**Task 후보 총 개수**: 22개(EPIC-01: 10, EPIC-02: 6, EPIC-03: 3, EPIC-04: 3). EPIC-01(FEATURE-01-A/B/C/D)은 `docs/TASKS.md` T065·T066으로, EPIC-02(FEATURE-02-A/B/C)는 T068로, EPIC-03(FEATURE-03-A/B/C)은 T069로 전환되어 각각 전부 완료(`[DONE]`), 사용자 최종 승인 완료. EPIC-04(FEATURE-04-A/B)는 T070으로 전환되어 EPIC-05 완료로 한 차례 차단이 해제되었다가, T073(1인칭 전환) 착수로 다시 `[BLOCKED]` 상태다. **EPIC-05는 원래의 22개 후보 목록에 없던 신규 Epic**으로, 사용자 플레이 피드백에 따라 추가되었고 처음 T071로 전환되어 자동 검증 완료(`[REVIEW]`, 승인 전)했다가, 다시 사용자 지시로 T072(Force-Based Physics Grab, FEATURE-05-H 추가)로 재설계되어 Player 밀림·관통 결함 수정 2건을 거쳐 사용자 수동 테스트 승인, `[DONE]`으로 완료되었다.
 
 ### T064 — Interactive Physics Objects (Epic 분해 외 추가 구현) ✅ 완료
 
 사용자가 위 Epic 분해와 별개로 "Feature-001 — Interactive Physics Objects"를 직접 지정해 `docs/TASKS.md`에 T064로 추가 승인했다(EPIC-01~04 어디에도 속하지 않는 신규 범위). PhysicsBarrel/PhysicsCrate/SmallPhysicsBox 환경 물리 오브젝트를 `PrototypeLevel`에 추가해 물리 연쇄 충돌(구름·적층 붕괴·배송 경로 간섭)을 만든다. `docs/DESIGN_PILLARS.md` Pillar 1(Unscripted Physics Chaos)과 직결되는 내용이라 EPIC-01(Obstacle Course Expansion)의 물리 검증 목적과도 자연스럽게 연결되지만, 계획 문서에는 사전에 반영되어 있지 않았다는 점을 기록해 둔다. **`[DONE]`으로 완료됨** — 구현 중 발견된 Crate 밀기 화면 떨림은 전역 Physics Interpolation 활성화로 해결, 사용자 최종 승인 완료. 상태와 완료 근거는 `docs/TASKS.md` T064 항목 참고.
+
+### T067 — Package Interaction Toggle (Epic 분해 외 추가 구현) ✅ 완료
+
+T064와 마찬가지로 Epic 분해에 없던 범위다. T066(좁은 문) 완료 직후, 이동키(WASD)와 `E`를 동시에 계속 눌러야 하는 조작 부담을 사용자가 직접 지적해 잡기 입력 방식을 Hold(DD-001)에서 Toggle(DD-017)로 변경했다. `Player.gd`의 `_handle_interact_input()`만 수정했고, 가시선 검사·Hold 차단 자동 Release(T065)·`max_hold_distance` 자동 Release 등 기존 안전장치는 전혀 건드리지 않았다. 헤드리스 자동 검증 40개 항목 전부 PASS. **`[DONE]`으로 완료됨** — 토글 방식 적용 후 T066(좁은 문)도 최종 조작으로 재검증해 함께 사용자 최종 승인을 받았다. 상태와 완료 근거는 `docs/TASKS.md` T067 항목 참고.
+
+### T073 — First-Person Camera Transition and Grab Usability (Epic 분해 외 추가 구현) 🔶 자동 검증 완료, 승인 대기
+
+T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완료로 T070이 재개되기 직전, 사용자가 "3인칭 카메라에서는 캐릭터가 잡은 물체를 가리는 문제가 있다"고 직접 지적해 시점을 1인칭으로 전환하고, Grab 판정을 화면 중앙(Camera) 기준으로 재정렬했다. `docs/GAME_DESIGN.md`가 명시하는 "3인칭 카메라 기본"과 정면으로 배치되는 변경이지만, `CLAUDE.md` 섹션 9(사용자의 최신 명시적 지시가 최우선)에 따라 사용자 승인 사항으로 진행했다 — `GAME_DESIGN.md` 자체는 이번 작업 범위에 없어 수정하지 않았으며, 이 불일치는 `docs/TASKS.md` T073 항목의 "예상 위험"에 기록되어 있다. T072의 Force-Based Grab 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조는 전혀 수정하지 않았다. 헤드리스 자동 검증 128개 항목 3회 연속 전부 PASS(Grab 정확도 80/80, 거리별 경계 판정, 가시선·우선순위, 조준점 정렬 오차 0px, 입력 반응 지연 0~1프레임, 자기 가림 0회, 실제 레벨 운반 회귀). **아직 `[REVIEW]`(사용자 수동 테스트 대기)** — 이 작업의 승인 전까지 T070은 `[BLOCKED]`를 유지한다(위 EPIC-04 참고). 상태와 완료 근거는 `docs/TASKS.md` T073 항목(섹션 25) 참고.
 
 ---
 

@@ -2,6 +2,7 @@ class_name DeliveryHUD
 extends CanvasLayer
 
 @onready var success_panel: Control = $SuccessPanel
+@onready var crosshair: Crosshair = $Crosshair
 
 
 func _ready() -> void:
@@ -10,3 +11,7 @@ func _ready() -> void:
 
 func show_success() -> void:
 	success_panel.visible = true
+
+
+func set_crosshair_state(state: int) -> void:
+	crosshair.set_state(state)

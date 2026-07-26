@@ -48,6 +48,18 @@ size = Vector3(6, 3, 0.6)
 [sub_resource type="BoxMesh" id="BoxMesh_5"]
 size = Vector3(6, 3, 0.6)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_6"]
+size = Vector3(0.6, 3, 2.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+size = Vector3(0.6, 3, 2.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7"]
+size = Vector3(0.6, 0.8, 1.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+size = Vector3(0.6, 0.8, 1.4)
+
 [node name="PrototypeLevel" type="Node3D" unique_id=347579214]
 script = ExtResource("4_prototype_level")
 
@@ -214,6 +226,35 @@ shape = SubResource("BoxShape3D_5")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallTestArea/TestWall" unique_id=724409758]
 mesh = SubResource("BoxMesh_5")
 
+[node name="NarrowDoorwayTestArea" type="Node3D" parent="Environment" unique_id=1780355476]
+
+[node name="LeftWall" type="StaticBody3D" parent="Environment/NarrowDoorwayTestArea" unique_id=633994136]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 2, -2.95)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/NarrowDoorwayTestArea/LeftWall" unique_id=1466131463]
+shape = SubResource("BoxShape3D_6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/NarrowDoorwayTestArea/LeftWall" unique_id=98321687]
+mesh = SubResource("BoxMesh_6")
+
+[node name="RightWall" type="StaticBody3D" parent="Environment/NarrowDoorwayTestArea" unique_id=1027600190]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 2, 0.95)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/NarrowDoorwayTestArea/RightWall" unique_id=1604622681]
+shape = SubResource("BoxShape3D_6")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/NarrowDoorwayTestArea/RightWall" unique_id=920352582]
+mesh = SubResource("BoxMesh_6")
+
+[node name="Lintel" type="StaticBody3D" parent="Environment/NarrowDoorwayTestArea" unique_id=1415241794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 3.1, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/NarrowDoorwayTestArea/Lintel" unique_id=2075787600]
+shape = SubResource("BoxShape3D_7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/NarrowDoorwayTestArea/Lintel" unique_id=1563618373]
+mesh = SubResource("BoxMesh_7")
+
 [node name="Gameplay" type="Node3D" parent="." unique_id=163921615]
 
 [node name="Player" parent="Gameplay" unique_id=1913023321 instance=ExtResource("1_player")]
@@ -221,6 +262,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 
 [node name="Package" parent="Gameplay" unique_id=473718712 instance=ExtResource("2_package")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1, 0)
+
+[node name="PackageB" parent="Gameplay" unique_id=1148304895 instance=ExtResource("2_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1, -2.5)
+
+[node name="PackageC" parent="Gameplay" unique_id=651485971 instance=ExtResource("2_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 1, -1)
 
 [node name="DeliveryZone" parent="Gameplay" unique_id=2090015328 instance=ExtResource("3_delivery_zone")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.5, 3)
