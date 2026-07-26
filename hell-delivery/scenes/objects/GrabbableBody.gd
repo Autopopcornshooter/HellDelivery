@@ -20,6 +20,12 @@ const _GRAB_BARRIER_MASK_BIT: int = 32 # collision_layer 6(GrabCollisionBarrier)
 const _RESTORE_SEPARATION_FRAMES: int = 3 # 연속 몇 프레임 분리가 확인되어야 collision exception/Barrier mask를 복구할지.
 const _RESTORE_WARN_FRAMES: int = 300 # 약 5초. 분리가 이보다 오래 걸리면 경고 1회 출력.
 
+const _MARKER_RADIUS: float = 0.04 # T075: Grab Point 표시용 절차적 마커 반지름 — 물리에는 전혀 관여하지 않음(CollisionShape 없음).
+
+enum DisconnectReason { MANUAL, DISTANCE_EXCEEDED, BLOCKED } # T075: Release 피드백 UI가 원인을 구분할 수 있도록 함.
+
+signal grabber_disconnected(grabber: Node3D, reason: int) # T075: 각 Player의 Crosshair가 자기 연결이 해제된 이유를 받아 짧은 피드백을 표시하는 데 사용.
+
 
 class _GrabConnection:
 	var grabber: Node3D
@@ -41,8 +47,20 @@ class _PendingRestore:
 var grab_connections: Dictionary = {} # Node3D(grabber) -> _GrabConnection. 단일 holder 대신 다중 연결 구조를 사용해, 여러 Grabber가 같은 물체를 동시에 잡을 수 있게 한다(로컬 싱글플레이에서는 항상 1개, 향후 멀티플레이 협동 운반의 물리적 기반).
 var _pending_restores: Dictionary = {} # Node3D(grabber) -> _PendingRestore. Release 직후에도 실제 Grabber 몸과 안전하게 분리될 때까지 collision exception/Barrier mask를 유지한다.
 var _barrier_hold_count: int = 0 # 현재 Barrier mask가 필요한 Grabber 수(활성 연결 + 안전 분리 대기 중인 release 포함). 0이 되어야 mask를 원래대로 되돌린다.
+var _grab_markers: Dictionary = {} # T075: Node3D(grabber) -> MeshInstance3D. 연결이 살아있는 동안 그 local_grab_point를 표시하는 순수 시각 마커(CollisionShape 없음, 물리에 관여하지 않음).
 
 @onready var _collision_shape: CollisionShape3D = $CollisionShape3D
+
+
+func _ready() -> void:
+	contact_monitor = true
+	max_contacts_reported = 8 # is_touching()이 실제 접촉 목록을 조회할 수 있어야 한다(기본값은 비활성).
+
+
+func is_touching(body: Node) -> bool:
+	# Player.gd의 _push_away_rigid_bodies()가, 이 물체(잡혀서 Spring-Damper 힘을 받는 중)가
+	# 이미 물리적으로 접촉해 힘을 전달하고 있는 대상에는 Body Push를 중복 적용하지 않기 위해 사용.
+	return body in get_colliding_bodies()
 
 
 func add_grabber(grabber: Node3D, target_point: Node3D, world_grab_position: Vector3) -> bool:
@@ -74,6 +92,7 @@ func add_grabber(grabber: Node3D, target_point: Node3D, world_grab_position: Vec
 	connection.smoothed_target_velocity = Vector3.ZERO
 	connection.block_streak = 0
 	grab_connections[grabber] = connection
+	_create_grab_marker(grabber, connection.local_grab_point)
 	sleeping = false
 	return true
 
@@ -84,7 +103,45 @@ func remove_grabber(grabber: Node3D) -> void:
 	if not grab_connections.has(grabber):
 		return
 	grab_connections.erase(grabber)
+	_remove_grab_marker(grabber)
 	_begin_pending_restore(grabber)
+	grabber_disconnected.emit(grabber, DisconnectReason.MANUAL)
+
+
+func _create_grab_marker(grabber: Node3D, local_grab_point: Vector3) -> void:
+	# T075: Grab Point를 표시하는 순수 시각 마커 — CollisionShape가 없어 물리·충돌 계산에는
+	# 전혀 참여하지 않는다. 이 물체(GrabbableBody)의 자식으로 붙여 local 좌표만 지정하면
+	# 물체가 움직이거나 회전해도 표면의 같은 지점을 자동으로 따라간다(별도 프레임 동기화 불필요).
+	var marker := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = _MARKER_RADIUS
+	mesh.height = _MARKER_RADIUS * 2.0
+	mesh.radial_segments = 12
+	mesh.rings = 6
+	marker.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = _get_marker_color(grabber)
+	marker.material_override = material
+	marker.position = local_grab_point
+	add_child(marker)
+	_grab_markers[grabber] = marker
+
+
+func _get_marker_color(grabber: Node3D) -> Color:
+	# T075: Player별로 구분되는 색(슬롯 0=시안, 슬롯 1=주황) — Player가 아닌 Grabber는 흰색.
+	if grabber is Player:
+		return Color(0.2, 0.85, 1.0) if grabber.player_slot == 0 else Color(1.0, 0.6, 0.15)
+	return Color(1.0, 1.0, 1.0)
+
+
+func _remove_grab_marker(grabber: Node3D) -> void:
+	if not _grab_markers.has(grabber):
+		return
+	var marker: Node = _grab_markers[grabber]
+	if is_instance_valid(marker):
+		marker.queue_free()
+	_grab_markers.erase(grabber)
 
 
 func _begin_pending_restore(grabber: Node3D) -> void:
@@ -114,13 +171,13 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 
 func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 	var step: float = clampf(state.step, 0.0001, _MAX_DELTA)
-	var invalid_grabbers: Array = []
+	var invalid_grabbers: Array = [] # [{grabber, reason}] — T075: Release 피드백 UI가 원인을 구분할 수 있도록 함께 기록.
 
 	for grabber in grab_connections.keys():
 		var connection: _GrabConnection = grab_connections[grabber]
 
 		if not is_instance_valid(grabber) or connection.target_point == null or not is_instance_valid(connection.target_point):
-			invalid_grabbers.append(grabber)
+			invalid_grabbers.append({"grabber": grabber, "reason": DisconnectReason.BLOCKED})
 			continue
 
 		var world_grab_point: Vector3 = to_global(connection.local_grab_point)
@@ -128,7 +185,7 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 		var to_target: Vector3 = target_position - world_grab_point
 
 		if to_target.length() > max_grab_distance:
-			invalid_grabbers.append(grabber) # 이 연결만 해제 — 다른 Grabber의 연결은 유지된다.
+			invalid_grabbers.append({"grabber": grabber, "reason": DisconnectReason.DISTANCE_EXCEEDED}) # 이 연결만 해제 — 다른 Grabber의 연결은 유지된다.
 			continue
 
 		if _is_connection_path_blocked(state, connection, world_grab_point):
@@ -137,7 +194,7 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 			connection.block_streak = 0
 
 		if connection.block_streak >= _HOLD_BLOCKED_RELEASE_FRAMES:
-			invalid_grabbers.append(grabber)
+			invalid_grabbers.append({"grabber": grabber, "reason": DisconnectReason.BLOCKED})
 			continue
 
 		var raw_target_velocity: Vector3 = (target_position - connection.prev_target_position) / step
@@ -164,9 +221,12 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 		var applied_force: Vector3 = desired_force.limit_length(connection.max_force)
 		state.apply_force(applied_force, offset)
 
-	for grabber in invalid_grabbers:
+	for entry in invalid_grabbers:
+		var grabber: Node3D = entry.grabber
 		grab_connections.erase(grabber)
+		_remove_grab_marker(grabber)
 		_begin_pending_restore(grabber)
+		grabber_disconnected.emit(grabber, entry.reason)
 
 
 func _is_connection_path_blocked(state: PhysicsDirectBodyState3D, connection: _GrabConnection, world_grab_point: Vector3) -> bool:

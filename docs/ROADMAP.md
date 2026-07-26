@@ -6,11 +6,11 @@
 
 버전 번호와 각 버전의 기능 범위는 `docs/GAME_DESIGN.md` 섹션 29(개발 단계, Phase 0~9)를 기준으로 재편성한 것이다. Phase 구조 자체는 `GAME_DESIGN.md`가 원본이며, 이 문서는 그것을 릴리스 단위(버전)로 묶어 우선순위를 제시한다. 기획 내용을 변경하지 않는다.
 
-**Current Status: T073(First-Person Camera Transition and Grab Usability) 사용자 수동 테스트 대기** — MVP-1(v0.1.0) 종료, Baseline 확정. EPIC-01~03·EPIC-05 전부 완료. EPIC-05가 완료되며 한 차례 `[BLOCKED]`가 해제됐던 T070(EPIC-04)은, 뒤이어 사용자 지시로 착수된 T073(3인칭→1인칭 시점 전환 및 Grab 조작성 개선, `docs/TASKS.md` 섹션 25 — Epic 분해 외 추가 구현)이 조작·시점 자체를 바꾸므로 다시 `[BLOCKED]`로 되돌아갔다. v0.2.0(및 EPIC-04)은 T073 사용자 승인과 그 이후 실제 전체 루프 플레이·재미 평가 전까지 완료 처리하지 않는다.
+**Current Status: v0.2.0 완료, v0.3.0(EPIC-06 — Local Co-op Foundation) 진행 중** — v0.2.0(Physics Playground)은 EPIC-01~05·T070 전부 완료로 확정되었다. v0.3.0(Fun Physics Update) 1단계인 EPIC-06의 T074(로컬 2인 협동 테스트 환경)는 사용자 수동 테스트 승인으로 `[DONE]` 확정되었다. 이어서 T075(Local Co-op Interaction UX — 협동 상태를 직관적으로 알 수 있는 UX 보강)를 구현·자동 검증 완료했으며(`[REVIEW]`), 사용자 수동 테스트 결과를 기다린다. v0.3.0과 Milestone 2는 T075 승인이 끝나기 전까지 완료 처리하지 않는다.
 
 ---
 
-## v0.1.0 — MVP Complete ✅ (현재)
+## v0.1.0 — MVP Complete ✅
 
 **상태**: 완료 (`docs/TASKS.md` T000~T063 전체 `[DONE]`)
 
@@ -22,9 +22,11 @@
 
 ---
 
-## v0.2.0 — Physics Playground
+## v0.2.0 — Physics Playground ✅ 완료
 
 대응: `GAME_DESIGN.md` Phase 4(재미 검증)
+
+**상태**: 완료 (`docs/TASKS.md` T064~T070·T072·T073 전체 `[DONE]`, EPIC-01~05 전부 완료, T070 사용자 최종 플레이 테스트 승인)
 
 - **Goal**: MVP 코어 루프를 다양한 상황에서 검증하고 다듬어, "기본 운반이 재미있는가"를 확정한다.
 - **Features**:
@@ -35,7 +37,7 @@
   - 실제 플레이 테스트 기반 정식 재미 검증
 - **Done Criteria**: Phase 4 항목 전부 완료, 좁은 문/벽 시나리오 포함 전체 루프 반복 시 치명적 물리 문제 없음, "기본 운반이 재미있다"는 실제 플레이 판단이 내려짐.
 - **Out of Scope**: 다인 협동, 온라인 멀티, 차량, 콘텐츠(여러 택배 종류, 정식 맵).
-- **Risks**: 이 단계에서 "기본 운반이 재미없다"고 판단되면 `GAME_DESIGN.md` 섹션 4의 명시적 지침에 따라 이후 멀티플레이·차량 개발을 시작하지 않는다 — 로드맵 자체가 재검토 대상이 됨.
+- **Risks**: 해소됨 — T070 사용자 최종 플레이 테스트에서 "기본 운반이 재미있다"는 판단이 내려져(치명적 결함 없음, 14개 평가 항목 모두 승인), 이 리스크가 우려한 "로드맵 재검토" 상황은 발생하지 않았다. 이후 멀티플레이·차량 개발(v0.3.0 이후)을 계속 진행할 근거가 확보됨.
 
 ### v0.2.0 Epic 분해 (계획 단계 — 아직 미구현, `docs/TASKS.md`에 Task로 추가되지 않음)
 
@@ -84,18 +86,18 @@
 | FEATURE-03-B Package 간 충돌·적재 안정성 검증 | Must | ✅ 완료(`docs/TASKS.md` T069 `[DONE]`) — 나란히 배치/2단/3단 적층/붕괴/더미로 던지기/홀드 중 비홀드 대상과 충돌/벽 샌드위치/좁은 문 인근/Barrel 충돌 전부 NaN·관통·폭발적 속도 없음 확인, 사용자 수동 테스트 승인 |
 | FEATURE-03-C 여러 Package 순차 배송 시나리오 검증 | Should | ✅ 완료(`docs/TASKS.md` T069 `[DONE]`) — `DeliveryZone`의 "임의의 package 진입 시 최초 1회만 성공" 특성을 그대로 유지, 순차 배송 3회(B→C→A) 모두 성공 시그널 정확히 1회만 발화·중복 없음 확인, 사용자 수동 테스트 승인 |
 
-#### EPIC-04 — Playtest & Fun Validation (재미 검증) ⏸ T073 완료 후 재개 예정
+#### EPIC-04 — Playtest & Fun Validation (재미 검증) ✅ 완료
 
 - **Goal**: "기본 운반이 재미있는가"를 실제 플레이로 확정한다.
 - **Player Value**: 게임의 핵심 재미 검증 — 이후 다인/온라인/차량 투자를 정당화하는 관문.
-- **Dependencies**: EPIC-01, EPIC-02, EPIC-03, EPIC-05 전부 `[DONE]`. **추가 전제조건(신규)**: T073(First-Person Camera Transition and Grab Usability, Epic 분해 외 추가 구현) — 시점과 조준 조작이 바뀌는 중이라 사용자 승인 전에는 "기본 운반이 재미있는가"를 최종 판정할 수 없다.
+- **Dependencies**: EPIC-01, EPIC-02, EPIC-03, EPIC-05 전부 `[DONE]`. T073(First-Person Camera Transition and Grab Usability, Epic 분해 외 추가 구현)도 사용자 수동 테스트 승인으로 `[DONE]` 완료 — 시점·조준 조작이 확정되어 "기본 운반이 재미있는가"를 최종 판정할 수 있는 상태가 되었다.
 - **Estimated Scope**: Small(신규 코드 없음, 순수 플레이테스트 + 기록).
-- **진행 상태**: `docs/TASKS.md` T070 `[BLOCKED]` — EPIC-05(T072) 완료로 한 차례 해제되었다가, T073 착수로 다시 `[BLOCKED]`. 플레이 경로·평가 양식은 T072 조작 방식 기준으로 갱신되어 있으나, T073 승인 후 1인칭 시점·조준점 기준으로 재검토가 필요할 수 있다.
+- **완료**: `docs/TASKS.md` T070 `[DONE]` — EPIC-05(T072) 완료로 한 차례 해제되었다가 T073 착수로 재차단, T073 사용자 승인으로 다시 해제된 뒤, 14개 평가 항목(기존 12개 + 1인칭 카메라·조준점 2개) 전체와 전체 루프 플레이 경로(Spawn→환경 오브젝트 밀집 구역→Stairs→Ramp→NarrowDoorway→TestWall→DeliveryZone→Restart)에서 치명적 결함 없이 사용자 최종 승인을 받아 완료됨. "기본 운반이 재미있다"는 실제 플레이 판단이 내려졌다(`docs/TASKS.md` 섹션 22 "T070 사용자 최종 플레이 테스트 승인(최종)" 참고).
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
-| FEATURE-04-A 확장된 전체 루프 플레이 테스트 | Must | ⏸ 보류(`docs/TASKS.md` T070 `[BLOCKED]`) — T073 승인 후 재개 |
-| FEATURE-04-B 재미 판정 및 로드맵 재검토 여부 결정 | Must | ⏸ 보류(`docs/TASKS.md` T070 `[BLOCKED]`) — T073 승인 후 재개 |
+| FEATURE-04-A 확장된 전체 루프 플레이 테스트 | Must | ✅ 완료(`docs/TASKS.md` T070 `[DONE]`) — 사용자 실제 플레이로 전체 경로 완료, 치명적 문제 없음 |
+| FEATURE-04-B 재미 판정 및 로드맵 재검토 여부 결정 | Must | ✅ 완료(`docs/TASKS.md` T070 `[DONE]`) — "기본 운반이 재미있다"는 판단 확정, 로드맵 재검토 불필요 |
 
 #### EPIC-05 — Generalized Object Interaction (범용 오브젝트 상호작용) ✅ 완료
 
@@ -118,9 +120,9 @@
 
 **Won't(this version)**: 다인 협동 네트워크 동기화(→ v0.3.0, 단 T072에서 다중 Grabber 물리 구조 자체는 로컬로 준비됨), 온라인 멀티·차량(→ v0.8.0), 콘텐츠 확장(→ v0.5.0), Steam 관련(→ v0.4.0 이후), 실제 버튼/문/레버 구현(EPIC-05 FEATURE-05-E는 입력 분리까지만, 향후 별도 Epic).
 
-**추천 착수 순서**: EPIC-01과 EPIC-03은 서로 의존하지 않아 병행 가능 → EPIC-02(EPIC-01 완료 후) → EPIC-05(사용자 피드백으로 EPIC-04보다 먼저 착수) → EPIC-04(EPIC-05 완료 후, 마지막). (EPIC-01·EPIC-02·EPIC-03·EPIC-05 전부 완료, EPIC-04는 T070 `[BLOCKED]` — T073(1인칭 전환) 사용자 승인 대기)
+**추천 착수 순서**: EPIC-01과 EPIC-03은 서로 의존하지 않아 병행 가능 → EPIC-02(EPIC-01 완료 후) → EPIC-05(사용자 피드백으로 EPIC-04보다 먼저 착수) → EPIC-04(EPIC-05 완료 후, 마지막). **(EPIC-01~05 전부 완료 — v0.2.0 Epic 분해 전체 완료)**
 
-**Task 후보 총 개수**: 22개(EPIC-01: 10, EPIC-02: 6, EPIC-03: 3, EPIC-04: 3). EPIC-01(FEATURE-01-A/B/C/D)은 `docs/TASKS.md` T065·T066으로, EPIC-02(FEATURE-02-A/B/C)는 T068로, EPIC-03(FEATURE-03-A/B/C)은 T069로 전환되어 각각 전부 완료(`[DONE]`), 사용자 최종 승인 완료. EPIC-04(FEATURE-04-A/B)는 T070으로 전환되어 EPIC-05 완료로 한 차례 차단이 해제되었다가, T073(1인칭 전환) 착수로 다시 `[BLOCKED]` 상태다. **EPIC-05는 원래의 22개 후보 목록에 없던 신규 Epic**으로, 사용자 플레이 피드백에 따라 추가되었고 처음 T071로 전환되어 자동 검증 완료(`[REVIEW]`, 승인 전)했다가, 다시 사용자 지시로 T072(Force-Based Physics Grab, FEATURE-05-H 추가)로 재설계되어 Player 밀림·관통 결함 수정 2건을 거쳐 사용자 수동 테스트 승인, `[DONE]`으로 완료되었다.
+**Task 후보 총 개수**: 22개(EPIC-01: 10, EPIC-02: 6, EPIC-03: 3, EPIC-04: 3). EPIC-01(FEATURE-01-A/B/C/D)은 `docs/TASKS.md` T065·T066으로, EPIC-02(FEATURE-02-A/B/C)는 T068로, EPIC-03(FEATURE-03-A/B/C)은 T069로 전환되어 각각 전부 완료(`[DONE]`), 사용자 최종 승인 완료. EPIC-04(FEATURE-04-A/B)는 T070으로 전환되어 EPIC-05 완료로 한 차례 차단이 해제되었다가, T073(1인칭 전환) 착수로 다시 `[BLOCKED]`된 뒤, T073 사용자 승인 완료로 다시 해제되어 사용자 최종 플레이 평가를 거쳐 `[DONE]`으로 완료되었다. **EPIC-05는 원래의 22개 후보 목록에 없던 신규 Epic**으로, 사용자 플레이 피드백에 따라 추가되었고 처음 T071로 전환되어 자동 검증 완료(`[REVIEW]`, 승인 전)했다가, 다시 사용자 지시로 T072(Force-Based Physics Grab, FEATURE-05-H 추가)로 재설계되어 Player 밀림·관통 결함 수정 2건을 거쳐 사용자 수동 테스트 승인, `[DONE]`으로 완료되었다. **v0.2.0 Epic 분해(EPIC-01~05) 전체 완료.**
 
 ### T064 — Interactive Physics Objects (Epic 분해 외 추가 구현) ✅ 완료
 
@@ -130,25 +132,42 @@
 
 T064와 마찬가지로 Epic 분해에 없던 범위다. T066(좁은 문) 완료 직후, 이동키(WASD)와 `E`를 동시에 계속 눌러야 하는 조작 부담을 사용자가 직접 지적해 잡기 입력 방식을 Hold(DD-001)에서 Toggle(DD-017)로 변경했다. `Player.gd`의 `_handle_interact_input()`만 수정했고, 가시선 검사·Hold 차단 자동 Release(T065)·`max_hold_distance` 자동 Release 등 기존 안전장치는 전혀 건드리지 않았다. 헤드리스 자동 검증 40개 항목 전부 PASS. **`[DONE]`으로 완료됨** — 토글 방식 적용 후 T066(좁은 문)도 최종 조작으로 재검증해 함께 사용자 최종 승인을 받았다. 상태와 완료 근거는 `docs/TASKS.md` T067 항목 참고.
 
-### T073 — First-Person Camera Transition and Grab Usability (Epic 분해 외 추가 구현) 🔶 자동 검증 완료, 승인 대기
+### T073 — First-Person Camera Transition and Grab Usability (Epic 분해 외 추가 구현) ✅ 완료
 
-T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완료로 T070이 재개되기 직전, 사용자가 "3인칭 카메라에서는 캐릭터가 잡은 물체를 가리는 문제가 있다"고 직접 지적해 시점을 1인칭으로 전환하고, Grab 판정을 화면 중앙(Camera) 기준으로 재정렬했다. `docs/GAME_DESIGN.md`가 명시하는 "3인칭 카메라 기본"과 정면으로 배치되는 변경이지만, `CLAUDE.md` 섹션 9(사용자의 최신 명시적 지시가 최우선)에 따라 사용자 승인 사항으로 진행했다 — `GAME_DESIGN.md` 자체는 이번 작업 범위에 없어 수정하지 않았으며, 이 불일치는 `docs/TASKS.md` T073 항목의 "예상 위험"에 기록되어 있다. T072의 Force-Based Grab 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조는 전혀 수정하지 않았다. 헤드리스 자동 검증 128개 항목 3회 연속 전부 PASS(Grab 정확도 80/80, 거리별 경계 판정, 가시선·우선순위, 조준점 정렬 오차 0px, 입력 반응 지연 0~1프레임, 자기 가림 0회, 실제 레벨 운반 회귀). **아직 `[REVIEW]`(사용자 수동 테스트 대기)** — 이 작업의 승인 전까지 T070은 `[BLOCKED]`를 유지한다(위 EPIC-04 참고). 상태와 완료 근거는 `docs/TASKS.md` T073 항목(섹션 25) 참고.
+T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완료로 T070이 재개되기 직전, 사용자가 "3인칭 카메라에서는 캐릭터가 잡은 물체를 가리는 문제가 있다"고 직접 지적해 시점을 1인칭으로 전환하고, Grab 판정을 화면 중앙(Camera) 기준으로 재정렬했다. `docs/GAME_DESIGN.md`가 명시하던 "3인칭 카메라 기본"과 정면으로 배치되는 변경이었지만, `CLAUDE.md` 섹션 9(사용자의 최신 명시적 지시가 최우선)에 따라 사용자 승인 사항으로 진행했다 — 사용자 최종 승인 이후 `docs/GAME_DESIGN.md`의 "3인칭" 서술도 실제 구현(1인칭)과 일치하도록 최소 수정해 동기화했다. T072의 Force-Based Grab 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조는 전혀 수정하지 않았다. 헤드리스 자동 검증 128개 항목 3회 연속 전부 PASS(Grab 정확도 80/80, 거리별 경계 판정, 가시선·우선순위, 조준점 정렬 오차 0px, 입력 반응 지연 0~1프레임, 자기 가림 0회, 실제 레벨 운반 회귀), 이후 두 차례의 Push 결함 수정(RigidBody 질량별 Player Push 차이, Held 상태 Body Push 과강화) 이후에도 18개 항목 재검증 3회 연속 전부 PASS. **`[DONE]`으로 완료됨** — 사용자 수동 테스트 승인 완료(1인칭 카메라 정상, 시야·Grab 판정 가림 없음, 조준점-Grab 일치, torque 정상, 좁은 문·계단·경사로 운반, held 상태 Body Push 정상, 배송·Restart 회귀 정상). 이 승인으로 T070의 `[BLOCKED]`가 해제되었다(위 EPIC-04 참고). 상태와 완료 근거는 `docs/TASKS.md` T073 항목(섹션 25, "T073 사용자 수동 테스트 승인(최종)") 참고.
 
 ---
 
-## v0.3.0 — Fun Physics Update
+## v0.3.0 — Fun Physics Update 🔶 착수(EPIC-06 진행 중)
 
 대응: `GAME_DESIGN.md` Phase 5(로컬 다인 협동 검토)
 
 - **Goal**: 물리 기반 협동의 핵심 재미(엉망이 되는 상황)를 다인 환경에서 검증한다. 정식 분할 화면 출시 기능이 아니라 개발용 검증 단계다.
 - **Features**:
   - 로컬 2인 테스트 환경
-  - 같은 Package 동시 잡기(현재 `Package.gd`의 `holder`는 단일 참조 구조 — 다인 확장 시 이 구조 자체를 재설계해야 함, `DESIGN_DECISIONS.md` DD-002/DD-007 참고)
+  - 같은 Package 동시 잡기 — **T072에서 이미 다중 `grab_connections: Dictionary` 구조로 재설계되어(`TECH_DEBT.md` TD-009 해결됨) 실제로는 재설계가 필요 없었고, T074에서 실제 Player 2명으로 검증만 수행했다.**
   - 플레이어 간 충돌
   - 협동 운반 테스트, 혼자 운반과의 속도/안정성 차이 검증
 - **Done Criteria**: 두 플레이어가 동시에 하나의 Package를 안정적으로 옮길 수 있음(또는 명확한 제약이 문서화됨), 혼자 운반이 여전히 가능함(강제 다인화 아님).
 - **Out of Scope**: 온라인 네트워크, 4인 이상, 정식 분할 화면 UI.
-- **Risks**: 현재 `Package.gd`의 잡기 구조(단일 holder, collision exception 1:1)가 다인 운반을 전제하지 않아 상당한 리팩터링이 필요할 수 있음(`TECH_DEBT.md` 참고).
+- **Risks**: (해소됨) 애초 우려했던 "`Package.gd`의 단일 holder 구조 재설계 필요"는 T072에서 이미 해결되어 v0.3.0 착수 시점에는 남아있지 않았다. 현재 리스크는 게임패드 감도/deadzone 등 협동 조작감 튜닝값이 실측 전 추정값이라는 점 정도(`TECH_DEBT.md` 참고).
+
+### v0.3.0 Epic 분해 (진행 중)
+
+#### EPIC-06 — Local Co-op Foundation (로컬 협동 기반) 🔶 진행 중
+
+- **Goal**: 온라인 네트워크 없이, 로컬에서 실제 Player 2명이 같은 물리 월드를 공유하며 물체를 함께 잡고 나르는 협동 물리 기반을 검증한다.
+- **Player Value**: 물리 기반 협동의 핵심 재미(무게를 나눠 들기, 서로 부딪히기, 같이 실수하기)를 실제로 확인할 수 있는 최초의 다인 환경.
+- **Dependencies**: v0.2.0 전체 완료(`[DONE]`).
+- **Estimated Scope**: Medium(Player.gd 입력 슬롯 분리, Player.tscn 충돌 마스크 수정, 신규 테스트 Scene 1개).
+- **진행 상태**: `docs/TASKS.md` T074 `[DONE]`(사용자 수동 테스트 승인 완료) — 로컬 2인 분할 화면 테스트 환경 구현·자동 검증(46개 항목 3회 연속 PASS) 완료. 이어서 T075 `[REVIEW]` — Grab Point 표시·협동 HUD·Release 피드백·게임패드 조작 개선(39개 항목 3회 연속 PASS) 완료, 사용자 수동 테스트 대기.
+
+| Feature | MoSCoW | Task 후보 |
+|---|---|---|
+| FEATURE-06-A 로컬 2인 분할 화면 테스트 환경(입력 슬롯 분리, 실제 2인 동시 Grab, Player 간 충돌) | Must | ✅ 완료(`docs/TASKS.md` T074 `[DONE]`) |
+| FEATURE-06-B 로컬 협동 상호작용 UX(Grab Point 표시, 협동 HUD, Release 피드백, 게임패드 조작 개선) | Must | 🔶 진행 중(`docs/TASKS.md` T075 `[REVIEW]`) — 사용자 수동 테스트 대기 |
+
+**Won't(이번 Task)**: 온라인 멀티플레이, RPC/네트워크 동기화, Steam 기능, 로비/매칭, 캐릭터 선택, 정식 메뉴 UI, 3인 이상, 정식 분할 화면 출시 UI.
 
 ---
 

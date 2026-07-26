@@ -39,9 +39,9 @@
 | Milestone | 상태 |
 |---|---|
 | 1. MVP | 완료 |
-| 2. Gameplay Expansion | 시작 전 (사용자 승인 대기) |
+| 2. Gameplay Expansion | 진행 중 — v0.2.0(Physics Playground) 완료, v0.3.0(로컬 다인 협동) 진행 중(EPIC-06, T074 `[DONE]`, T075 `[REVIEW]`, `ROADMAP.md` 참고) |
 | 3. Steam Demo | 시작 전 |
 | 4. Early Access | 시작 전 |
 | 5. Steam Release | 시작 전 |
 
-다음 마일스톤 착수는 사용자의 명시적 승인이 있을 때 시작한다(`CLAUDE.md` 섹션 6).
+다음 마일스톤(또는 마일스톤 내 다음 버전) 착수는 사용자의 명시적 승인이 있을 때 시작한다(`CLAUDE.md` 섹션 6).

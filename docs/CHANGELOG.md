@@ -8,9 +8,45 @@
 
 ---
 
-## [Unreleased] — Gameplay Expansion (In Progress)
+## [Unreleased] — Fun Physics Update (In Progress)
 
-v0.2.0 범위의 구현 작업. `docs/TASKS.md` T064~T069·T072 전부 `[DONE]` — EPIC-01(Obstacle Course Expansion), EPIC-02(Physics Feel Tuning), EPIC-03(Multi-Package Stability), EPIC-05(Generalized Object Interaction) 완료, 사용자 최종 승인. EPIC-05는 T071 `[REVIEW]`(승인 전)로 시작했다가, 사용자 지시로 T072 "Force-Based Physics Grab"로 이동 방식 자체가 재설계되었고, Player 밀림·관통 결함 수정 2건을 거쳐 사용자 수동 테스트 승인으로 `[DONE]` 확정되었다. T070(EPIC-04, Playtest & Fun Validation)은 EPIC-05 완료로 한 차례 `[BLOCKED]`가 해제되었으나, 곧이어 사용자 지시로 T073(3인칭→1인칭 시점 전환 및 Grab 조작성 개선, `[REVIEW]`, 자동 검증 완료)이 착수되어 조작·시점이 다시 바뀌는 중이라 `[BLOCKED]`로 되돌아갔다. v0.2.0은 T073 승인과 그 이후 사용자의 실제 전체 루프 플레이·최종 재미 평가 전까지 완료 처리하지 않는다.
+v0.3.0 범위의 구현 작업 착수. `docs/TASKS.md` T074(Local Co-op Test Environment) `[DONE]`(사용자 수동 테스트 승인 완료) — EPIC-06(Local Co-op Foundation)의 첫 Task로, 온라인 멀티플레이가 아닌 **로컬 2인 물리 검증 기반**을 구현했다. 이어서 T075(Local Co-op Interaction UX) `[REVIEW]` — 협동 상태(누가 무엇을 잡았는지, 같은 물체를 함께 잡았는지, 연결이 왜 끊겼는지)를 직관적으로 알 수 있도록 UX를 보강했다. 자동 검증(39개 항목 3회 연속) 완료, 사용자 수동 테스트 대기 중이라 v0.3.0은 아직 완료 처리하지 않는다.
+
+### Added
+
+- `scenes/level/LocalCoopTest.tscn`/`LocalCoopTest.gd` 신규 — 기존 `PrototypeLevel`을 그대로 인스턴스해 재사용하고 그 위에 Player2를 추가하는 방식의 로컬 2인 분할 화면 테스트 Scene(레벨·물리 월드 중복 생성 없음). 좌우 `SubViewport` 2개가 동일한 `World3D`를 공유하고, 각각 전용 `ViewCamera`(해당 Player의 실제 Camera3D를 매 프레임 추종)와 전용 `Crosshair`를 가진다(T074)
+- `Player.gd`에 `InputProfile` enum(KEYBOARD_MOUSE/GAMEPAD)과 `player_slot`/`input_profile`/`gamepad_device`/`gamepad_look_sensitivity`/`gamepad_deadzone` export 추가 — 기본값(slot 0, KEYBOARD_MOUSE)은 기존 싱글플레이와 완전히 동일하게 동작(T074)
+- `Player.gd`에 게임패드 이동(왼쪽 스틱+deadzone)·시점 회전(오른쪽 스틱, `JOY_BUTTON_A`로 Grab) 입력 경로 추가, 마우스/키보드 입력과 프레임 단위로 독립 처리(T074)
+- `Player.gd`에 `_apply_visual_layer_for_slot()` 추가 — `player_slot`마다 다른 시각 레이어를 계산해, 로컬 협동에서도 "자기 카메라에는 자기 모델만 안 보이고 다른 Player는 보이는" 동작이 성립하도록 함(T073에서 예견된 위험 해소, T074)
+- `Player.gd`에 오른쪽 트리거(`gamepad_grab_trigger_threshold`)+`JOY_BUTTON_A` OR 조합 Grab 입력, `invert_gamepad_y` 옵션 추가 — 둘 다 눌려도 중복 Connection·조기 Release가 생기지 않도록 단일 edge로 추적(T075)
+- `GrabbableBody.gd`에 Player별 Grab Point 절차적 마커(작은 구, 물체 자식 노드로 붙어 이동/회전 자동 추종, 슬롯별 색 구분, CollisionShape 없음) 추가(T075)
+- `GrabbableBody.gd`에 `DisconnectReason` enum(MANUAL/DISTANCE_EXCEEDED/BLOCKED)과 `grabber_disconnected` 시그널 추가, `Player.gd`에 이를 중계하는 `grab_connection_lost` 시그널 추가(T075)
+- `Crosshair.gd`에 `flash()` 추가 — 거리 초과·정적 차단으로 자동 Release될 때만 0.4초 짧게 링 점멸(수동 Release는 점멸 없음)(T075)
+- `LocalCoopTest.tscn`/`.gd`에 `CoopStatus` Label 추가 — 같은 물체를 두 Player가 동시에 잡았을 때만("협동 운반") 양쪽 화면에 표시, 한쪽이 놓으면 다음 physics frame 안에 해제(T075)
+
+### Changed
+
+- `Player.tscn`의 `collision_mask`를 21→23(World+**Player**+Package+PhysicsObject)으로 수정 — Player끼리 전혀 충돌하지 않던 결함 수정(T074)
+- `Player.gd`의 단일 `gamepad_deadzone`을 `move_deadzone`(왼쪽 스틱)/`look_deadzone`(오른쪽 스틱)으로 분리(T075)
+
+### Fixed
+
+- Player 2명이 로컬에서 동시에 존재할 때, 한 Player가 `sprint`(Shift)나 `jump`(Space)를 누르면 게임패드를 쓰는 다른 Player에게도 그대로 적용되던 입력 누수 → 두 액션 모두 `input_profile == KEYBOARD_MOUSE`로 게이트해 해결(T074)
+- `Player.tscn`의 `collision_mask`(21)에 Player 자신의 레이어(2)가 빠져 있어 Player끼리 물리적으로 전혀 충돌하지 않던 문제 → `collision_mask`를 23으로 수정해 해결(T074)
+
+### Known Notes
+
+- `gamepad_look_sensitivity`(2.5)·`move_deadzone`/`look_deadzone`(각 0.2)은 T074에서 사용자 승인된 프로토타입 기준값(Baseline)(`TECH_DEBT.md` TD-014)
+- `gamepad_grab_trigger_threshold`(0.5)·`invert_gamepad_y`(기본 false)는 T075에서 새로 도입된, 아직 실측 후보 비교를 거치지 않은 초기값(`TECH_DEBT.md` TD-015)
+- 기존 `GrabbableBody`의 다중 `grab_connections` 구조(T072)는 T074에서 실제 Player 2명으로 처음 검증되었다 — 별도의 2인 전용 물리나 인원수 배율 없이, 기존 Grabber별 힘 합산만으로 협동 효과가 발생함을 확인(1인 대비 2인이 Crate를 더 높이·더 정확하게 들어올림)
+
+---
+
+## [0.2.0] — Physics Playground
+
+v0.2.0 범위의 구현 작업 전체 완료. `docs/TASKS.md` T064~T070·T072·T073 전부 `[DONE]` — EPIC-01(Obstacle Course Expansion), EPIC-02(Physics Feel Tuning), EPIC-03(Multi-Package Stability), EPIC-05(Generalized Object Interaction), EPIC-04(Playtest & Fun Validation) 전부 완료, 사용자 최종 승인. EPIC-05는 T071 `[REVIEW]`(승인 전)로 시작했다가, 사용자 지시로 T072 "Force-Based Physics Grab"로 이동 방식 자체가 재설계되었고, Player 밀림·관통 결함 수정 2건을 거쳐 사용자 수동 테스트 승인으로 `[DONE]` 확정되었다. T070(EPIC-04)은 EPIC-05 완료로 한 차례 `[BLOCKED]`가 해제되었으나, 곧이어 사용자 지시로 T073(3인칭→1인칭 시점 전환 및 Grab 조작성 개선)이 착수되어 조작·시점이 다시 바뀌는 중이라 `[BLOCKED]`로 되돌아갔다. T073은 자동 검증(128개+18개 항목)과 이후 발견된 Body Push 결함 2건 수정을 거쳐 사용자 수동 테스트 승인으로 `[DONE]` 확정되었고, 이 승인으로 T070의 `[BLOCKED]`가 다시 해제되었다. T070은 14개 평가 항목과 전체 루프 플레이 경로(Spawn→환경 오브젝트 밀집 구역→Stairs→Ramp→NarrowDoorway→TestWall→DeliveryZone→Restart)에서 치명적 결함 없이 사용자 최종 승인을 받아 `[DONE]`으로 확정되었고, 이로써 EPIC-04와 v0.2.0(Physics Playground) 전체가 완료되었다.
+
+**한눈에 보는 v0.2.0 (사용자 관점 요약)**: 1인칭 시점으로 직접 물리 운반을 체감 — 좌클릭을 누르고 있으면 실제로 클릭한 물체의 표면 지점을 잡고(Spring-Damper 기반 Force Grab), 물체마다 질량과 관성에 따라 다르게 반응하며(가벼운 SmallBox는 가볍게, 무거운 Crate는 묵직하게), 중앙과 모서리 중 어디를 잡느냐에 따라 자연스러운 회전이 생긴다. 놓으면 그 순간의 실제 속도로 자연스럽게 날아가고(별도 던지기 임펄스 없음), 잡은 물체가 Player를 뚫고 지나가거나 Player를 밀어내지 않는다. 화면 중앙의 조준점이 항상 실제 Grab 대상과 일치한다. 이 모든 것으로 Package를 배송하고 Restart로 반복 플레이할 수 있으며, 이 전체 경험이 최종 사용자 플레이 테스트를 통과했다.
 
 ### Added
 
@@ -62,9 +98,10 @@ v0.2.0 범위의 구현 작업. `docs/TASKS.md` T064~T069·T072 전부 `[DONE]` 
 
 - 환경 물리 오브젝트의 물리 파라미터(mass/friction/damp), 좁은 문(1.4m) 폭, Export 값 전반은 모두 실측 비교가 아닌 추론/동결값으로 시작되었으나, T068 사용자 수동 테스트에서 전부 승인되어 `TECH_DEBT.md` TD-006/TD-010/TD-011이 해결 처리됨
 - T071의 `max_carry_force`(600.0)·스윙 릴리즈 게인(`_SWING_IMPULSE_GAIN=8.0`, `_MAX_SWING_SPEED=12.0`)은 T072에서 이동 방식 자체가 대체되며 함께 폐기됨(`TECH_DEBT.md` TD-012, 역사 기록으로 유지)
-- T072의 `grab_spring_strength`(500.0)·`grab_damping`(60.0)·`max_force_per_grabber`(300.0) 등은 각 오브젝트의 실제 mass×gravity를 기준으로 역산한 초기 추정값으로 시작했으나, 사용자 수동 테스트 승인으로 프로토타입 기준값(Baseline)으로 확정됨 — 완료를 막는 미해결 결함은 아니며, 추가 조정은 별도 Task로 진행(`TECH_DEBT.md` TD-013)
-- T073의 카메라 눈높이(`CameraPivot` 로컬 y=0.7)는 여러 후보를 실측 비교하지 않은 초기 추정값 — 사용자 수동 테스트 승인 대기 중
-- T073로 시점이 1인칭으로 바뀌었지만 `docs/GAME_DESIGN.md`(섹션 26, 29 등)는 여전히 "3인칭 카메라 기본"으로 서술되어 있음 — 이번 작업 문서 반영 범위 밖이라 갱신하지 않았고, 실제 구현과 불일치 상태로 남아 있음(`docs/TASKS.md` T073 "예상 위험" 참고)
+- T072의 `grab_spring_strength`(500.0)·`grab_damping`(60.0)·`max_force_per_grabber`(300.0) 등은 각 오브젝트의 실제 mass×gravity를 기준으로 역산한 초기 추정값으로 시작했으나, 사용자 수동 테스트 승인으로 프로토타입 기준값(Baseline)으로 확정됨 — T070 최종 플레이 테스트에서도 "무게 차이 체감", "torque 자연스러움" 등이 재확인됨. 완료를 막는 미해결 결함은 아니며, 추가 조정은 별도 Task로 진행(`TECH_DEBT.md` TD-013)
+- T070(Final Playtest and Fun Validation)이 14개 평가 항목·전체 루프 플레이 경로에서 치명적 결함 없이 사용자 최종 승인을 받아 `[DONE]` 확정 — "기본 운반이 재미있는가?"라는 v0.2.0의 핵심 질문에 "재미있다"는 실제 플레이 판단이 내려졌다. EPIC-04와 v0.2.0(Physics Playground) 완료
+- T073의 카메라 눈높이(`CameraPivot` 로컬 y=0.7)는 여러 후보를 실측 비교하지 않은 초기 추정값으로 시작했으나, 사용자 수동 테스트 승인으로 프로토타입 기준값(Baseline)으로 확정됨 — 완료를 막는 미해결 결함은 아니며, 추가 조정은 별도 Task로 진행
+- T073로 시점이 1인칭으로 바뀐 뒤 한동안 `docs/GAME_DESIGN.md`(섹션 26, 29 등)가 "3인칭 카메라 기본"으로 서술되어 실제 구현과 불일치했었으나, T073 사용자 승인 이후 해당 서술을 1인칭으로 최소 수정해 동기화함(해결됨)
 
 ---
 

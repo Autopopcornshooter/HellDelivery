@@ -800,21 +800,21 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
 
 ## 22. T070 — Final Playtest and Fun Validation
 
-- 상태: `[BLOCKED]` (T072 완료로 잠시 해제되었다가, T073 착수로 재차단)
-- **차단 이력**: 선행 조건이던 EPIC-05(Generalized Object Interaction)가 T072(Force-Based Physics Grab) 및 두 차례의 Player 밀림/관통 결함 수정을 거쳐 사용자 수동 테스트 승인을 받아 완료되면서 한 차례 `[BLOCKED]`가 해제되었다(섹션 24 "T072 사용자 수동 테스트 승인(최종)" 참고). 그러나 곧이어 사용자 지시로 T073(1인칭 시점 전환 및 Grab 조작성 개선)이 착수되어 조작·시점 자체가 다시 바뀌므로, T073이 사용자 승인을 받기 전까지는 최종 재미 평가를 진행할 수 없어 `[BLOCKED]`로 되돌렸다(섹션 25 참고). T073 승인 후 재개하며, 그때 아래 평가 항목도 필요 시 다시 검토한다.
+- 상태: `[x]` `[DONE]` (사용자 최종 플레이 테스트 완료·승인 — 아래 "T070 사용자 최종 플레이 테스트 승인(최종)" 참고)
+- **차단 이력**: 선행 조건이던 EPIC-05(Generalized Object Interaction)가 T072(Force-Based Physics Grab) 및 두 차례의 Player 밀림/관통 결함 수정을 거쳐 사용자 수동 테스트 승인을 받아 완료되면서 한 차례 `[BLOCKED]`가 해제되었다(섹션 24 "T072 사용자 수동 테스트 승인(최종)" 참고). 그러나 곧이어 사용자 지시로 T073(1인칭 시점 전환 및 Grab 조작성 개선)이 착수되어 조작·시점 자체가 다시 바뀌므로 `[BLOCKED]`로 되돌아갔다(섹션 25 참고). **T073이 이후 두 차례의 Push 결함 수정과 재검증을 거쳐 사용자 수동 테스트 승인을 받아 `[DONE]`으로 확정되면서(섹션 25 "T073 사용자 수동 테스트 승인(최종)" 참고), 조작·시점이 확정되었다고 보고 `[BLOCKED]`를 다시 해제한다.** 아래 평가 항목은 T073 확정 반영(1인칭 카메라, 조준점 포함)을 위해 2개 항목을 추가했다.
 - 목적: "Package를 직접 잡고 운반하며 물리적 사고를 수습하는 행동이 재미있는가?"라는 핵심 질문에 사용자의 실제 플레이 결과로 답한다. `docs/ROADMAP.md` EPIC-04(Playtest & Fun Validation)의 FEATURE-04-A(확장된 전체 루프 플레이 테스트)/FEATURE-04-B(재미 판정 및 로드맵 재검토 여부 결정)에 대응.
 - 소속: `docs/ROADMAP.md` v0.2.0 EPIC-04(Playtest & Fun Validation) — FEATURE-04-A, FEATURE-04-B
-- 선행 작업: T069(`[DONE]`, EPIC-01~03 전부 완료), EPIC-05/T072(`[DONE]`, 사용자 승인 완료)
-- 작업 범위: 실제 씬 좌표 기준 전체 루프 플레이 경로 작성, 현재 조작 방식(좌클릭 Hold + Force-Based Grab, T072)에 맞춘 평가 항목 12개 작성, 경량 자동 점검(구조 존재 확인)만 수행
+- 선행 작업: T069(`[DONE]`, EPIC-01~03 전부 완료), EPIC-05/T072(`[DONE]`, 사용자 승인 완료), T073(`[DONE]`, 1인칭 카메라·조준점·Grab 조작성 사용자 승인 완료 — 섹션 25 참고)
+- 작업 범위: 실제 씬 좌표 기준 전체 루프 플레이 경로 작성, 현재 조작 방식(1인칭 카메라 + 조준점 + 좌클릭 Hold + Force-Based Grab, T072·T073)에 맞춘 평가 항목 14개(기존 12개 + T073 반영 2개) 작성, 경량 자동 점검(구조 존재 확인)만 수행
 - 제외 범위: 게임 코드·씬·물리값 수정, 새 기능 구현, 대규모 회귀 스크립트, Claude에 의한 재미 판정(반드시 사용자 응답 근거)
 - 생성 파일: 없음
 - 수정 파일: 없음(코드/씬 무변경, 이번 문서 갱신만)
 - 에디터 수동 작업: 사용자가 직접 플레이(Claude 대행 불가)
-- 완료 조건: 사용자가 전체 루프 플레이를 완료하고 아래 평가 항목 12개에 답변, 그 응답을 근거로 PASS/PASS WITH NOTES/FAIL 중 하나로 판정
+- 완료 조건: 사용자가 전체 루프 플레이를 완료하고 아래 평가 항목 14개에 답변, 그 응답을 근거로 PASS/PASS WITH NOTES/FAIL 중 하나로 판정
 - 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 스크립트(검증 후 삭제)로 Player/Package 3개/TestWall/NarrowDoorwayTestArea/PhysicsObjects 6개/DeliveryZone/DeliveryHUD 존재와 Physics Interpolation 활성화만 경량 점검(대규모 회귀 스크립트 미작성). 재미 여부는 자동 검증 대상이 아님 — **사용자 실제 플레이 결과 필요**.
 - 예상 위험: 낮음(코드 변경 없음). 유일한 위험은 판정 자체가 100% 사용자 응답에 의존한다는 점 — 응답이 오기 전까지 EPIC-04와 v0.2.0을 완료 처리할 수 없다.
 - 완료 근거(준비 단계): 실제 씬 좌표를 기준으로 전체 루프 경로를 작성했다(Spawn(0,1.5,0) → Package/환경 오브젝트 밀집 구역 → Stairs(X10.1~16) → Ramp(-7.02,6) → NarrowDoorway(X=-7, gap Z -1.7~-0.3) → TestWall(6,2,-8) → 던지기 → DeliveryZone(5,0.5,3) → Restart). 경량 자동 점검 10개 항목 전부 PASS(`--headless --import`, `--headless --quit-after 60` 오류 0건). 대규모 회귀 스크립트는 작성하지 않았다(T069까지 이미 충분히 검증됨, 이번 Task는 재미 판정이 목적). 코드·씬·물리값은 전혀 수정하지 않았다.
-- **평가 항목(T072 최종 조작 방식 기준으로 갱신, 각 항목 1~5점 + 자유 코멘트)**:
+- **평가 항목(T072 최종 조작 방식 + T073 확정된 1인칭 카메라·조준점 반영, 각 항목 1~5점 + 자유 코멘트)**:
   1. 좌클릭 Hold Grab과 Release가 직관적인가
   2. SmallBox, Package, Barrel, Crate의 무게감 차이가 잘 느껴지는가
   3. 중앙과 모서리를 잡았을 때 회전 차이(torque)가 자연스러운가
@@ -827,8 +827,39 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
   10. Package를 DeliveryZone에 배송하는 흐름이 매끄러운가
   11. Restart 이후 Grab과 배송이 다시 정상 동작하는가
   12. 전체 플레이 흐름이 재미있는가, 불편하거나 어색한 지점은 무엇인가(자유 서술)
+  13. 1인칭 카메라가 장시간 플레이에서도 편안한가(멀미·불편함 없는가)
+  14. 화면 중앙 조준점이 실제 Grab 대상과 항상 일치한다고 느껴지는가
   - 평가 양식: 각 항목 1~5점(1=매우 불만족, 5=매우 만족) + 필요 시 한 줄 코멘트. 12번은 자유 서술.
   - 플레이 경로: 위 완료 근거(준비 단계)의 좌표 경로를 그대로 사용한다(Spawn → 환경 오브젝트 밀집 구역 → Stairs → Ramp → NarrowDoorway → TestWall → DeliveryZone → Restart 후 재검증).
+
+### T070 최종 실행 준비 확인(코드 변경 없음)
+
+- **목적**: T073이 `[DONE]`으로 확정된 이후, 사용자의 최종 재미 평가 플레이를 받을 수 있는 상태인지 재확인한다. 기능 추가나 물리값 튜닝은 하지 않았다.
+- **자동 회귀(기존 headless 실행만 사용, 신규 임시 스크립트 미작성)**: `godot --headless --path . --import` — 오류 없이 완료. `godot --headless --path . --quit-after 180`(약 3초, 레벨 전체 로드 후 물리 정착 포함) — 오류·경고 0건. 코드가 이전 T073 승인 시점 이후 전혀 변경되지 않아(이번 세션은 문서만 수정), 이전에 기록된 자동 검증 결과(T073 18개 항목·128개 항목, T072 59개+회귀, T069 55개 등, 모두 3회 연속 PASS)가 그대로 유효하다.
+- **테스트 경로 구조 확인(`PrototypeLevel.tscn` 직접 대조, 실행 없이 정적 확인)**: `Stairs`(Step1~13 + TopLanding, X 10.1~16), `Ramp`(X -7.02, Z 6), `NarrowDoorwayTestArea`(LeftWall/RightWall/Lintel, X -7, gap Z -1.7~-0.3), `WallTestArea/TestWall`(X 6, Z -8), `DeliveryZone`(X 5, Z 3), `PhysicsObjects`(Barrel 1 + Crate 2 + SmallBox 3), `Package`/`PackageB`/`PackageC` 전부 씬에 존재하고 좌표가 최근 검증 시점과 동일함을 확인(`git status`상 `PrototypeLevel.tscn` 무변경). 계단-Floor 접합부(T022에서 해결된 0.05m 중첩)를 포함해 구간 간 이동을 막는 새로운 간격은 발견되지 않았다.
+- **결론**: 실행 불가 결함 없음. T070 사용자 최종 플레이 테스트 진행 가능.
+- **상태**: `[REVIEW]` 유지(사용자 최종 플레이·평가 대기). T070/EPIC-04/v0.2.0 모두 `[DONE]`·완료 처리하지 않음. **(이후 사용자가 실제 최종 플레이 테스트를 완료·승인 — 아래 "T070 사용자 최종 플레이 테스트 승인(최종)" 참고)**
+
+### T070 사용자 최종 플레이 테스트 승인(최종)
+
+- **사용자 최종 플레이 테스트 결과: 승인.** 전체 테스트 경로(Spawn → 환경 오브젝트 밀집 구역 → Stairs → Ramp → NarrowDoorway → TestWall → DeliveryZone → Restart)와 14개 평가 항목 전체에서 치명적인 문제 없이 PASS로 확인함:
+  1. 좌클릭 Hold Grab/Release가 직관적으로 작동
+  2. SmallBox, Package, Barrel, Crate의 무게 차이가 체감됨
+  3. 중앙과 모서리 Grab의 torque 차이가 자연스러움
+  4. 저속 이동과 빠른 스윙에서 물체 반응이 정상적임
+  5. Release 후 현재 운동량이 자연스럽게 유지됨
+  6. 잡은 물체가 Player를 관통하거나 밀어내지 않음
+  7. 잡은 물체로 다른 물체를 밀 때 과도한 힘이 발생하지 않음
+  8. 좁은 문, 벽, 계단, 경사로 운반 가능
+  9. 여러 Package 운반에 치명적인 불편 없음
+  10. DeliveryZone 배송 흐름 정상
+  11. Restart 후 Grab과 배송 정상
+  12. 전체 플레이 흐름과 물리 조작 재미를 승인함(자유 서술 포함)
+  13. 1인칭 카메라가 편안하고 시야 가림이 없음
+  14. 조준점과 실제 Grab 대상이 일치함
+  - 반드시 수정해야 할 결함 없음. NaN·속도 폭주·관통·비정상 튕김 없음.
+- **완료 처리**: 이 승인으로 T070은 `[DONE]`으로 확정한다(섹션 22 상단 상태 갱신). "Package를 직접 잡고 운반하며 물리적 사고를 수습하는 행동이 재미있는가?"라는 핵심 질문에 **"재미있다"**는 실제 플레이 판단이 내려졌다. 추가 필수 수정 없이 현재 프로토타입(1인칭 카메라, 조준점, Force-Based Physics Grab, Body Push 질량 반영 등)을 그대로 승인한다.
+- **상위 완료 처리**: 이 승인을 근거로 `docs/ROADMAP.md`의 EPIC-04(Playtest & Fun Validation)와 v0.2.0(Physics Playground)을 완료 처리한다(`docs/ROADMAP.md` 참고). Milestone 2(Gameplay Expansion)는 v0.2.0·v0.3.0에 걸쳐 있어, v0.3.0(로컬 다인 협동) 착수 전까지는 전체 완료로 처리하지 않는다(`docs/MILESTONES.md` 참고).
 
 ## 23. T071 — Generalized Grabbable Objects, Swing Release, Mass-Consistent Carrying
 
@@ -905,8 +936,8 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
 
 ## 25. T073 — First-Person Camera Transition and Grab Usability
 
-- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 대기)
-- **T070 재차단**: 이 작업 착수로 T070의 `[REVIEW]`를 다시 `[BLOCKED]`로 되돌린다(섹션 22 참고) — 조작·시점 자체가 바뀌므로 T073 사용자 승인 전에는 최종 재미 평가를 진행할 수 없다.
+- 상태: `[x]` `[DONE]` (구현·자동 검증·재검증·사용자 수동 테스트 승인 모두 완료 — 아래 "T073 사용자 수동 테스트 승인(최종)" 참고)
+- **T070 재차단(이력)**: 이 작업 착수로 T070의 `[REVIEW]`를 한 차례 `[BLOCKED]`로 되돌렸었다(섹션 22 참고) — 조작·시점 자체가 바뀌므로 T073 사용자 승인 전에는 최종 재미 평가를 진행할 수 없었기 때문. **이제 아래 사용자 승인으로 T070의 `[BLOCKED]`를 다시 해제한다(섹션 22 참고).**
 - 목적: 3인칭 카메라에서 캐릭터가 잡은 물체와 조준 대상을 가리는 문제를 해결하기 위해 플레이 시점을 1인칭으로 전환한다. 기존 T072 Force-Based Physics Grab의 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조는 그대로 유지하며, Grab 판정을 카메라 중앙(화면 조준점) 기준으로 재정렬하고 상태형 조준점 UI를 추가해 조작성을 명시적으로 검증한다. 사용자 지시(카메라/조준 관련 요청)에 따른 변경이며, `docs/GAME_DESIGN.md`가 명시하는 "3인칭 카메라를 기본으로 한다"(섹션 26, 29 등)와 정면으로 배치되지만, 사용자의 최신 명시적 지시가 `CLAUDE.md` 섹션 9 문서 우선순위상 `GAME_DESIGN.md`보다 우선하므로 진행했다. **`GAME_DESIGN.md` 자체는 이번 작업 문서 반영 범위에 포함되지 않아 수정하지 않았다 — "3인칭"이라는 서술이 실제 구현과 불일치 상태로 남아 있음을 남은 위험에 기록한다.**
 - 소속: `docs/ROADMAP.md`에 해당 Epic 없음(사용자가 T064/T067처럼 Epic 분해 외 별도 지정한 작업).
 - 선행 작업: T072(`[DONE]`, Force-Based Physics Grab 및 Player 밀림/관통 방지 구조를 그대로 사용)
@@ -925,12 +956,141 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
 - 예상 위험:
   - 카메라 눈높이(`CameraPivot` 로컬 y=0.7)는 Player 기본 `CapsuleShape3D`(radius 0.5/height 2.0) 기준으로 추론한 프로토타입 값이며, 여러 후보를 실측 비교하지 않았다 — 사용자 수동 테스트에서 너무 낮거나 높게 느껴지면 조정이 필요할 수 있다.
   - `HoldPoint`의 `CameraPivot` 기준 오프셋(전방 1.5m)은 T042부터 이어진 값을 그대로 유지했다 — 3인칭에서는 렌더 카메라가 4.5m 뒤로 빠져 있어 물체가 실제 화면에서 멀리 보였지만, 1인칭 전환으로 Camera가 `CameraPivot` 원점에 위치하게 되며 물체가 화면상 카메라에 훨씬 가깝게(1.5m) 보이게 되는 체감 변화가 있다 — Crate(1.0m 정육면체) 기준 화면 점유 비율을 계산상으로는 확인했으나 실제 체감은 사용자 확인이 필요하다.
-  - `docs/GAME_DESIGN.md`(섹션 26, 29, 그 외 "3인칭 시점" 서술)가 이번 변경 후에도 3인칭으로 남아 있다 — 이번 작업의 문서 반영 범위에 포함되지 않았기 때문이며, 사용자가 원하면 별도로 `GAME_DESIGN.md` 갱신을 요청해야 한다.
+  - ~~`docs/GAME_DESIGN.md`(섹션 26, 29, 그 외 "3인칭 시점" 서술)가 이번 변경 후에도 3인칭으로 남아 있다~~ — **사용자 승인 후 해결**: `docs/GAME_DESIGN.md` 섹션 "카메라"·섹션 26·섹션 32의 "3인칭" 서술을 "1인칭(T073)"으로 최소 수정해 실제 구현과 동기화했다(아래 "T073 사용자 수동 테스트 승인(최종)" 참고).
   - 로컬 Player Mesh 은닉은 `MeshInstance3D.layers=2` + `Camera3D.cull_mask`에서 레이어 2 제외로 구현했다 — 향후 실제 멀티플레이 도입 시, 여러 Player 인스턴스가 전부 같은 레이어 2를 공유하면 "다른 Player도 안 보이는" 문제가 생길 수 있어(레이어는 인스턴스별이 아니라 전역 공유) 그때는 Player별로 별도 레이어를 동적 할당하는 구조가 추가로 필요하다 — 지금은 싱글플레이이므로 이 구조까지는 만들지 않았다(과도한 확장 설계 금지 원칙).
 - 완료 근거(구현): `Player.tscn`에서 `SpringArm3D`(spring_length=4.5)를 제거하고 `Camera3D`를 `CameraPivot`의 직계 자식으로 재배치했다. `CameraPivot`에 로컬 `Transform3D` y=0.7(눈높이, TODO 프로토타입 값)을 부여했다. `GrabShapeCast`를 기존 `CameraPivot` 로컬 y=-0.5 오프라인에서 `CameraPivot` 원점(=Camera3D 원점)으로 이동시켜, Grab 판정 Ray/ShapeCast가 항상 실제 렌더 카메라의 광학축과 정확히 일치하도록 만들었다(오프셋을 아예 0으로 만들어 구조적으로 정렬 오차가 발생할 수 없게 함). `HoldPoint`는 `CameraPivot` 로컬 좌표(0,0,-1.5)를 그대로 유지했다 — Camera가 `CameraPivot` 원점으로 옮겨온 결과 이제 HoldPoint는 자동으로 "Camera 정면, Camera와 동일 위치 아님, Player 캡슐(반경 0.5)·GrabCollisionBarrier(반경 0.55)보다 바깥"이라는 요구를 모두 만족하게 되어 별도 값 변경이 필요하지 않았다. `MeshInstance3D`에 `layers=2`를 부여하고 `Camera3D.cull_mask=1048573`(전체 레이어에서 레이어 2만 제외)로 설정해, 로컬 카메라가 자신의 Mesh를 렌더링하지 않도록 했다(전역 `visible=false`는 사용하지 않아 향후 다른 Player에게는 보이는 구조를 해치지 않음). `Player.gd`는 `_unhandled_input()`에서 마우스 X 이동을 `rotation.y -= ...`(Player 자신의 yaw)로, 마우스 Y 이동은 기존과 동일하게 `camera_pivot.rotation.x`(pitch, 기존 clamp 유지)로 분리했다. `_physics_process()`의 이동 방향 계산을 `camera_pivot.global_transform.basis`에서 `transform.basis`로 변경했다(yaw가 이제 Player 자신에 있으므로). `grab_aim_state_changed(state: int)` 시그널을 추가하고, 매 물리 프레임 `_update_grab_detection()`/`_handle_grab_input()`이 이미 계산해 둔 `_detected_grabbable`/`held_grabbable`만으로 상태(0/1/2)를 판정해 값이 바뀔 때만 발신한다(별도 탐색 없음). `scenes/ui/Crosshair.gd`(`class_name Crosshair extends Control`)를 신규 작성 — `_draw()`로 상태별(기본 점/조준 원/홀드 사각형) 표시, `mouse_filter=IGNORE`, anchors 0.5/0.5 고정 오프셋으로 해상도·화면비와 무관하게 항상 화면 정중앙에 위치한다. `DeliveryHUD.tscn`에 `Crosshair` 노드를 추가하고 `DeliveryHUD.gd`에 `set_crosshair_state(state)` 위임 메서드를 추가했다. `PrototypeLevel.gd`에 `player: Player` 참조를 추가하고 `player.grab_aim_state_changed.connect(delivery_hud.set_crosshair_state)`로 연결했다(기존 `DeliveryZone → PrototypeLevel → DeliveryHUD` 시그널 패턴과 동일). 이 과정에서 `Player.gd`에 `class_name Player`를 추가했다(다른 모든 씬 스크립트가 `class_name`을 갖는 기존 관례와 통일, `PrototypeLevel.gd`에서 타입 참조를 위해 필요) — 동작 변경은 없다. `GrabbableBody.gd`는 전혀 수정하지 않았다(Force-Based Grab 힘 계산·다중 Grab Connection·Player 관통/밀림 방지 구조 무변경).
 - 완료 근거(검증): 헤드리스 자동 검증 128개 항목 3회 연속 전부 PASS. Grab 정확도: 4종 오브젝트(Package/PhysicsBarrel/PhysicsCrate/SmallPhysicsBox) 각 20회, 정면 중앙·일반 운반 거리(1.5m)에서 80/80(100%) 첫 클릭 성공. 거리별 Grab: 표면 거리 기준 0.4m/1.5m/2.4m(유효 사거리 내)는 4종 전부 성공, 2.6m(유효 사거리 밖, `GrabShapeCast` 감지거리 2.2m+구체 반경 0.3m=2.5m 기준)는 4종 전부 실패로 정확히 갈렸으며, 모든 경우 조준점 상태(`GRAB_AIM_HOLDING` 등)가 같은 프레임에 일치. 가시선·우선순위: 벽 뒤 대상 5회 시도 중 Grab 성공 0회, 일렬 배치 시 앞 물체 10/10(100%) 선택. 조준점 정렬 오차: `Camera3D.unproject_position()`으로 계산한 화면 투영 좌표와 화면 정중앙의 오차 0px(구조적으로 `GrabShapeCast`가 Camera 원점과 완전히 일치하므로 이론상 항상 0). 입력 반응: Grab/Release/조준점 상태 변경 모두 지연 0~1 physics frame(코드 구조상 같은 `_physics_process()` 호출 내에서 동시에 처리되어 실측으로도 확인). 자기 가림: Player를 360도 회전 + pitch 전 범위로 움직이는 동안 `GrabShapeCast`가 Player 자신을 감지한 횟수 0회, `MeshInstance3D.layers`와 `Camera3D.cull_mask`가 서로 배타적임을 확인. 운반 회귀: 실제 `PrototypeLevel`에서 4종 오브젝트 각각 전진·후진·좌우 이동, 빠른 연속 시점 회전(720도), 좁은 문(`NarrowDoorwayTestArea`) 통과, Player 근처 Release까지 전부 NaN 없음·속도 폭주 없음·Grab 유지·Player 밀림 없음·Player 관통 없음 확인. `--headless --import`, `--headless --quit-after 90` 모두 오류·경고 0건.
   - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관, 테스트 스크립트에서만 수정): (1) 좁은 문 통과 테스트 초안에서 Player를 held 상태로 순간이동시키면 `max_grab_distance`(3.0)를 항상 초과해 자동 해제되는 것을 발견 — 실제 플레이는 걸어서 접근하므로 재현되지 않는 아티팩트이며, 테스트를 "이동 전 놓기 → 이동 → 다시 잡기"로 수정해 우회했다. (2) 좁은 문 통과 경로가 `PrototypeLevel`에 이미 배치된 `PackageC`(-4.5,1,-1)와 정확히 겹쳐, Player·held 오브젝트가 그 오브젝트와 부딪혀 속도가 급감/불안정해지는 현상을 발견 — Force-Based Grab과 무관한 테스트 동선 설계 문제로 판단해 해당 테스트에서만 `PackageC`를 제거하도록 수정했다(레벨 자체는 무수정). (3) 문을 지난 뒤 속도를 오래(200프레임) 측정하면 `Floor`(X=-10까지) 밖으로 나가 자유낙하가 "이상 속도"로 오인되는, 이 프로젝트에 기존에도 문서화된 패턴을 재확인 — 이동 프레임 수를 줄이고 수평 성분만 측정하도록 수정했다.
 - **상태**: T072/EPIC-05는 계속 `[DONE]`(무변경). T070은 이 Task 착수로 다시 `[BLOCKED]`. T073 승인 전에는 `[DONE]` 처리하지 않는다.
+
+### T073 결함 수정 — RigidBody 질량별 Player Push 차이
+
+- **결함**: 사용자가 "Player가 몸으로 미는 상호작용에서 25kg `PhysicsCrate`가 `SmallPhysicsBox`(5kg)나 `PhysicsBarrel`과 거의 같은 속도로 밀린다"고 보고. `Player.gd`의 `_push_away_rigid_bodies()`는 `push_force`(220.0)를 모든 대상에 동일하게 `apply_central_impulse()`로 가하고 있었으나, 대상의 현재 속도가 `max_push_speed`(고정 절대값 2.0)를 넘으면 push를 멈추는 방식이었다.
+- **원인(2단계로 확인)**:
+  1. `max_push_speed`가 질량과 무관한 고정 절대값이라, 지속적인 접촉(Player가 계속 밀착해 걷는 상황)에서는 가벼운 물체든 무거운 물체든 결국 같은 `max_push_speed`로 수렴했다(질량이 클수록 수렴이 늦을 뿐, 도달하는 속도 자체는 동일).
+  2. 더 근본적으로, `Player.tscn`의 `collision_mask`가 `5`(World+Package)였고 `PhysicsObject`(16, `PhysicsBarrel`/`PhysicsCrate`/`SmallPhysicsBox`가 속한 레이어)를 포함하지 않았다 — `GrabShapeCast`/`_DETECT_LOS_MASK`(21)에는 T064에서 PhysicsObject가 반영됐지만, Player 자신의 물리 `collision_mask`는 갱신되지 않은 채 남아 있었다. 그 결과 Player의 `move_and_slide()`는 이 3종 오브젝트를 `get_slide_collision()`으로 전혀 감지하지 못했고(`_push_away_rigid_bodies()`의 루프 자체가 실행되지 않음), 이들의 이동은 전적으로 Godot/Jolt의 kinematic(Player) vs dynamic(RigidBody) 접촉 해석이 자체적으로 만드는 raw 침투 해소 push에 의한 것이었다 — 이 raw push는 질량과 무관하게 RigidBody를 거의 Player 속도로 맞춰버린다(`DESIGN_DECISIONS.md` DD-006에서 이미 확인된 현상). 헤드리스 실측으로, 정지마찰(245N)이 `push_force`(220N)를 넘는 25kg Crate조차 이 raw push만으로 6m/s 이상 밀리는 것을 확인해 이 raw 채널이 지배적임을 검증했다.
+- **수정**:
+  - `Player.tscn`: `collision_mask`를 `5`→`21`(World+Package+PhysicsObject)로 수정 — `_DETECT_LOS_MASK`(21)와 동일한 값으로 통일. 이제 `move_and_slide()`가 3종 오브젝트와의 접촉을 정상적으로 `get_slide_collision()`에 보고한다.
+  - `Player.gd`: `max_push_speed` export 제거, `_push_away_rigid_bodies()`의 `apply_central_impulse(...*delta)`를 `apply_central_force(push_direction * push_force)`(질량과 무관한 동일 힘, 매 프레임 지속 적용, `a=F/mass`가 자연히 성립)로 교체.
+  - `push_mass`(export, 70.0, TODO 프로토타입 값) 신규 추가 — Player가 몸으로 미는 상호작용 전용 유효 질량(운동량 비율 계산용, `CharacterBody3D` 자체의 물리 질량이 아님). 신규 `_apply_push_resistance()`가 `move_and_slide()` 호출 **직전**, 직전 프레임에 실제로 밀고 있던 대상의 질량만을 이용해 reduced-mass 비율(`current_component * push_mass / (push_mass + object_mass)`)로 Player 자신의 전진 속도 성분을 미리 낮춘다. 처음에는 대상의 `linear_velocity`도 함께 참조하는 (반복 계산형) reduced-mass 공식을 시도했으나, 그 `linear_velocity` 자체가 이미 매 프레임 raw push로 오염돼 있어(질량과 무관하게 거의 Player 속도를 반영) 보정이 전혀 누적되지 않음을 헤드리스 실측으로 확인하고 폐기했다 — RigidBody의 속도를 전혀 참조하지 않는 현재의 단순 비율식으로 교체한 뒤에야 실제로 효과가 나타났다. `_push_away_rigid_bodies()`가 매 프레임 끝에 현재 접촉 정보(`push_direction`, `mass`)를 `_active_pushes`에 기록해 다음 프레임 `_apply_push_resistance()`가 사용한다.
+  - 잡고 있는(Grab 중) Grabbable에는 Body Push를 중복 적용하지 않는 기존 제외 로직(`collider == held_grabbable`)을 `collider is GrabbableBody and collider.has_grabber(self)`로 일반화(다중 Grabber 구조와 의미상 일치, 동작은 동일).
+  - `linear_velocity` 직접 대입, 질량별 속도 multiplier, mass 임시 조작은 전혀 사용하지 않음 — `apply_central_force`/Player 자신의 `velocity` 조정만 사용.
+- **검증**: 임시 헤드리스 스크립트(검증 후 삭제)로 21개 항목 3회 연속 실행 전부 PASS. (1) 동일 `BoxShape3D`/`PhysicsMaterial`(friction 0.7), mass만 5/15/20/25로 변경한 격리 비교 — 1초 후 속도 3.65/3.23/2.87/1.34 m/s로 정확히 단조 감소, 25kg이 5kg의 약 37%(≤40% 권장 기준 충족). (2) 실제 4종 오브젝트(1초 연속 접촉) — `SmallPhysicsBox` 2.99, `Package` 2.76, `PhysicsBarrel` 3.22(원통형 굴림으로 예외적으로 잘 이동, 정상), `PhysicsCrate` ≈0(정지마찰 245N > push_force 220N이라 몸으로는 거의 밀리지 않음 — 이제 실제 물리와 일치, Crate가 SmallBox와 같은 속도로 끌려가지 않음 확인). (3) 회귀: Grab 중인 물체에 Body Push 중복 적용 없음(Grab 상태에서 NaN 없음, 폭주 없음), Grab하지 않은 물체는 정상 충돌·정상 Push 유지, Player가 물체를 관통하지 않음, Grab/DeliveryZone 관련 기능 무변화. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+- **수정 파일**: `hell-delivery/scenes/player/Player.tscn`(`collision_mask` 5→21), `hell-delivery/scenes/player/Player.gd`(`max_push_speed` 제거, `push_mass` 추가, `_apply_push_resistance()` 신규, `_push_away_rigid_bodies()` 수정).
+- **남은 위험**: `push_mass`(70.0)는 사람 평균 체중을 참고한 초기 추정값으로, 여러 후보를 실측 비교하지 않았다 — 사용자 수동 테스트에서 "무거운 물체를 밀 때 Player가 너무 많이/적게 느려진다"고 느끼면 조정이 필요할 수 있다(`TECH_DEBT.md`에 추가 검토 항목으로 남길 만함). `PhysicsCrate`가 이제 몸으로는 거의 밀리지 않게 된 것은 실제 friction/mass 값 기준으로 올바른 결과이지만, 이전까지의(버그가 있던) 체감과 달라지므로 사용자 재확인이 필요하다.
+- **상태**: 이 결함 수정을 포함해도 T073은 여전히 `[REVIEW]`(사용자 수동 테스트 대기). T072/EPIC-05는 무변경. T070은 계속 `[BLOCKED]`.
+
+### T073 결함 수정 — Held 상태에서 Body Push가 과도하게 강해지는 문제
+
+- **결함**: 사용자가 "다른 물체(SmallBox/Package)를 잡은 채 몸으로 25kg `PhysicsCrate`를 밀면, 빈손일 때보다 Crate가 훨씬 가벼운 물체처럼 쉽게 밀린다"고 보고. 위 "RigidBody 질량별 Player Push 차이" 결함 수정(직전 항목) 이후에도 재현됨.
+- **원인**: 헤드리스 실측(빈손/SmallBox 보유/Package 보유 3종 비교, 3초 연속 접촉)으로 Player가 Crate에 접근하면 **두 채널이 동시에 Crate에 힘을 가한다**는 것을 확인했다 — (1) `_push_away_rigid_bodies()`의 일반 Body Push(`push_force`=220N, `_apply_push_resistance()`로 질량 비율 감쇠), (2) 잡고 있는 물체(SmallBox/Package)가 Player보다 먼저 Crate에 맞닿아 `GrabbableBody._apply_grab_forces()`의 Spring-Damper 힘(최대 `max_force_per_grabber`=300N, 일반 Push보다 큰 상한)을 Crate에 그대로 전달하는 채널. 실측으로 `player_body_touched_crate_directly=true`가 Player 자신이 계속 전진하는 한 빈손/보유 여부와 무관하게 결국 항상 성립함을 확인했다 — 즉 잡은 물체가 먼저 Crate에 닿아 Spring 힘을 전달하는 동안에도 Player 몸이 뒤이어 Crate에 닿으면 일반 Body Push가 **추가로** 적용되어, 같은 대상에 두 힘이 중복 합산되고 있었다. `GrabCollisionBarrier`(layer 32, mask 0)는 Crate의 `collision_mask`(23, bit 32 없음)와 애초에 겹치지 않아 이 경로는 아니었음을 mask 값과 실측(barrier가 Crate와 실제 물리적 충돌을 생성하지 않음)으로 확인.
+- **수정**:
+  - `GrabbableBody.gd`: `_ready()`에서 `contact_monitor=true`/`max_contacts_reported=8` 활성화(기존 기본값은 비활성이라 실제 접촉 목록을 조회할 수 없었음), 신규 `is_touching(body)` 메서드 추가(`get_colliding_bodies()`에 대상이 있는지만 확인, Spring 힘 계산·`max_force_per_grabber`·질량 등은 전혀 건드리지 않음).
+  - `Player.gd`의 `_push_away_rigid_bodies()`: 대상에 `push_force`를 적용하기 전, `held_grabbable != null and held_grabbable.is_touching(collider)`이면 이 프레임의 `apply_central_force()` 호출만 건너뛴다(이미 Grab Spring이 같은 대상에 힘을 전달 중이므로 중복 방지). `_active_pushes` 기록(다음 프레임 `_apply_push_resistance()`가 쓰는 Player 자신의 감속 정보)은 이 경우에도 그대로 유지 — Player 몸이 실제로 그 대상과 접촉했다는 사실 자체는 held 여부와 무관하게 반영되어야 하므로, held 여부에 따라 Player의 감속 계산 방식을 바꾸지 않았다.
+  - 일반 Body Push 계산식(`push_force`, `_apply_push_resistance`), `max_force_per_grabber`, Spring-Damper 힘 계산, mass 값은 전혀 변경하지 않음 — held object가 대상과 닿지 않은 프레임에서는 기존과 완전히 동일하게 동작한다.
+- **검증**: 임시 헤드리스 스크립트(검증 후 삭제)로 빈손/SmallBox 보유/Package 보유 3종 비교(동일 위치·동일 입력, 3초 연속 접근) — 수정 전 Package 보유 시 Crate 이동 거리 비율 2.00배(빈손 대비)였던 것이 수정 후 1.61배로 감소(권장 기준 1.5배에 근접, 완전히 일치하지는 않음 — 최대 속도 비율은 실측상 변동폭이 있어 이번 수정만으로 모든 지표를 1.5배 이내로 맞추지는 못했다). SmallBox 보유 시에는 원래도 빈손보다 낮은 비율(0.39~0.42배)이라 이번 수정으로 문제되지 않음. 회귀: 질량별 Push 순서(5>15>20>25, 25kg≤5kg의 40%) 3회 연속 PASS, 실제 4종 오브젝트 Push(SmallBox/Package/Barrel/Crate) 정상, Grab 중 물체에 Body Push 중복 미적용, `add_grabber` 성공, collision exception 정상, NaN·속도 폭주·관통 없음, `--headless --import`/`--headless --quit-after 90` 오류·경고 0건. Force-Based Grab 자체(Spring 계산·torque·다중 Grabber·`max_force_per_grabber`)는 무수정이라 별도 회귀 없음(코드 변경 범위 자체가 이를 건드리지 않음).
+- **수정 파일**: `hell-delivery/scenes/objects/GrabbableBody.gd`(`_ready()`, `is_touching()` 추가), `hell-delivery/scenes/player/Player.gd`(`_push_away_rigid_bodies()`에 중복 방지 조건 1개 추가).
+- **남은 위험**: Package를 보유한 채 Crate에 닿는 경우 이동 거리 비율이 여전히 사용자가 제시한 "1.5배를 크게 초과하지 않음" 초기 기준에 근접하되 완전히 이내는 아니다(1.61배) — Spring Force 자체(최대 300N, `max_force_per_grabber`)가 일반 Body Push(220N, 질량 비율로 추가 감쇠)보다 크게 설계돼 있어 held object가 대상에 닿아 있는 동안에는 어느 정도 더 강하게 밀리는 것이 구조적으로 자연스럽다 — 사용자가 명시한 대로 이 값(`max_force_per_grabber`)과 일반 Push 시스템 자체는 이번 수정에서 건드리지 않았으므로, 남은 차이의 최종 체감 허용 여부는 사용자 수동 테스트로 판단이 필요하다.
+- **상태**: 이 결함 수정을 포함해도 T073은 여전히 `[REVIEW]`(사용자 수동 테스트 대기). T072/EPIC-05는 무변경. T070은 계속 `[BLOCKED]`. **(이후 사용자 승인으로 T073 `[DONE]` 확정 — 아래 "T073 사용자 수동 테스트 승인(최종)" 참고)**
+
+### T073 재검증 — 1인칭·조준점·조작성 최종 확인(코드 변경 없음)
+
+- **목적**: 위 두 차례의 Push 결함 수정(Player.gd 3회 수정, GrabbableBody.gd 1회 수정) 이후에도 T073의 원래 구현(1인칭 카메라, 화면 중앙 조준점, 조준점-Grab 판정 공유, HandPoint 구성)이 그대로 유지되는지, 그리고 원래 계획된 수치 기반 조작성 검증 항목이 여전히 통과하는지 재확인한다.
+- **조사 결과(수정 전)**: `Player.gd`(카메라 yaw/pitch 분리, `grab_shape_cast`/`hold_point`가 `CameraPivot` 자식, `grab_aim_state_changed` 시그널), `Player.tscn`(`SpringArm3D` 없음, `Camera3D`가 `CameraPivot` 직계 자식, `MeshInstance3D.layers=2` + `Camera3D.cull_mask`가 레이어 2 제외, `GrabShapeCast`가 `CameraPivot` 원점), `scenes/ui/Crosshair.gd`(상태형 조준점, `mouse_filter=IGNORE`), `DeliveryHUD.gd`/`PrototypeLevel.gd`(조준점 상태 연결) 모두 기존 그대로 존재함을 확인 — Push 결함 수정 2건은 `_push_away_rigid_bodies()`/`_apply_push_resistance()`/`GrabbableBody.is_touching()`만 건드려 카메라·조준점·Grab 감지 코드와 겹치지 않는다. **재작성 없이 재검증만 수행**.
+- **검증(임시 헤드리스 스크립트, 검증 후 삭제, 3회 연속 실행)**: 총 18개 항목 전부 PASS.
+  - Grab 성공률: 4종(SmallBox/Package/Barrel/Crate) × 20회, 정면 유효 조준 상태에서 80/80(100%) 성공.
+  - 거리 판정: 4종 × 4개 거리(표면 기준 0.4/1.5/2.4m은 유효 사거리 내, 2.6m은 사거리 밖)에서 16개 전부 기대와 일치(성공/실패 경계 정확).
+  - 가시선: 벽 뒤 대상 Grab 시도 5회 중 성공 0회. 일렬 배치 시 앞 물체 선택 10/10(100%).
+  - 자기 가림: Player 360도 회전 + pitch 전 범위(`min_pitch`~`max_pitch`) 이동 중 `GrabShapeCast`가 Player 자신을 감지한 횟수 0회, `MeshInstance3D.layers`(2)와 `Camera3D.cull_mask`가 서로 배타적임을 재확인.
+  - 입력 반응성: Grab 입력→Connection 생성, Release 입력→Connection 제거, 조준 대상 변경→조준점 상태 변경 모두 같은 물리 tick 내 처리 확인(헤드리스 하네스에서는 `SceneTree.physics_frame` 시그널이 해당 tick의 노드 처리 *직전*에 발신되는 특성 때문에 측정값이 실제보다 1~2 커 보이는 아티팩트가 있어, 원 지연이 아니라 이 오프셋을 보정해 판정).
+  - 화면 중앙 정렬: `GrabShapeCast`가 `Camera3D`와 정확히 같은 로컬 원점(오프셋 0.0m)이라 구조적으로 항상 화면 정렬 오차 0px.
+  - 실제 레벨(`PrototypeLevel`) 운반 회귀: Package Grab 성공, 전진/후진/좌우 이동·빠른 카메라 회전 중 NaN 없음, 이동 후에도 Grab 유지, Player-Package 관통 없음.
+  - Push 회귀(직전 두 결함 수정 유지 확인): 빈손 대비 SmallBox/Package 보유 시 거리비 정상 범위, `GrabCollisionBarrier`가 무관한 Crate에 힘을 전달하지 않음.
+- **결론**: T073은 코드 수정 없이 재검증만으로 통과 — 원래 구현이 이후의 Push 결함 수정들과 정상적으로 공존하며, 계획된 자동 조작성 측정 항목(성공률/거리/가시선/자기가림/입력반응/화면정렬/운반회귀)을 모두 충족한다.
+- **수정 파일**: 없음(문서만 갱신).
+- **남은 위험**: 자동 검증은 조작 편안함·조준점 가독성·멀미 여부 등 주관적 항목을 판단할 수 없다 — 사용자 수동 테스트가 반드시 필요하다. `docs/GAME_DESIGN.md`의 "3인칭 카메라 기본" 서술과 실제 구현(1인칭)의 불일치는 T073 최초 작업 때부터 알려진 상태이며, 이번 재검증 범위에는 포함되지 않았다(아래 "T073 사용자 수동 테스트 승인(최종)"에서 별도로 해결).
+- **상태**: T073은 여전히 `[REVIEW]`(사용자 수동 테스트 대기, `[DONE]` 처리하지 않음). T070은 계속 `[BLOCKED]`. EPIC-04 및 목표 버전 완료 처리하지 않음.
+
+### T073 사용자 수동 테스트 승인(최종)
+
+- **사용자 수동 테스트 결과: 승인.** 1인칭 카메라·조준점·Grab 조작성 전체(위 두 차례 Push 결함 수정 포함) 최종 상태로 실제 플레이 테스트를 진행했고, 다음을 모두 확인해 승인함:
+  - 1인칭 카메라가 정상 작동
+  - 로컬 Player 모델이 시야와 Grab 판정을 가리지 않음
+  - 조준점 상태와 실제 Grab 대상이 일치
+  - Package 반복 Grab에서 치명적인 오조작 없음
+  - 중앙과 모서리 Grab의 torque 차이 정상
+  - 운반 중 시야 확보 가능
+  - 빠른 카메라 회전 후 Release가 자연스러움
+  - 좁은 문, 계단, 경사로 운반 가능
+  - held 상태에서 Crate Body Push가 과도하게 강해지지 않음
+  - Package 배송과 Restart 회귀 정상
+  - 심한 카메라 불편, 관통, NaN, 속도 폭주 없음
+- **완료 처리**: 이 승인으로 T073은 `[DONE]`으로 확정한다(섹션 25 상단 상태 갱신). 카메라 눈높이(`CameraPivot` y=0.7), `HoldPoint` 오프셋(1.5m), 조준점 색상/크기 등 T073에서 도입된 프로토타입 값은 이번 승인으로 **사용자 승인된 Baseline**으로 확정되며, 추가 조정 가능성은 남기되 완료를 막는 미해결 결함으로는 취급하지 않는다.
+- **문서 동기화**: `docs/GAME_DESIGN.md`의 "3인칭 카메라 기본" 서술(카메라 섹션, 섹션 26, 섹션 32)을 실제 구현(1인칭, T073)과 일치하도록 최소 수정했다 — 핵심 장르/코어 루프/MVP 범위는 변경하지 않고 카메라 시점 서술만 사실과 동기화(`CLAUDE.md` 섹션 9: 사용자의 최신 명시적 지시가 최우선).
+- **T070 재개**: 위 섹션 22에서 T070의 `[BLOCKED]`를 해제하고 `[REVIEW]`(사용자 최종 플레이·재미 평가 대기)로 전환했다. 평가 항목을 12개→14개로 확장해 1인칭 카메라 편안함·조준점 일치 항목을 추가했다. EPIC-04(`docs/ROADMAP.md`)와 목표 버전(v0.2.0)은 T070의 실제 최종 재미 평가 결과가 나오기 전까지 완료 처리하지 않는다.
+
+## 26. T074 — Local Co-op Test Environment
+
+- 상태: `[x]` `[DONE]` (구현·자동 검증·사용자 수동 테스트 승인 모두 완료 — 아래 "T074 사용자 수동 테스트 승인(최종)" 참고)
+- 목적: v0.2.0 완료 이후 v0.3.0(Fun Physics Update)의 첫 단계로, 로컬 환경에서 실제 Player 2명이 같은 물리 월드를 공유하고 하나의 물체를 동시에 잡을 수 있는 **로컬 2인 물리 검증 기반**을 구현한다. 온라인 멀티플레이가 아니다.
+- 소속: `docs/ROADMAP.md` v0.3.0 EPIC-06(Local Co-op Foundation, 신규) — FEATURE-06-A(로컬 2인 분할 화면 테스트 환경)
+- 선행 작업: v0.2.0 전체 완료(T070 `[DONE]`, EPIC-01~05 `[DONE]`)
+- 작업 범위:
+  - `Player.gd`: `InputProfile` enum(KEYBOARD_MOUSE/GAMEPAD) 및 `player_slot`/`input_profile`/`gamepad_device`/`gamepad_look_sensitivity`/`gamepad_deadzone` export 추가. 이동 입력을 `_get_movement_input_2d()`로 추출(GAMEPAD면 왼쪽 스틱+deadzone), 시점 회전을 `_apply_gamepad_look()`으로 추가(오른쪽 스틱, delta 곱)하고 기존 마우스 기반 `_unhandled_input()`은 `input_profile != KEYBOARD_MOUSE`면 즉시 반환하도록 가드. Grab 입력을 `_update_gamepad_grab_edge()`(게임패드 A 버튼, 프레임 간 edge 직접 추적)로 확장하고 `_handle_grab_input()`이 프로필에 따라 마우스 액션 또는 게임패드 edge를 선택하도록 분기. `jump`/`sprint`는 키보드 전용 전역 Input 상태라 `input_profile == KEYBOARD_MOUSE`로 게이트(안 그러면 한 Player의 Space/Shift가 다른 Player에도 적용되는 누수가 있었음 — 아래 "발견한 결함" 참고). `_apply_visual_layer_for_slot()` 신규 — `player_slot`마다 다른 시각 레이어를 계산해 MeshInstance3D.layers/Camera3D.cull_mask에 적용(slot 0 결과는 T073의 기존 고정값과 완전히 동일).
+  - `Player.tscn`: `collision_mask`를 21→23(World+**Player**+Package+PhysicsObject)으로 수정 — Player끼리 전혀 충돌하지 않던 결함 수정(아래 참고). `layers=2`/`cull_mask=1048573` 하드코딩 값은 그대로 두되(초기값), `_ready()`가 매번 재계산해 덮어씀.
+  - `scenes/level/LocalCoopTest.tscn`/`LocalCoopTest.gd` 신규 — `PrototypeLevel.tscn`을 통째로 인스턴스해 레벨·물리 오브젝트·Package·DeliveryZone을 재사용(중복 생성 없음)하고, 같은 `Gameplay` 아래 `Player2`(`player_slot=1`, `input_profile=GAMEPAD`)를 형제 노드로 추가. `SplitScreen`(CanvasLayer) 아래 `HBoxContainer`로 좌우 50/50 `SubViewportContainer` 2개를 배치하고, 각 `SubViewport`의 `world_3d`를 메인 뷰포트의 `world_3d`와 동일하게 설정(물리 월드 공유, 레벨 미중복)해 그 안에 `ViewCamera`(현재 카메라, 매 프레임 해당 Player의 실제 Camera3D transform을 복사)와 전용 `Crosshair`를 배치, 각각 해당 Player의 `grab_aim_state_changed`에 연결. 기존 `DeliveryHUD`의 조준점은 숨기고 성공 패널은 그대로 공유 사용.
+- 제외 범위: 온라인 멀티플레이, RPC/네트워크 동기화, Steam 기능, 로비/매칭, 캐릭터 선택, 정식 메뉴 UI, 3인 이상, 기존 물리 수치 전면 재튜닝, `LocalCoopTest.tscn`을 Main Scene으로 지정.
+- 생성 파일: `hell-delivery/scenes/level/LocalCoopTest.tscn`, `hell-delivery/scenes/level/LocalCoopTest.gd`
+- 수정 파일: `hell-delivery/scenes/player/Player.gd`, `hell-delivery/scenes/player/Player.tscn`
+- 에디터 수동 작업: 없음(전부 텍스트 편집, headless import/boot로 구조 검증). 실제 게임패드 연결·분할 화면 렌더링 확인은 사용자 수동 테스트 필요.
+- **실행 방법**: Godot 에디터에서 `scenes/level/LocalCoopTest.tscn`을 열어 F6(현재 씬 실행)으로 실행한다. `project.godot`의 `run/main_scene`은 `PrototypeLevel.tscn` 그대로 두어(F5는 여전히 싱글플레이 실행), 이 Task 단계에서 협동 Scene을 기본 Main Scene으로 바꾸지 않는다.
+- **발견한 결함(구현 중 발견, 함께 수정)**:
+  1. `Player.tscn`의 `collision_mask`(21)에 Player 자신의 레이어(2)가 빠져 있어, 실제로 Player끼리는 전혀 물리적으로 충돌하지 않고 있었다(bidirectional-OR 규칙상 양쪽 다 상대 레이어를 마스크에 포함하지 않으면 접촉 쌍 자체가 생기지 않음) — `collision_mask`를 23으로 수정해 해결.
+  2. `Input.is_action_pressed("sprint")`/`Input.is_action_just_pressed("jump")`가 전역 상태를 그대로 읽고 있어, 로컬 협동에서 한 Player가 Shift/Space를 누르면 **다른 Player도** 질주·점프해버리는 입력 누수가 있었다 — `input_profile == KEYBOARD_MOUSE`로 게이트해 해결(게임패드 슬롯은 원래 이 두 동작을 지원하지 않으므로 조용히 무시).
+- **완료 조건**: 로컬 협동 Scene에서 Player 2명이 같은 물리 월드 공유, 좌우 분할 화면, 입력 슬롯 분리, Crosshair 독립, 실제 2인 동시 Grab(Grabber 수 0→1→2→1→0), GrabCollisionBarrier/충돌 예외가 연결 단위로 정상 동작, Player 간 비관통·비폭주 충돌, 싱글플레이 무회귀 — 모두 자동 검증으로 확인.
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인. 임시 헤드리스 `SceneTree` 스크립트(검증 후 삭제)로 `LocalCoopTest.tscn`을 직접 인스턴스해 46개 항목을 3회 연속 검증: 구조(Player 2개·별개 시각 레이어·SubViewport world_3d 공유, 12개), 입력 독립성(키보드 전진 시 P2 무변위, 게임패드 전진 시 P1 무변위, sprint 전역 누수 없음, 5개), Grab 입력 독립성(한쪽 Grab 입력이 다른 쪽 `held_grabbable`에 영향 없음, 2개), Crosshair 독립성(한쪽만 조준 시 반대쪽 Crosshair 상태 불변, 3개), 실제 2인 동시 Grab(Grabber 수 순서·서로 다른 Grab Point·충돌 예외·release 순서, 14개), 1인 vs 2인 Crate 들어올리기 비교(2인이 더 높이·목표 오차 더 작음, 3개), Player 간 충돌(관통 없음·정지 후 표류 없음, 3개), 싱글플레이 회귀(`PrototypeLevel.tscn` 단독 실행, 기존 값 무변경, Package Grab 정상, 4개).
+- 완료 근거(검증): 헤드리스 자동 검증 46개 항목 3회 연속 전부 PASS. 구조: Player1(KEYBOARD_MOUSE)·Player2(GAMEPAD) 별개 인스턴스, 서로 다른 `MeshInstance3D.layers`, 각 뷰 카메라 `cull_mask`가 자기 Player만 제외하고 상대는 그대로 보이게 함, 두 SubViewport가 메인 뷰포트와 동일한 `World3D` 공유(레벨 미중복) 확인. 입력 독립성: 키보드 `move_forward`(30프레임) 시 P1 변위 >0.3m·P2 변위 <0.05m, 게임패드 왼쪽 스틱(`InputEventJoypadMotion` 합성 입력, 30프레임) 시 P2 변위 >0.3m·P1 변위 <0.05m, P1이 `sprint`를 누른 채 P2가 게임패드로 이동해도 P2 추정 속도가 `sprint_speed`에 도달하지 않음(전역 상태 누수 없음) 확인. Grab 입력 독립성: 한쪽의 `grab_object`/게임패드 A 버튼 입력이 반대쪽 `held_grabbable`을 바꾸지 않음 확인. Crosshair 독립성: Player1만 Package를 조준한 순간 왼쪽 Crosshair만 조준 상태(1), 오른쪽은 기본 상태(0) 확인. 실제 2인 동시 Grab: `add_grabber`로 Player1→Grabber 수 1, Player2(다른 지점)→Grabber 수 2, 두 `local_grab_point`가 서로 다름, Package가 Player1·Player2 실제 Body 모두와 collision exception 관계이면서 관통 없음, Player1 release→Grabber 수 1(Player2 연결 유지)→Player2 release→Grabber 수 0, 이후 NaN·속도 폭주 없이 자유 낙하 확인. 1인 vs 2인: 동일 Crate·동일 시간(2초) 조건에서 2인이 1인보다 더 높이 들어올리고(1인 height≈1.86m vs 2인≈2.26m) 목표점 오차가 더 작음(1인≈0.64m vs 2인≈0.24m) — `max_force_per_grabber`(300N) 그대로 두 Grabber의 힘이 합산된 결과이며 별도의 인원수 배율은 사용하지 않음. Player 간 충돌: 서로를 향해 걸어 접근시켜도 최소 거리 1.0m 초과(capsule 반지름 합 이상) 유지, 입력을 멈춘 뒤 30프레임 동안 위치·속도 완전히 정지(표류 없음, kinematic-vs-kinematic 접촉이 폭발적 반발을 일으키지 않음 확인). 싱글플레이 회귀: `PrototypeLevel.tscn` 단독 실행 시 Player의 `input_profile` 기본값·`MeshInstance3D.layers`(2)·`Camera3D.cull_mask`(1048573)가 T073 이전과 완전히 동일하고 Package Grab이 정상 동작. `--headless --import`, `--headless --quit-after 120`(실제 Main Scene) 오류·경고 0건.
+  - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관, 테스트 스크립트에서만 수정): (1) 첫 시도에서 Player-간-충돌 테스트를 좌표 (40,1.5,40) 부근에 배치했는데, 이는 실제 Floor(대략 X/Z -10~10) 밖이라 테스트 내내 자유낙하 중이었던 것을 뒤늦게 발견 — Floor 위 좌표(0,1.5,-9)로 옮겨 재검증했다. (2) 연속된 하위 테스트 사이에 Player의 감속(`deceleration=25.0`)이 끝나기 전(3프레임만 대기)에 다음 측정을 시작해 잔류 관성이 "입력 누수"로 오인된 아티팩트를 발견 — 하위 테스트 사이 대기 프레임을 늘려(20프레임) 해결.
+- 예상 위험:
+  - `gamepad_look_sensitivity`(2.5)·`gamepad_deadzone`(0.2)는 실측 후보 비교 없는 초기 추정값 — 사용자 수동 테스트에서 너무 둔하거나 예민하면 조정 필요.
+  - Grab 버튼을 오른쪽 트리거(아날로그) 대신 `JOY_BUTTON_A`(디지털 페이스 버튼)로 선택했다 — 임계값 튜닝을 피하기 위한 의도적 선택이며, 사용자가 트리거를 선호하면 별도로 변경 가능.
+  - 로컬 Player Mesh 은닉용 시각 레이어를 `player_slot`으로 동적 계산하도록 바꿨다(T073의 정적 하드코딩 대체) — 3인 이상으로 확장 시(이번 범위 밖) 레이어 개수(20개 제한)를 고려한 재검토가 필요할 수 있다.
+  - 분할 화면 `SubViewportContainer` 2개가 화면 전체를 덮어도, 메인/루트 뷰포트 자체는 여전히 어떤 Player의 실제 Camera3D를 기준으로 별도 렌더링을 시도할 수 있어 약간의 렌더링 낭비가 있다 — 기능적으로 화면에는 영향 없으나(완전히 가려짐), 최적화 대상은 아니라 이번 범위에서는 손대지 않았다.
+  - 실제 게임패드 연결 상태에서의 입력 반응감, 분할 화면 렌더링 품질, 두 SubViewport의 해상도 배분은 헤드리스로 확인할 수 없어 사용자 수동 테스트가 반드시 필요하다.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. v0.3.0과 Milestone 2는 완료 처리하지 않는다. v0.2.0 완료 상태는 변경하지 않는다. **(이후 사용자 승인으로 `[DONE]` 확정 — 아래 참고)**
+
+### T074 사용자 수동 테스트 승인(최종)
+
+- **사용자 수동 테스트 결과: 승인.** 로컬 2인 협동 기능(입력 슬롯 분리, 분할 화면, Player 간 충돌, 실제 2인 동시 Grab)이 정상 작동함을 확인함.
+- **완료 처리**: 이 승인으로 T074는 `[DONE]`으로 확정한다(섹션 26 상단 상태 갱신).
+- **TD-014 확정**: `gamepad_look_sensitivity`(2.5)·`gamepad_deadzone`(0.2)는 이번 승인으로 **사용자 승인된 프로토타입 기준값(Baseline)**으로 확정한다 — T061/T072와 같은 성격("여러 후보 실측 비교"는 아직 거치지 않은 초기값이지만, 완료를 막는 미해결 결함으로는 취급하지 않음). `docs/TECH_DEBT.md` TD-014에 반영.
+- **EPIC-06/v0.3.0**: 아직 완료 처리하지 않는다 — T075(Local Co-op Interaction UX)가 이어서 진행된다.
+
+## 27. T075 — Local Co-op Interaction UX
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 목적: T074에서 확보한 로컬 2인 협동의 물리적 기반(동시 Grab, 분할 화면, 입력 슬롯 분리) 위에, 각 Player가 "누가 무엇을 잡고 있는지·같은 물체를 함께 잡고 있는지·물체의 어느 지점을 잡았는지·연결이 왜 끊겼는지·P2 게임패드 조작이 편안한지"를 직관적으로 알 수 있도록 UX를 보강한다. 기존 Force-Based Physics Grab과 물리 수치(spring/damping/max_force 등)는 변경하지 않는다.
+- 소속: `docs/ROADMAP.md` v0.3.0 EPIC-06(Local Co-op Foundation) — FEATURE-06-A 후속
+- 선행 작업: T074 `[DONE]`(사용자 수동 테스트 승인 완료)
+- 작업 범위:
+  1. **P2 게임패드 조작 개선**(`Player.gd`): 기존 단일 `gamepad_deadzone`을 `move_deadzone`(왼쪽 스틱)/`look_deadzone`(오른쪽 스틱) 두 export로 분리, `invert_gamepad_y`(오른쪽 스틱 상하 반전, 기본 false) 추가. Grab 입력을 오른쪽 트리거(`JOY_AXIS_TRIGGER_RIGHT`, 임계값 `gamepad_grab_trigger_threshold=0.5`)와 A 버튼의 OR 조합으로 확장(`_update_gamepad_grab_edge()`) — 두 입력이 동시에 눌려도 중복 Connection이 생기지 않고, 하나만 떼도 남은 입력이 눌려 있으면 즉시 Release되지 않도록(`pressed = trigger_pressed or button_pressed`로 단일 edge만 추적) 구현. P1 키보드/마우스 입력 경로는 전혀 건드리지 않음.
+  2. **Player별 Grab Point 표시**(`GrabbableBody.gd`): `add_grabber()` 성공 시 해당 Grabber 전용 절차적 마커(`SphereMesh`, 반지름 0.04m, `SHADING_MODE_UNSHADED`)를 물체의 **자식 노드**로 생성해 `position = local_grab_point`로 고정 — 별도 프레임 동기화 없이 물체 이동/회전에 자동으로 따라감. Player 슬롯별 색 구분(slot 0=시안, slot 1=주황), CollisionShape 없음(물리 미참여). `remove_grabber()`/자동 해제 시 해당 Grabber 마커만 `queue_free()`(다른 Grabber 마커는 유지).
+  3. **동시 Grab 피드백**(`LocalCoopTest.gd`/`.tscn`): 각 SubViewport에 `CoopStatus` Label(기본 숨김) 추가, `_physics_process()`에서 자기 Player의 `held_grabbable.get_grabber_count() >= 2`일 때만 표시. 같은 물체를 둘 다 잡을 때만 켜지고, 한쪽이 release하는 즉시(다음 physics frame 이내) 꺼짐. 각 Crosshair 상태는 기존과 동일하게 완전히 독립적으로 유지.
+  4. **Release 피드백**(`GrabbableBody.gd`/`Crosshair.gd`/`LocalCoopTest.gd`): `GrabbableBody`에 `DisconnectReason` enum(MANUAL/DISTANCE_EXCEEDED/BLOCKED)과 `grabber_disconnected(grabber, reason)` 시그널 추가, `Player.gd`에 이를 중계하는 `grab_connection_lost(reason)` 시그널 추가. `Crosshair.gd`에 `flash(color)` 추가 — 사용자가 직접 놓은 경우(MANUAL)는 별도 표시 없이 조준점 상태 변화만으로 충분하다고 보고 점멸하지 않으며, DISTANCE_EXCEEDED(주황)·BLOCKED(빨강)만 0.4초 짧게 링 점멸. 텍스트 없음, 상대 Player가 여전히 들고 있으면 그 화면에는 아무 표시도 하지 않음(자기 연결 해제만 자기 화면에 표시).
+  5. **분할 화면 HUD 정리**(`LocalCoopTest.tscn`): 각 SubViewport의 Crosshair를 화면 정중앙(`anchor 0.5/0.5`)에 고정, `PlayerTag` Label(좌상단, "P1"/"P2")과 `CoopStatus` Label(하단 중앙)을 기존 `DeliveryHUD`와 겹치지 않게 배치. 싱글플레이(`PrototypeLevel.tscn` 단독 실행)는 이 씬을 전혀 거치지 않으므로 기존 HUD 형태가 그대로 유지됨.
+- 제외 범위: Force-Based Physics Grab의 물리 수치 변경, Player-vs-Player 충돌 로직 대규모 수정, 온라인 멀티플레이, 정식 메뉴/설정 UI, 3인 이상 지원, `LocalCoopTest.tscn`을 Main Scene으로 지정.
+- 생성 파일: 없음(T074에서 생성된 `LocalCoopTest.tscn`/`.gd`를 수정)
+- 수정 파일: `hell-delivery/scenes/player/Player.gd`, `hell-delivery/scenes/objects/GrabbableBody.gd`, `hell-delivery/scenes/ui/Crosshair.gd`, `hell-delivery/scenes/level/LocalCoopTest.gd`, `hell-delivery/scenes/level/LocalCoopTest.tscn`
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 실제 게임패드 드리프트 체감, 마커 시인성, 점멸 타이밍 체감은 사용자 수동 테스트 필요.
+- 완료 조건: 게임패드 10초 무입력 드리프트 사실상 0, P1/P2 최고 이동 속도 일치, 트리거+A 동시 입력 시 중복 Connection·조기 Release 없음, Grab Point 마커가 실제 `local_grab_point`를 오차 0.03m 이내로 표시하고 이동/회전 중에도 추종, 동시 Grab 시에만 양쪽 협동 HUD 표시(0→1→2→1→0 정상 순서), Release 사유별 점멸 구분, 싱글플레이·좁은 문·Barrier 회귀 없음 — 모두 자동 검증으로 확인.
+- 테스트 방법: 임시 헤드리스 `SceneTree` 스크립트(검증 후 삭제)로 `LocalCoopTest.tscn`을 직접 인스턴스해 39개 항목을 3회 연속 검증: 게임패드 드리프트(10초 무입력, 위치·yaw·pitch 변화, 3개), 최대 입력(P1/P2 최고 속도 비교, 180도 회전 소요 시간·프레임당 회전량, 3개), 입력 독립성 재검증(키보드/게임패드 이동 상호 무간섭, 2개), 트리거+A 동시 입력(중복 없음, 유지, 동시 해제, 순서 무관 재확인, 정리, 5개), Grab Point 표시(생성 개수, 위치 오차, 물리 미참여, Player별 색 구분, 이동/회전 추종, 개별 release 시 표시 개수 순서 0→1→2→1→0, 11개), 협동 HUD(1명/2명/release/다른 물체, 4개), Release 피드백(점멸 없음/거리초과 자동 해제/점멸함/수동 무점멸, 4개), 좁은 문 및 기타 회귀(NaN 없음, 자유낙하 없음, Barrier 무관 Crate 무영향, 3개), 싱글플레이·Delivery·Restart 회귀(4개).
+- 완료 근거(검증): 헤드리스 자동 검증 39개 항목 3회 연속 전부 PASS. 드리프트: 10초간 위치 변화 0.0m, yaw 변화 0.0deg, pitch 변화 0.0deg(입력 없음, 완전 정지). 최대 속도: P1=4.0, P2=4.0(`walk_speed`와 동일, 차이 0%). 180도 회전: 소요 시간 약 1.267초, 프레임당 최대 회전 약 2.39deg(60fps 기준 상한 30deg/frame 대비 여유 큼, 폭주 없음). 트리거+A: 동시 입력 시 Connection 1개만 생성, 한쪽만 떼도 유지, 둘 다 떼야 Release, 순서를 바꿔도(A 먼저→트리거 추가) 중복 없음. Grab Point 표시: 마커 위치가 `local_grab_point`와 오차 0.03m 이내 일치, `CollisionObject3D` 아님·자식 없음(물리 미참여 확인), Player1(시안)·Player2(주황) 마커 색 다름, 60프레임 이동/회전 후에도 마커의 `global_position`이 실제 계산된 `local_grab_point`의 world 좌표와 오차 0.001m 이내(자식 노드 로컬 좌표라 항상 일치), Player1만 release 시 Player1 마커만 사라지고 Player2 마커는 유지, 모두 release 후 표시 0개(원래 자식 2개만 남음). 협동 HUD: 1명만 잡았을 때 양쪽 다 표시 없음, 2명이 같은 물체를 잡으면 1 physics frame 이내 양쪽 다 표시, 1명이 release하면 1 physics frame 이내 양쪽 다 표시 해제, 서로 다른 물체를 각각 잡을 때는 표시 0회. Release 피드백: Grab 직후에는 점멸 없음, 강제로 거리를 벌려 `DISTANCE_EXCEEDED`로 자동 해제되면 해당 Crosshair만 점멸, 수동 Release(`remove_grabber` 직접 호출)는 점멸하지 않음. 좁은 문 및 회귀: 좁은 문 통과 시도 중 NaN 없음, 두 Player 모두 자유낙하 없음(Y 좌표 정상 범위 유지), Barrier가 무관한 Crate를 밀지 않음(속도 거의 0). 싱글플레이·Delivery·Restart: `input_profile` 기본값 유지, Package만 DeliveryZone 성공 판정, PhysicsCrate는 성공 판정에 관여하지 않음. `--headless --import`, `--headless --quit-after 60`(실제 Main Scene) 오류·경고 0건.
+  - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관, 테스트 스크립트에서만 수정): Grab Point 표시 검증에서 이전 하위 섹션들(최대 속도·180도 회전 등)이 남긴 두 Player의 위치·회전 누적 상태를 그대로 이어받아 물체를 배치했더니, Player2의 `hold_point`가 `max_grab_distance`(3.0m) 밖에 위치해 `add_grabber()`는 성공(`true`)했지만 바로 다음 physics frame의 `_apply_grab_forces()`에서 거리 초과로 즉시 자동 해제되는 현상이 있었다(게임 코드는 설계대로 정상 동작 — Release 피드백 섹션에서 이미 검증한 것과 같은 정상적인 자동 해제 경로). Player2의 현재(이미 바닥 위에서 검증된) 위치를 기준으로 두 Player를 서로 마주보게 명시적으로 재배치한 뒤 실제 `hold_point.global_position`으로 물체 위치를 계산하도록 테스트 스크립트를 수정해 해결.
+- 예상 위험:
+  - `gamepad_grab_trigger_threshold`(0.5)·`invert_gamepad_y`(기본 false)는 이번에 새로 도입된 프로토타입 값으로, 여러 후보 실측 비교를 거치지 않았다 — 사용자 수동 테스트에서 트리거 반응감이 너무 이르거나 늦으면 조정 필요.
+  - `move_deadzone`/`look_deadzone`은 T074의 단일 `gamepad_deadzone`(0.2, 사용자 승인된 Baseline)을 그대로 승계해 둘 다 0.2로 분리했을 뿐, 이동/시점을 서로 다른 값으로 튜닝하지는 않았다 — 실제 사용 중 둘 중 하나만 불편하면 개별 조정 가능.
+  - Grab Point 마커·협동 HUD·Release 점멸은 헤드리스 자동 검증으로 "정확한 좌표·타이밍"만 확인했고, 실제 화면에서의 시인성(마커 크기, 점멸 눈에 띄는 정도, 텍스트 가독성)은 사용자 수동 테스트가 반드시 필요하다.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-06과 v0.3.0은 완료 처리하지 않는다. v0.2.0 완료 상태는 변경하지 않는다.
 
 ## 작업별 작성 형식
 
