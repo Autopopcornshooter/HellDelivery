@@ -1,0 +1,86 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/OnboardingOverlay.gd" id="1_onboarding"]
+
+[node name="OnboardingOverlay" type="CanvasLayer"]
+script = ExtResource("1_onboarding")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Background" type="ColorRect" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05, 0.05, 0.07, 0.72)
+
+[node name="CenterContainer" type="CenterContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/CenterContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+custom_minimum_size = Vector2(460, 0)
+
+[node name="TitleLabel" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 26
+text = "Package를 잡아 Delivery Zone까지 운반하세요"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HintSpacer" type="Control" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+custom_minimum_size = Vector2(0, 6)
+
+[node name="HintMove" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "WASD 이동 · 마우스 시점"
+horizontal_alignment = 1
+
+[node name="HintGrab" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "마우스 왼쪽 버튼 길게 잡기 / 놓기"
+horizontal_alignment = 1
+
+[node name="HintPauseRestart" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "Esc 일시정지 · R 다시 시작"
+horizontal_alignment = 1
+
+[node name="PromptSpacer" type="Control" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+custom_minimum_size = Vector2(0, 10)
+
+[node name="PromptLabel" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "아무 키나 눌러 시작"
+horizontal_alignment = 1

@@ -6,7 +6,7 @@
 
 버전 번호와 각 버전의 기능 범위는 `docs/GAME_DESIGN.md` 섹션 29(개발 단계, Phase 0~9)를 기준으로 재편성한 것이다. Phase 구조 자체는 `GAME_DESIGN.md`가 원본이며, 이 문서는 그것을 릴리스 단위(버전)로 묶어 우선순위를 제시한다. 기획 내용을 변경하지 않는다.
 
-**Current Status: v0.2.0 완료, v0.3.0(EPIC-06 — Local Co-op Foundation) 진행 중** — v0.2.0(Physics Playground)은 EPIC-01~05·T070 전부 완료로 확정되었다. v0.3.0(Fun Physics Update) 1단계인 EPIC-06의 T074(로컬 2인 협동 테스트 환경)는 사용자 수동 테스트 승인으로 `[DONE]` 확정되었다. 이어서 T075(Local Co-op Interaction UX — 협동 상태를 직관적으로 알 수 있는 UX 보강)를 구현·자동 검증 완료했으며(`[REVIEW]`), 사용자 수동 테스트 결과를 기다린다. v0.3.0과 Milestone 2는 T075 승인이 끝나기 전까지 완료 처리하지 않는다.
+**Current Status: v0.3.0 완료(Milestone 2 완료), v0.4.0(Steam Demo — EPIC-07 Steam Demo Readiness) 진행 중** — v0.2.0·v0.3.0·Milestone 2는 전부 완료로 확정되었다(EPIC-01~06 전부 완료). T077(Demo Readiness Audit & Scope Lock)의 조사·권장안(안 A — 싱글플레이 중심 데모)이 사용자 승인을 받아 `[DONE]` 확정되었다 — v0.4.0 데모 범위는 싱글플레이 중심으로 확정되었고, 로컬 협동(`LocalCoopTest.tscn`)은 공개 데모 필수 범위에서 제외되었으나 삭제·변경 없이 그대로 유지된다. T078(Main Menu & Demo Entry — 데모 시작·게임 종료, 키보드/마우스/게임패드 조작)이 사용자 승인을 받아 `[DONE]` 확정되었고, 이 메인 메뉴는 v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow — 일시정지 메뉴·공용 설정 화면·`GameSettings` Autoload·안전한 Scene 전환)도 사용자 승인을 받아 `[DONE]` 확정되었고, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls — 첫 실행 안내 Overlay·공용 조작법 화면·짧은 목표 문구)도 사용자 승인을 받아 `[DONE]` 확정되었고, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow)로 단일 배송 판정을 Package 3개 반복 배송 + 완료 화면(다시 플레이/메인 메뉴) 흐름으로 확장·자동 검증했으며(`[REVIEW]`), 사용자 수동 테스트를 기다린다. v0.4.0은 아직 완료 처리하지 않는다.
 
 ---
 
@@ -138,7 +138,7 @@ T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완
 
 ---
 
-## v0.3.0 — Fun Physics Update 🔶 착수(EPIC-06 진행 중)
+## v0.3.0 — Fun Physics Update ✅ 완료(EPIC-06 완료, 사용자 최종 승인)
 
 대응: `GAME_DESIGN.md` Phase 5(로컬 다인 협동 검토)
 
@@ -148,30 +148,32 @@ T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완
   - 같은 Package 동시 잡기 — **T072에서 이미 다중 `grab_connections: Dictionary` 구조로 재설계되어(`TECH_DEBT.md` TD-009 해결됨) 실제로는 재설계가 필요 없었고, T074에서 실제 Player 2명으로 검증만 수행했다.**
   - 플레이어 간 충돌
   - 협동 운반 테스트, 혼자 운반과의 속도/안정성 차이 검증
-- **Done Criteria**: 두 플레이어가 동시에 하나의 Package를 안정적으로 옮길 수 있음(또는 명확한 제약이 문서화됨), 혼자 운반이 여전히 가능함(강제 다인화 아님).
+- **Done Criteria**: 두 플레이어가 동시에 하나의 Package를 안정적으로 옮길 수 있음(또는 명확한 제약이 문서화됨), 혼자 운반이 여전히 가능함(강제 다인화 아님). **→ 충족됨**: T074~T076에서 2인 동시 Grab·1인 단독 운반 모두 자동 검증 및 사용자 승인 완료.
 - **Out of Scope**: 온라인 네트워크, 4인 이상, 정식 분할 화면 UI.
-- **Risks**: (해소됨) 애초 우려했던 "`Package.gd`의 단일 holder 구조 재설계 필요"는 T072에서 이미 해결되어 v0.3.0 착수 시점에는 남아있지 않았다. 현재 리스크는 게임패드 감도/deadzone 등 협동 조작감 튜닝값이 실측 전 추정값이라는 점 정도(`TECH_DEBT.md` 참고).
+- **Risks**: (해소됨) 애초 우려했던 "`Package.gd`의 단일 holder 구조 재설계 필요"는 T072에서 이미 해결되어 v0.3.0 착수 시점에는 남아있지 않았다. 게임패드 감도/deadzone/트리거 임계값 등 협동 조작감 튜닝값은 사용자 승인을 받았으나(`TECH_DEBT.md` TD-014/TD-015), 여러 후보 실측 비교는 아직 거치지 않은 비차단 항목으로 남아있다.
+- **완료 근거(최종)**: EPIC-06의 T074(로컬 2인 협동 테스트 환경)·T075(Local Co-op Interaction UX)·T076(전체 플레이 흐름 통합 검증)이 모두 자동 검증(각 46/39/46개 항목 3회 연속 PASS)과 사용자 수동/최종 테스트 승인을 받아 `[DONE]` 확정되었다. T076 최종 승인 이후 발견된 Held Light Object Push 결함(가벼운 held object가 빈손 Body Push보다 무거운 물체를 더 쉽게 미는 문제)도 원인 규명·수정·자동 재검증(26개 항목 3회 연속 PASS)·사용자 재검증 승인을 모두 마쳐 v0.3.0 완료 상태를 그대로 유지한다.
 
-### v0.3.0 Epic 분해 (진행 중)
+### v0.3.0 Epic 분해 (완료)
 
-#### EPIC-06 — Local Co-op Foundation (로컬 협동 기반) 🔶 진행 중
+#### EPIC-06 — Local Co-op Foundation (로컬 협동 기반) ✅ 완료
 
 - **Goal**: 온라인 네트워크 없이, 로컬에서 실제 Player 2명이 같은 물리 월드를 공유하며 물체를 함께 잡고 나르는 협동 물리 기반을 검증한다.
 - **Player Value**: 물리 기반 협동의 핵심 재미(무게를 나눠 들기, 서로 부딪히기, 같이 실수하기)를 실제로 확인할 수 있는 최초의 다인 환경.
 - **Dependencies**: v0.2.0 전체 완료(`[DONE]`).
 - **Estimated Scope**: Medium(Player.gd 입력 슬롯 분리, Player.tscn 충돌 마스크 수정, 신규 테스트 Scene 1개).
-- **진행 상태**: `docs/TASKS.md` T074 `[DONE]`(사용자 수동 테스트 승인 완료) — 로컬 2인 분할 화면 테스트 환경 구현·자동 검증(46개 항목 3회 연속 PASS) 완료. 이어서 T075 `[REVIEW]` — Grab Point 표시·협동 HUD·Release 피드백·게임패드 조작 개선(39개 항목 3회 연속 PASS) 완료, 사용자 수동 테스트 대기.
+- **진행 상태**: `docs/TASKS.md` T074 `[DONE]`(사용자 수동 테스트 승인 완료) — 로컬 2인 분할 화면 테스트 환경 구현·자동 검증(46개 항목 3회 연속 PASS) 완료. T075 `[DONE]`(사용자 수동 테스트 승인 완료) — Grab Point 표시·협동 HUD·Release 피드백·게임패드 조작 개선(39개 항목 3회 연속 PASS) 완료. T076 `[DONE]`(사용자 최종 협동 테스트 승인 완료, 이후 발견된 Held Light Object Push 결함도 수정·재검증·재승인까지 완료) — 전체 플레이 흐름 통합 검증(46개 항목 3회 연속 PASS) + 결함 수정 검증(26개 항목 3회 연속 PASS) 완료. **EPIC-06 전체 완료, 미해결 차단 결함 없음.**
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
 | FEATURE-06-A 로컬 2인 분할 화면 테스트 환경(입력 슬롯 분리, 실제 2인 동시 Grab, Player 간 충돌) | Must | ✅ 완료(`docs/TASKS.md` T074 `[DONE]`) |
-| FEATURE-06-B 로컬 협동 상호작용 UX(Grab Point 표시, 협동 HUD, Release 피드백, 게임패드 조작 개선) | Must | 🔶 진행 중(`docs/TASKS.md` T075 `[REVIEW]`) — 사용자 수동 테스트 대기 |
+| FEATURE-06-B 로컬 협동 상호작용 UX(Grab Point 표시, 협동 HUD, Release 피드백, 게임패드 조작 개선) | Must | ✅ 완료(`docs/TASKS.md` T075 `[DONE]`) |
+| FEATURE-06-C 로컬 협동 전체 플레이 흐름 최종 검증 | Must | ✅ 완료(`docs/TASKS.md` T076 `[DONE]`) |
 
 **Won't(이번 Task)**: 온라인 멀티플레이, RPC/네트워크 동기화, Steam 기능, 로비/매칭, 캐릭터 선택, 정식 메뉴 UI, 3인 이상, 정식 분할 화면 출시 UI.
 
 ---
 
-## v0.4.0 — Steam Demo
+## v0.4.0 — Steam Demo 🔶 진행 중(EPIC-07 진행 중)
 
 대응: `GAME_DESIGN.md` Phase 9 중 데모 제작·상점 자료 준비를 조기 실행
 
@@ -183,7 +185,29 @@ T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완
   - 기초 최적화 및 버그 수정
 - **Done Criteria**: 외부 플레이어가 설치해 싱글/로컬 다인으로 끝까지 플레이 가능한 빌드 1개 존재.
 - **Out of Scope**: 온라인 멀티플레이(Phase 6), 차량(Phase 7), 정식 콘텐츠 확장(Phase 8), Steamworks 업적/친구 초대.
-- **Risks**: 데모 시점에 온라인 멀티가 없다는 것이 데모 인상에 불리할 수 있음 — 데모 범위를 "협동 물리 코미디"에 집중해 상쇄하는 방향으로 접근.
+- **Risks**: 데모 시점에 온라인 멀티가 없다는 것이 데모 인상에 불리할 수 있음 — 데모 범위를 "협동 물리 코미디"에 집중해 상쇄하는 방향으로 접근. T077 조사로 확인된 리스크: (1) `export_presets.cfg`가 아직 없어 Windows 빌드 자체를 만든 적이 없음(T083에서 해결 예정), (2) 메뉴·조작법 안내·오디오·완결된 플레이 흐름이 아직 없음(T078이 메뉴, T079가 Pause/Settings/Exit, T080이 조작법 안내, T081이 완결된 배송 흐름+완료 화면을 해결, T082가 오디오 담당). **게임 종료 수단 부재는 T078의 메인 메뉴 종료 버튼과 T079의 Pause 종료 버튼으로 해결됨. 신규 사용자 온보딩 부재는 T080의 첫 실행 안내 Overlay와 공용 조작법 화면으로 해결됨. "성공 후 무엇을 해야 할지 불명확함"은 T081의 완료 화면(다시 플레이/메인 메뉴)으로 해결됨.**
+
+### v0.4.0 Epic 분해 (진행 중)
+
+#### EPIC-07 — Steam Demo Readiness (데모 준비) 🔶 진행 중
+
+- **Goal**: 구현이 아니라 조사·계획 — 현재 저장소 상태를 감사해 데모 필수/권장/선택 항목을 분류하고, 현실적인 v0.4.0 범위(싱글플레이 중심 vs 싱글+로컬 협동)를 확정한다.
+- **Player Value**: 없음(개발 준비 단계). 이후 Task들의 실제 작업 범위를 낭비 없이 정하기 위한 선행 조사.
+- **Dependencies**: v0.3.0 전체 완료(`[DONE]`).
+- **Estimated Scope**: Small(조사·문서화만, 코드 변경 없음).
+- **진행 상태**: `docs/TASKS.md` T077 `[DONE]`(사용자 승인 완료, 안 A 확정) — 실행 구조·콘텐츠·UI/UX·기술 상태 조사, 필수/권장/선택/완료 분류, 데모 범위 비교, 후속 Task(T078~T085) 계획 완료. T078 `[DONE]`(사용자 승인 완료) — 메인 메뉴(데모 시작·게임 종료, 키보드/마우스/게임패드 조작) 구현·자동 검증(44개 항목 3회 연속 PASS) 완료, v0.4.0 데모 Baseline으로 기록. T079 `[DONE]`(사용자 승인 완료) — 일시정지 메뉴·공용 설정 화면·`GameSettings` Autoload·안전한 Scene 전환 구현·자동 검증(55개 항목 중 52개 PASS) 완료, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록됨. T080 `[DONE]`(사용자 승인 완료) — 첫 실행 안내 Overlay, 공용 조작법 화면(MainMenu·PauseMenu 재사용), 짧은 목표 문구 구현·자동 검증(50개 항목 중 49개 PASS) 완료, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록됨. T081 `[REVIEW]` — Package 3개 반복 배송·진행도/토스트 HUD·플레이 타이머·완료 화면(다시 플레이/메인 메뉴) 구현·자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기.
+
+| Feature | MoSCoW | Task 후보 |
+|---|---|---|
+| FEATURE-07-A Demo Readiness Audit & Scope Lock | Must | ✅ 완료(`docs/TASKS.md` T077 `[DONE]`) |
+| FEATURE-07-B Main Menu / Pause / Settings / Exit | Must | ✅ 완료(`docs/TASKS.md` T078 `[DONE]`, T079 `[DONE]`) |
+| FEATURE-07-C Onboarding & Demo Completion Flow | Must | 🔶 진행 중(`docs/TASKS.md` T080 `[DONE]`, T081 `[REVIEW]`) — 온보딩 완료, 완료 화면 구현 완료, T081 사용자 수동 테스트 대기 |
+| FEATURE-07-D Audio & Feedback Pass | Should | 계획됨(T082) — 착수 전 |
+| FEATURE-07-E Windows Export & Build Validation | Must | 계획됨(T083) — 착수 전 |
+| FEATURE-07-F Performance & Compatibility Pass | Should | 계획됨(T084) — 착수 전 |
+| FEATURE-07-G Final Demo Playtest | Must | 계획됨(T085) — 착수 전 |
+
+**Won't(이번 단계)**: Steamworks SDK 연동, Steam 상점 페이지 업로드, 실제 빌드 배포, 온라인 멀티플레이, 신규 Asset 제작.
 
 ---
 

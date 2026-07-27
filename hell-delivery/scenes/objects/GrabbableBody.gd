@@ -11,6 +11,7 @@ extends RigidBody3D
 @export var max_spring_distance: float = 2.5 # Spring 힘 계산에 사용하는 displacement 상한(2차 안전장치 — 대부분의 경우 max_force_per_grabber가 먼저 힘을 제한한다).
 @export var max_grab_distance: float = 3.0 # 연결을 유지할 수 있는 실제 최대 거리(기존 max_hold_distance 값 승계).
 @export var max_target_speed: float = 15.0 # HandPoint 순간 이동/저프레임으로 인한 속도 폭주 방지 상한.
+@export var push_transmission_accel: float = 12.0 # TODO: 프로토타입 값, 실측 재검증 필요 — T076 결함 수정: 이 물체가 잡힌 채로 무관한 RigidBody와 접촉해 그 안쪽으로 누르는 방향 힘을 지속 전달할 수 있는 질량당 가속도 상한(N/kg). mass가 작을수록(가벼운 held object) 전달 가능한 압축력이 작아진다 — 기존에는 max_force_per_grabber(300N)가 어떤 물체를 들었든 동일하게 적용되어, 가벼운 물체가 빈손 Body Push(push_force 220N)보다 강한 유압식 밀대처럼 작동하는 결함이 있었다.
 
 const _HOLD_BLOCKED_RELEASE_FRAMES: int = 3 # 연속 몇 프레임 정적 차단이 유지되어야 해당 연결만 해제할지(한 프레임짜리 접촉/모서리 오차 무시).
 const _STATIC_BLOCK_MASK: int = 1 # World만. 다른 Grabbable(동적 RigidBody)은 차단 사유에서 제외 — 동적 오브젝트끼리 접촉만으로 연결이 끊기지 않게 한다(T071에서 도입한 정적/동적 분리를 유지).
@@ -45,6 +46,7 @@ class _PendingRestore:
 
 
 var grab_connections: Dictionary = {} # Node3D(grabber) -> _GrabConnection. 단일 holder 대신 다중 연결 구조를 사용해, 여러 Grabber가 같은 물체를 동시에 잡을 수 있게 한다(로컬 싱글플레이에서는 항상 1개, 향후 멀티플레이 협동 운반의 물리적 기반).
+var _delivered: bool = false # T081: DeliveryZone.deliver()로만 true가 되며, 그 뒤로는 add_grabber()가 항상 거부한다(Package 전용 흐름 — 다른 Grabbable은 절대 호출되지 않아 기본값 false 그대로 무영향).
 var _pending_restores: Dictionary = {} # Node3D(grabber) -> _PendingRestore. Release 직후에도 실제 Grabber 몸과 안전하게 분리될 때까지 collision exception/Barrier mask를 유지한다.
 var _barrier_hold_count: int = 0 # 현재 Barrier mask가 필요한 Grabber 수(활성 연결 + 안전 분리 대기 중인 release 포함). 0이 되어야 mask를 원래대로 되돌린다.
 var _grab_markers: Dictionary = {} # T075: Node3D(grabber) -> MeshInstance3D. 연결이 살아있는 동안 그 local_grab_point를 표시하는 순수 시각 마커(CollisionShape 없음, 물리에 관여하지 않음).
@@ -64,6 +66,8 @@ func is_touching(body: Node) -> bool:
 
 
 func add_grabber(grabber: Node3D, target_point: Node3D, world_grab_position: Vector3) -> bool:
+	if _delivered:
+		return false # T081: 배송 완료된 물체는 다시 잡을 수 없다(Package 전용 흐름, deliver() 참고).
 	if grabber == null or not is_instance_valid(grabber):
 		return false
 	if target_point == null or not is_instance_valid(target_point):
@@ -106,6 +110,24 @@ func remove_grabber(grabber: Node3D) -> void:
 	_remove_grab_marker(grabber)
 	_begin_pending_restore(grabber)
 	grabber_disconnected.emit(grabber, DisconnectReason.MANUAL)
+
+
+func deliver() -> void:
+	# T081: DeliveryZone이 이 물체를 배송 완료로 판정했을 때만 호출한다(Package 그룹 전용 —
+	# PhysicsCrate/Barrel/SmallBox 등 다른 Grabbable은 이 함수를 절대 호출하지 않으므로
+	# 이 물체들의 물리·Grab 동작에는 전혀 영향이 없다). Grab 중이었다면 먼저 안전하게 놓고
+	# (기존 remove_grabber()가 이미 처리하는 Marker 정리·Player 밀림 없는 해제를 그대로 재사용),
+	# 이후 다시 잡히지 않도록 하며 충돌도 정리해 남은 플레이를 방해하지 않게 한다.
+	if _delivered:
+		return
+	_delivered = true
+	for grabber in grab_connections.keys():
+		remove_grabber(grabber)
+	freeze = true
+	collision_layer = 0
+	collision_mask = 0
+	await get_tree().create_timer(0.6).timeout
+	visible = false
 
 
 func _create_grab_marker(grabber: Node3D, local_grab_point: Vector3) -> void:
@@ -173,6 +195,18 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 	var step: float = clampf(state.step, 0.0001, _MAX_DELTA)
 	var invalid_grabbers: Array = [] # [{grabber, reason}] — T075: Release 피드백 UI가 원인을 구분할 수 있도록 함께 기록.
 
+	# T076 결함 수정: 이 물체가 무관한 다른 RigidBody(예: Player가 미는 대상)와 접촉해 눌리고
+	# 있으면, 그 방향 Spring Force를 아래 _limit_push_transmission()으로 제한한다. 그것만으로는
+	# 부족한 이유 — GrabCollisionBarrier는 매 물리 프레임 Player의 실제 Transform을 그대로
+	# 따라가는 kinematic Body라, 이 물체가 장애물에 막혀 더 나아가지 못하는 동안 Player가 계속
+	# 전진하면 Barrier가 이 물체 쪽으로 파고들어(DD-006과 같은 kinematic 침투 해소) Spring Force와
+	# 무관하게 큰 속도를 주입할 수 있다(실측으로 확인). Barrier는 "Player 실제 몸과의 충돌 방지"만
+	# 담당해야 하므로, 이 물체가 무관한 다른 몸과 접촉 중인 동안에는 Barrier 충돌용 mask 비트를
+	# 잠시 빼 둔다(Player 실제 몸과의 충돌 예외는 grabber별 collision_exception으로 별도 유지되므로
+	# 계속 안전하다) — 접촉이 풀리면 즉시 원래대로 복구된다.
+	var unrelated_contacts := _get_unrelated_rigidbody_contacts()
+	_update_barrier_mask_for_contact(not unrelated_contacts.is_empty())
+
 	for grabber in grab_connections.keys():
 		var connection: _GrabConnection = grab_connections[grabber]
 
@@ -218,6 +252,7 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 		if is_nan(desired_force.x) or is_nan(desired_force.y) or is_nan(desired_force.z):
 			continue
 
+		desired_force = _limit_push_transmission(desired_force, unrelated_contacts)
 		var applied_force: Vector3 = desired_force.limit_length(connection.max_force)
 		state.apply_force(applied_force, offset)
 
@@ -227,6 +262,55 @@ func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:
 		_remove_grab_marker(grabber)
 		_begin_pending_restore(grabber)
 		grabber_disconnected.emit(grabber, entry.reason)
+
+
+func _get_unrelated_rigidbody_contacts() -> Array:
+	# 이 물체가 실제로 접촉 중인 대상 중, 자기 자신의 Grabber가 아닌 별개의 RigidBody만 골라낸다
+	# (World/벽 같은 StaticBody3D는 RigidBody3D가 아니므로 여기서 자동으로 제외됨 — 정적 차단은
+	# 이미 _is_connection_path_blocked()가 별도로 처리).
+	var result: Array = []
+	for other in get_colliding_bodies():
+		if not (other is RigidBody3D) or other == self or grab_connections.has(other):
+			continue
+		result.append(other)
+	return result
+
+
+func _limit_push_transmission(desired_force: Vector3, unrelated_contacts: Array) -> Vector3:
+	# T076 결함 수정: 이 물체가 잡힌 채로 무관한 다른 RigidBody(Player가 미는 대상이 아닌, 이
+	# 물체가 우연히 접촉한 별개의 물체)와 접촉 중이면, 그 물체 안쪽으로 누르는(압축) 힘 성분만
+	# push_transmission_accel * mass로 제한한다. 접촉이 없거나(공중 운반) 접촉면에서 떼어내는
+	# 방향·접선 방향 힘은 전혀 건드리지 않는다 — 기존 들어올리기·swing·release 운동량은 그대로 유지된다.
+	# 정확한 접촉 법선(Contact Normal) 대신 두 물체 중심을 잇는 수평 방향을 근사로 쓴다 — 이
+	# 프로젝트의 모든 Grabbable이 원점 대칭인 단순한 Box/Cylinder Shape라 이 근사로 충분하고,
+	# `_push_away_rigid_bodies()`의 위/아래 접촉 제외 관례와도 일치한다(적재 상황은 대상에서 제외).
+	var cap: float = mass * push_transmission_accel
+	var result := desired_force
+	for other in unrelated_contacts:
+		var away: Vector3 = global_position - other.global_position
+		away.y = 0.0
+		if away.length() < 0.001:
+			continue
+		away = away.normalized()
+		var into_direction := -away # 그 물체 안쪽으로 누르는(압축) 방향
+		var compressive_component: float = result.dot(into_direction)
+		if compressive_component > cap:
+			result += into_direction * (cap - compressive_component)
+	return result
+
+
+func _update_barrier_mask_for_contact(is_blocked_by_unrelated_body: bool) -> void:
+	# T076 결함 수정: GrabCollisionBarrier는 Player의 실제 Transform을 매 물리 프레임 그대로
+	# 따라가는 kinematic Body라(AnimatableBody3D), 이 물체가 장애물에 막혀 물러설 수 없는 동안
+	# Player가 계속 다가오면 Barrier가 이 물체 쪽으로 파고들어 Spring Force와 무관하게 큰 속도를
+	# 주입할 수 있다(DD-006과 같은 kinematic 침투 해소 문제, 실측으로 확인). 이 물체가 무관한
+	# 다른 RigidBody와 접촉해 눌리는 동안에는 Barrier 충돌용 mask 비트를 잠시 빼 둔다 — Player의
+	# 실제 몸과의 충돌은 grabber별 collision_exception(add_grabber에서 항상 설정됨)으로 별도
+	# 보장되므로, 이 비트를 잠시 빼도 "Player 실제 몸과 부딪힘"은 재현되지 않는다.
+	if is_blocked_by_unrelated_body:
+		collision_mask &= ~_GRAB_BARRIER_MASK_BIT
+	elif _barrier_hold_count > 0:
+		collision_mask |= _GRAB_BARRIER_MASK_BIT
 
 
 func _is_connection_path_blocked(state: PhysicsDirectBodyState3D, connection: _GrabConnection, world_grab_point: Vector3) -> bool:

@@ -8,6 +8,9 @@
 [ext_resource type="PackedScene" path="res://scenes/objects/PhysicsBarrel.tscn" id="6_physics_barrel"]
 [ext_resource type="PackedScene" path="res://scenes/objects/PhysicsCrate.tscn" id="7_physics_crate"]
 [ext_resource type="PackedScene" path="res://scenes/objects/SmallPhysicsBox.tscn" id="8_small_physics_box"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="9_pause_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OnboardingOverlay.tscn" id="10_onboarding_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CompletionOverlay.tscn" id="11_completion_overlay"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(20, 1, 20)
@@ -275,6 +278,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.5, 3)
 [node name="UI" type="Node3D" parent="." unique_id=549853222]
 
 [node name="DeliveryHUD" parent="UI" unique_id=2002294138 instance=ExtResource("5_delivery_hud")]
+
+[node name="PauseMenu" parent="UI" instance=ExtResource("9_pause_menu")]
+
+[node name="OnboardingOverlay" parent="UI" instance=ExtResource("10_onboarding_overlay")]
+
+[node name="CompletionOverlay" parent="UI" instance=ExtResource("11_completion_overlay")]
 
 [node name="PhysicsObjects" type="Node3D" parent="." unique_id=1753939631]
 

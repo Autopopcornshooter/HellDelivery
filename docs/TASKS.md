@@ -1068,7 +1068,7 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
 
 ## 27. T075 — Local Co-op Interaction UX
 
-- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 상태: `[x]` `[DONE]` (구현·자동 검증·사용자 수동 테스트 승인 모두 완료 — 아래 "T075 사용자 수동 테스트 승인(최종)" 참고)
 - 목적: T074에서 확보한 로컬 2인 협동의 물리적 기반(동시 Grab, 분할 화면, 입력 슬롯 분리) 위에, 각 Player가 "누가 무엇을 잡고 있는지·같은 물체를 함께 잡고 있는지·물체의 어느 지점을 잡았는지·연결이 왜 끊겼는지·P2 게임패드 조작이 편안한지"를 직관적으로 알 수 있도록 UX를 보강한다. 기존 Force-Based Physics Grab과 물리 수치(spring/damping/max_force 등)는 변경하지 않는다.
 - 소속: `docs/ROADMAP.md` v0.3.0 EPIC-06(Local Co-op Foundation) — FEATURE-06-A 후속
 - 선행 작업: T074 `[DONE]`(사용자 수동 테스트 승인 완료)
@@ -1090,7 +1090,349 @@ MVP-1 완료 선언(섹션 14) 이후, 장기 개발을 위한 프로젝트 관�
   - `gamepad_grab_trigger_threshold`(0.5)·`invert_gamepad_y`(기본 false)는 이번에 새로 도입된 프로토타입 값으로, 여러 후보 실측 비교를 거치지 않았다 — 사용자 수동 테스트에서 트리거 반응감이 너무 이르거나 늦으면 조정 필요.
   - `move_deadzone`/`look_deadzone`은 T074의 단일 `gamepad_deadzone`(0.2, 사용자 승인된 Baseline)을 그대로 승계해 둘 다 0.2로 분리했을 뿐, 이동/시점을 서로 다른 값으로 튜닝하지는 않았다 — 실제 사용 중 둘 중 하나만 불편하면 개별 조정 가능.
   - Grab Point 마커·협동 HUD·Release 점멸은 헤드리스 자동 검증으로 "정확한 좌표·타이밍"만 확인했고, 실제 화면에서의 시인성(마커 크기, 점멸 눈에 띄는 정도, 텍스트 가독성)은 사용자 수동 테스트가 반드시 필요하다.
-- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-06과 v0.3.0은 완료 처리하지 않는다. v0.2.0 완료 상태는 변경하지 않는다.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-06과 v0.3.0은 완료 처리하지 않는다. v0.2.0 완료 상태는 변경하지 않는다. **(이후 사용자 승인으로 `[DONE]` 확정 — 아래 참고)**
+
+### T075 사용자 수동 테스트 승인(최종)
+
+- **사용자 수동 테스트 결과: 현재 구현 상태로 승인.** Grab Point 표시, 동시 Grab 협동 HUD, Release 피드백, P2 게임패드 조작(트리거+A OR 조합, `move_deadzone`/`look_deadzone` 분리)이 정상 작동함을 확인함.
+- **완료 처리**: 이 승인으로 T075는 `[DONE]`으로 확정한다(섹션 27 상단 상태 갱신).
+- **Baseline 확정**: 현재 게임패드 설정값(`gamepad_look_sensitivity=2.5`, `move_deadzone=0.2`, `look_deadzone=0.2`, `invert_gamepad_y=false`, `gamepad_grab_trigger_threshold=0.5`)과 협동 HUD 표시 방식(2인 동시 Grab 시 "협동 운반" 텍스트, Grab Point 마커, Release 점멸)을 **현재 프로토타입 기준값(Baseline)**으로 기록한다.
+- **TD-015 유지**: `gamepad_grab_trigger_threshold`·`invert_gamepad_y`는 이번 승인에도 불구하고 여러 후보 실측 비교를 거치지 않은 값이므로, 완료를 막지 않는 **비차단(non-blocking) 튜닝 항목**으로 `docs/TECH_DEBT.md` TD-015에 유지한다.
+- **EPIC-06/v0.3.0**: 아직 완료 처리하지 않는다 — T076(Local Co-op Final Validation, 전체 플레이 흐름 통합 검증)이 이어서 진행된다.
+
+## 28. T076 — Local Co-op Final Validation
+
+- 상태: `[x]` `[DONE]` (사용자 최종 협동 테스트 승인 + Held Light Object Push 결함 발견·수정·사용자 재검증 승인까지 모두 완료 — 아래 "T076 재오픈", "T076 결함 수정", "T076 재오픈 결함 사용자 재검증 승인(최종)" 참고. 중간의 `[BLOCKED]` 이력은 삭제하지 않고 그대로 보존함)
+- 목적: 새 기능을 추가하지 않고, T074~T075에서 구현된 로컬 2인 협동 기능(입력 슬롯 분리, 실제 2인 동시 Grab, Grab Point 표시, 협동 HUD, Release 피드백)이 `LocalCoopTest.tscn`의 **전체 플레이 흐름**(Spawn → 독립 이동 → 서로 다른 물체 Grab → 같은 Package 동시 Grab → 한 명만 Release → Crate 1인/2인 운반 비교 → 좁은 문 통과 → 배송 → Restart → 재Grab)에서 통합적으로 안정적인지 확인한다.
+- 소속: `docs/ROADMAP.md` v0.3.0 EPIC-06(Local Co-op Foundation) — FEATURE-06-B 최종 검증 단계
+- 선행 작업: T075 `[DONE]`(사용자 수동 테스트 승인 완료)
+- 작업 범위: 통합 검증(자동 헤드리스 테스트)만 수행. 명확한 실행 불가 결함이 발견된 경우에만 최소 수정.
+- 발견한 결함(구현 중 발견, 최소 범위로 수정): `LocalCoopTest.gd`에 `PrototypeLevel.gd`와 달리 `restart` 입력 처리가 전혀 없어, 로컬 협동 씬에서는 R키를 눌러도 아무 효과가 없었다(요구된 검증 흐름의 "Restart" 단계 자체를 실행할 수 없는 결함) — `PrototypeLevel.gd`의 기존 패턴(`event.is_action_pressed("restart")` 시 `get_tree().reload_current_scene()`)을 그대로 승계해 `_unhandled_input()`에 추가. 새 기능이 아니라 기존에 이미 있어야 했던 동작의 누락을 보완한 것이며, Input Map 변경도 없다(기존 `restart` 액션 그대로 재사용).
+- 제외 범위: Force-Based Grab 물리값 변경, 새로운 UX 기능 추가, `Player.gd`/`GrabbableBody.gd`/`Crosshair.gd` 로직 변경(Restart 처리 1건 제외), 버전 번호 변경, Git 작업
+- 생성 파일: 없음
+- 수정 파일: `hell-delivery/scenes/level/LocalCoopTest.gd` (Restart 입력 처리 추가)
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 실제 게임패드·분할 화면 체감, 재미 평가는 사용자 최종 테스트 필요.
+- 완료 조건: 전체 플레이 흐름 10단계가 순서대로 오류 없이 진행되고, 입력·화면 독립성, 동시 Grab 순서(0→1→2→1→0), Crate 1인/2인 비교(2인이 확실히 더 우수, 인원수 배율 없음), 좁은 문 통과, Delivery(2인 Grab 중 포함), Restart 후 전체 상태 초기화, 싱글플레이 회귀가 모두 자동 검증으로 확인됨.
+- 테스트 방법: 임시 헤드리스 `SceneTree` 스크립트(검증 후 삭제)로 `LocalCoopTest.tscn`을 직접 인스턴스해 46개 항목을 3회 연속 검증: 입력·화면 독립성 통합 재확인(2개), 서로 다른 물체 동시 Grab(4개), 같은 Package 동시 Grab 0→1→2→1→0 순서(12개), Crate 1인/2인 운반 비교(5개), 좁은 문 순차 통과(5개), DeliveryZone 배송(2인 Grab 중 포함, 3개), Restart-동등(새 인스턴스 상태 초기화 확인, 9개), 싱글플레이 회귀(6개).
+- 완료 근거(검증): 헤드리스 자동 검증 46개 항목 3회 연속 전부 PASS. 입력·화면 독립성: P1 키보드 전진 시 P1만 이동(P2 무변위), P2 게임패드 전진 시 P2만 이동(P1 무변위) 재확인. 서로 다른 물체: P1이 box_a, P2가 box_b를 동시에 잡아도 `held_grabbable`이 서로 바뀌지 않고 각 물체 Grabber 수 1(협동 표시 대상 아님), 정리 후 둘 다 0. 같은 Package 순서: Grab 전 0 → P1 Grab 후 1(양쪽 협동 표시 없음, P1 마커만) → P2 Grab 후 2(1 physics frame 이내 양쪽 협동 표시, 두 마커 모두 존재) → P1 release 후 1(P2 연결 유지, 1 physics frame 이내 양쪽 협동 표시 해제, P1 마커만 사라짐) → 모두 release 후 0(마커 0개). Crate 1인/2인 비교(카메라를 위로 향해(pitch +55°) HoldPoint를 Crate보다 충분히 높은 곳에 두어 스프링이 오래 포화 상태를 유지하도록 구성): P1 단독 상승 0.240m(오차 0.018m), P2 단독 상승 0.240m(오차 0.018m, P1과 사실상 동일 — 대칭 설정이므로 예상대로), 협동 상승 1.472m(오차 0.515m)로 1인 대비 확실히 더 높음, 세 조건 모두 2초 동안 연결 유지·NaN/속도 폭주 없음, `grab_spring_strength`/`max_force_per_grabber`는 인원수와 무관한 상수이므로 인원수 배율이 코드에 존재하지 않음을 재확인. 좁은 문(NarrowDoorwayTestArea는 X=-7 평면을 Z -1.7~-0.3 구간만 뚫어둔 구조라 실제 통과 방향이 X축임을 재확인): P1·P2 모두 4초 이내 정체 없이 통과, NaN 없음, 속도 폭주(발사) 없음, 자유낙하 없음. Delivery: 두 명이 잡은 상태로 Package를 DeliveryZone에 넣어도 배송 판정 정상, PhysicsCrate는 여전히 배송 판정에 관여하지 않음. Restart-동등(완전히 새 씬 인스턴스로 교체): P1/P2 위치가 씬 기본값으로 복구, Grab Connection 0개, Grab Point marker 0개, 협동 HUD 숨김, DeliveryZone 미배송 상태로 초기화, collision exception 0개, 이후 다시 정상적으로 Grab 가능. 싱글플레이 회귀: `input_profile`/`player_slot` 기본값 유지, 키보드 이동·1인칭 Camera·Force-Based Grab·Delivery 모두 정상. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+  - 검증 중 발견한 테스트 방법론 이슈 3건(게임 코드와 무관, 테스트 스크립트에서만 수정): (1) 좁은 문 통과 방향을 처음에 Z축으로 오인해 실제 문 구조(X=-7 평면을 Z구간만 뚫어둔 형태)와 다르게 접근시켰다가 항상 "정체"로 오판정됨을 발견 — 실제 벽 Shape 크기를 다시 계산해 X축 통과로 수정. (2) Crate 1인/2인 비교에서 Player가 Crate 바로 옆(가까운 거리)에서 들면 스프링이 금방 평형에 도달해 상승량이 거의 0에 가까워 1인/2인 차이가 드러나지 않음을 발견 — 카메라를 위로(pitch +55°) 향하게 해 HoldPoint를 충분히 높은 곳에 두는 방식으로 변경(T072/T074의 "확실한 차이" 측정 취지를 재현). (3) 이전 섹션에서 release 후에도 근처에 계속 서 있던 Player, 그리고 이전 섹션이 남긴 Package가 다음 섹션의 Crate teleport 위치와 겹쳐 순간적으로 밀려나는 아티팩트 2건을 발견 — Player를 release 즉시 멀리 격리하고, Crate 비교 섹션에 별도의 격리된 위치(`CRATE_BENCH_POS`)를 사용해 우회.
+- 예상 위험:
+  - Crate 1인/2인 비교는 실제 플레이 자세(선 채로 위를 올려보는 각도)를 반영한 합성 힘 테스트로, 실제 사용자가 이런 각도로 오래 들고 있을 일은 드물다 — 일상적인 낮은 각도에서의 체감(스프링이 빠르게 평형에 도달해 상승감이 약함)은 사용자 수동 테스트로만 확인 가능.
+  - 좁은 문·Crate 비교의 정확한 좌표는 이번 검증에서 처음 정밀하게 재계산된 것으로, 향후 레벨 지오메트리가 바뀌면 테스트 좌표도 갱신이 필요하다(테스트 전용 상수라 게임 코드에는 영향 없음).
+- **상태**: 사용자 최종 협동 테스트 전까지 `[REVIEW]` 유지. EPIC-06과 v0.3.0, Milestone 2는 완료 처리하지 않는다. **(이후 사용자 최종 승인으로 `[DONE]` 확정 — 아래 참고)**
+
+### T076 사용자 최종 협동 테스트 승인(최종)
+
+- **사용자 최종 협동 테스트 결과: 승인.** 14개 항목(P1/P2 독립 이동·시점, 양쪽 Crosshair/HUD 가독성, 서로 다른 물체 동시 Grab, 같은 Package 동시 Grab, 한 명만 Release 시 나머지 연결 유지, P1/P2 단독 Crate 무게감 비교, 1인/2인 운반 차이, 좁은 문 협동 운반, Player 간 관통·튕김 여부, Trigger+A 편의성, Grab Point marker/협동 HUD 시인성, Package 배송, Restart 후 초기화, 전체 협동 재미와 조작성) 전부 문제 없음으로 확인, 치명적인 입력·물리·충돌·HUD 결함 없음.
+- **완료 처리**: 이 승인으로 T076은 `[DONE]`으로 확정한다(섹션 28 상단 상태 갱신). 헤드리스 자동 검증 46개 항목 3회 연속 PASS(위 "완료 근거" 참고)와 이번 사용자 최종 승인이 함께 완료 근거를 구성한다.
+- **EPIC-06/v0.3.0/Milestone 2**: 이 승인으로 EPIC-06(Local Co-op Foundation)의 모든 Must Feature(FEATURE-06-A/B/C)가 완료되어, EPIC-06·v0.3.0(Fun Physics Update)·Milestone 2(Gameplay Expansion)를 완료 처리한다(`docs/ROADMAP.md`/`docs/MILESTONES.md`/`docs/VERSION.md`/`docs/CHANGELOG.md` 갱신 참고).
+
+### T076 재오픈 — Held Light Object Push 결함(차단 결함)
+
+- **사용자 발견**: 위 최종 승인 이후 진행된 사용자 수동 테스트에서, 가벼운 물체를 Grab한 상태로 무거운 물체(Heavy Crate)에 밀착해 전진하면 **빈손으로 직접 미는 것보다 무거운 물체가 훨씬 쉽게 밀리는** 차단 결함이 발견됨(의도한 물리 결과 아님).
+- **처리**: T076을 `[DONE]`에서 `[BLOCKED]`로 되돌린다(섹션 상단 상태 갱신, 위 승인 기록은 삭제하지 않고 보존). EPIC-06·v0.3.0·Milestone 2 완료 처리를 취소하지 않되(과거 사실 자체는 보존), 이 결함이 수정·재검증되어 사용자 재승인을 받기 전까지는 v0.3.0 관련 완료 상태를 최종으로 간주하지 않는다. v0.4.0 착수는 보류한다.
+- **원인·수정 내역**: 아래 "T076 결함 수정 — Held Light Object가 Heavy Object를 과도하게 미는 문제" 참고.
+
+### T076 결함 수정 — Held Light Object가 Heavy Object를 과도하게 미는 문제
+
+- **정확한 재현 조건**: 같은 Heavy Crate(25kg)를 대상으로 (1) 빈손 Body Push, (2) 가벼운 물체를 들었지만 접촉하지 않음, (3) Light(SmallBox 5kg)/(4) Medium(Package 15kg)/(5) Heavy(PhysicsBarrel 20kg)로 각각 밀착해 전진, 총 5개 시나리오를 동일 위치·동일 입력(1초 `move_forward`)으로 헤드리스 비교해 재현했다.
+- **실제 근본 원인 2가지(복합)**:
+  1. `GrabbableBody.max_force_per_grabber`(300N)가 어떤 물체를 들었든 동일하게 적용되는 **질량 무관 상수**였다 — 빈손 Body Push(`push_force` 220N)보다 이미 더 큰 값이라, 무엇을 들든 빈손보다 강하게 미는 구조적 결함이었다.
+  2. `GrabCollisionBarrier`(Player를 매 물리 프레임 그대로 따라가는 kinematic `AnimatableBody3D`)가, held object가 다른 물체에 막혀 더 물러설 수 없는 동안 Player가 계속 전진하면 그 물체 쪽으로 파고들어(DD-006과 같은 kinematic 침투 해소) Spring Force와 무관하게 큰 속도(실측 최대 약 87m/s)를 주입할 수 있었다 — 1번을 고치는 것만으로는 이 경로가 막히지 않아 별도로 확인·수정이 필요했다.
+- **중복 Force 경로 존재 여부**: 조사한 3가지 중 실제로 존재한 것은 이 2가지뿐이었다.
+  - Player의 일반 `_push_away_rigid_bodies()`가 held object 자체를 대상으로 삼는지 → **아니오**(이미 `collider is GrabbableBody and collider.has_grabber(self)` 가드로 제외되어 있었음, 정상).
+  - Heavy Crate에 Player Body Push와 held-object 충돌력이 동시에 적용되는지 → **아니오**(`already_pushed_via_grab` 가드가 이미 정상 작동, `player_body_directly_touches_crate=false`로 실측 확인).
+  - `max_force_per_grabber`가 질량 무관하게 적용되는지 → **예(주원인 1)**.
+  - GrabCollisionBarrier의 kinematic 침투 → **예(주원인 2, 처음엔 예상 못한 별도 경로)**.
+- **Barrier가 target과 충돌했는지**: Barrier는 Heavy Crate(target)와 **직접 충돌하지 않는다**(target의 `collision_mask`에 Barrier 레이어 32가 애초에 포함되지 않음, 코드 검토로 확인). 대신 Barrier는 **held object**(Player가 들고 있는 물체 자신)를 파고들어 그 물체에 과도한 속도를 주입했고, 그 물체가 다시 target과 충돌하면서 간접적으로 과도한 힘을 전달했다.
+- **수정 파일**: `hell-delivery/scenes/objects/GrabbableBody.gd`
+- **적용한 Force 전달 제한 방식**:
+  1. `push_transmission_accel`(신규 `@export`, 12.0 N/kg) 추가. `_get_unrelated_rigidbody_contacts()`로 이 물체가 접촉 중인 자기 Grabber 이외의 RigidBody를 찾고, `_limit_push_transmission()`이 그 물체 안쪽으로 누르는(압축) 힘 성분만 `mass * push_transmission_accel`로 제한한다(접촉면에서 떼는 방향·접선 방향·공중 운반 힘은 전혀 건드리지 않음). 정확한 접촉 법선 대신 두 물체 중심을 잇는 수평 방향을 근사로 사용(이 프로젝트의 모든 Grabbable이 원점 대칭 Box/Cylinder라 충분).
+  2. `_update_barrier_mask_for_contact()` 추가. 이 물체가 무관한 RigidBody와 접촉 중인 동안에는 `_GRAB_BARRIER_MASK_BIT`를 잠시 빼 GrabCollisionBarrier와의 충돌 자체를 끈다(Player 실제 몸과의 충돌은 grabber별 `collision_exception`으로 항상 별도 보장되므로 안전). 접촉이 풀리면 즉시 원래대로 복구.
+  - 두 함수 모두 `_apply_grab_forces()`에서 매 물리 프레임 호출되며, 무관한 물체와 접촉하지 않을 때는 완전한 no-op이라 기존 공중 운반·swing·release 동작에는 전혀 관여하지 않는다.
+- **빈손/Light/Medium/Heavy 비교 수치**(1초, Heavy Crate 25kg 대상): 빈손 변위 0.471m(최고속도 2.756m/s) · 접촉 없이 든 경우 0.416m(빈손 대비 차이 11.5%, 기준 15% 이내) · Light(5kg) 0.410m(빈손 대비 0.87배) · Medium(15kg) 0.640~0.692m(빈손 대비 1.36~1.47배) · Heavy(20kg) 0.787m(빈손 대비 1.67배) — Light ≤ Medium ≤ Heavy 순서 유지, 3초 지속 압박(별도 시나리오)에서도 속도 폭주·NaN·Player 발사 없음(최고 속도 crate 2.70m/s, barrel 1.92m/s, Player Y 항상 1.5 유지).
+- **target 질량별 비교 수치**: 같은 Medium(Package 15kg) held object로 밀 때, Heavy target(Crate 25kg) 변위 2.28~2.35m vs Light target(SmallBox 5kg) 변위 3.49~3.63m — 무거운 target이 명확히 덜 움직임(질량 차이가 압축 상황에서도 사라지지 않음).
+- **기존 Grab 조작감 회귀 결과**: 공중 운반 질량 순서(SmallBox 6.91 > Package 1.82 > Barrel 1.42 > Crate 0.74 m/s, 초기 가속 구간 기준) 정상, 무게중심 grab 각속도 거의 0(0.0) vs 모서리 grab 뚜렷한 torque(4.33 rad/s) 정상, 빠른 swing 후 release 시 별도 impulse 없이 속도 유지(코드 검토로 `remove_grabber()`가 velocity를 전혀 건드리지 않음을 재확인) 정상, 좁은 문 통과 중 Package를 든 채 정체·NaN 없이 통과 정상.
+- **1인/2인 협동 운반 회귀 결과**: Grabber 수 0→1→2→1→0 순서 정상(로컬 협동 씬에서 재확인). 1인/2인 절대 수치는 T076 최초 검증(위 "완료 근거" 참고)에서 이미 확인된 것을 그대로 재사용했으며, 이번 결함 수정이 다중 Grabber 힘 합산 로직 자체를 건드리지 않아(오직 "무관한 다른 물체와의 접촉" 상황에서만 개입) 별도 회귀가 없음을 코드 검토로 확인했다.
+- **자동 검증 결과**: 임시 헤드리스 스크립트(검증 후 삭제) 2개로 나누어 검증. (1) 핵심 수정 검증 스크립트 — Push 비교(4개), target 질량별 비교(1개), 3초 지속 압박 안정성(5개), swing+release(1개), 좁은 문 운반(3개), 협동 Grabber 순서(5개), Delivery/Restart(3개), 입력 독립성(1개) 총 23개 항목 3회 연속 전부 PASS. (2) torque·공중 운반 질량 순서 회귀 검증 스크립트(별도 1회성 Scene 인스턴스로 분리 — 같은 인스턴스에서 두 하위 측정을 이어 하면 잔여 상태가 다음 측정에 영향을 주는 테스트 전용 아티팩트를 실측으로 발견해 우회) 3개 항목 3회 연속 전부 PASS. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+  - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관, 테스트 스크립트에서만 수정): 물체 크기별 실제 정지 높이·半깊이를 고려하지 않고 동일한 절대 좌표로 배치했다가 큰 물체가 시작부터 겹쳐 순간적으로 튕겨나가는 아티팩트, HoldPoint가 눈높이에 있어 가벼운 물체가 장애물 위로 튀어 넘어가는 아티팩트, 자유 공중 운반 질량 순서 측정 시 "1초 시점 값"이 아니라 "1초간 최고값"을 재면 오히려 순서가 뒤섞이는 아티팩트, 여러 Scene 인스턴스를 한 스크립트에서 연달아 boot/free할 때 완전히 분리하지 않으면 torque 측정이 실패하는 아티팩트 — 총 4건을 발견해 각각 테스트 스크립트에서만 수정했다.
+- **수동 재검증 방법**: 에디터에서 `LocalCoopTest.tscn` 또는 `PrototypeLevel.tscn`을 실행해, (1) SmallPhysicsBox를 든 채 PhysicsCrate에 밀착해 계속 전진 — Crate가 빈손으로 밀 때보다 눈에 띄게 강하게 밀리지 않는지, (2) PhysicsBarrel을 든 채 같은 시도 — Light보다는 확실히 더 잘 밀리되 유압식으로 느껴지지 않는지, (3) 기존처럼 물체를 공중에서 들어올리는 손맛(무게감, torque, swing, release)이 그대로인지, (4) 로컬 협동에서 2인 동시 운반이 그대로 잘 작동하는지 확인.
+- **상태**: **해결됨(사용자 재검증 승인 완료)** — 아래 "T076 재오픈 결함 사용자 재검증 승인(최종)" 참고. 더 이상 미해결 차단 결함이 아니다.
+
+### T076 재오픈 결함 사용자 재검증 승인(최종)
+
+- **사용자 회귀 테스트 결과: 승인.** 다음 11개 항목을 사용자가 직접 확인함 — 빈손으로 Heavy Crate 밀기 정상, 가벼운 물체를 들었지만 Crate에 닿지 않을 때 빈손과 차이 없음, 가벼운 물체로 Heavy Crate를 밀어도 과도하게 밀리지 않음, Light→Medium→Heavy 순서로 전달 힘이 자연스럽게 증가, 무거운 대상일수록 명확히 덜 움직임, held object가 Player 이동 속도로 대상을 강제 추종시키지 않음, 장시간 밀어도 속도 폭주·NaN·비정상 발사 없음, 기존 Grab·Swing·Release·Torque 감각 정상, 1인·2인 협동 운반 정상, Delivery와 Restart 정상, 싱글플레이·로컬 협동 모두 정상.
+- **결함 해결 처리**: "T076 재오픈 — Held Light Object Push 결함"은 이 승인으로 **해결됨**으로 확정한다. 원인(질량 무관 `max_force_per_grabber` + GrabCollisionBarrier kinematic 침투)과 해결 방식(`push_transmission_accel` 기반 압축 힘 제한 + 접촉 중 Barrier mask 일시 해제)은 위 "T076 결함 수정" 섹션에 기록된 그대로다. 발견·차단(`[BLOCKED]`) 이력은 삭제하지 않고 보존한다.
+- **완료 처리**: 이 승인으로 T076은 (이미 받았던 사용자 최종 협동 테스트 승인과 함께) `[DONE]`으로 최종 확정한다(섹션 28 상단 상태 갱신).
+- **EPIC-06/v0.3.0/Milestone 2**: T074~T076 전부 `[DONE]`, 미해결 차단 결함 없음 — EPIC-06(Local Co-op Foundation)·v0.3.0(Fun Physics Update)·Milestone 2(Gameplay Expansion)를 완료 상태로 확정한다(`docs/ROADMAP.md`/`docs/MILESTONES.md`/`docs/VERSION.md`/`docs/CHANGELOG.md` 갱신 참고).
+- **Baseline 확정**: `push_transmission_accel`(12.0 N/kg)을 사용자 승인된 v0.3.0 프로토타입 Baseline으로 기록한다(`docs/TECH_DEBT.md` TD-019 갱신 참고) — 완료를 막는 미해결 결함이 아니며, 추가 튜닝 가능성은 비차단 항목으로 유지한다.
+
+## 29. T077 — Steam Demo Readiness Audit & Scope Lock
+
+- 상태: `[x]` `[DONE]` (조사·범위 제안 완료, 사용자가 안 A(싱글플레이 중심)를 승인해 v0.4.0 데모 범위 확정 — 아래 "T077 사용자 승인(최종)" 참고)
+- 목적: 구현이 아니라 **조사와 계획**. v0.3.0 완료(T074~T076, EPIC-06, Milestone 2) 상태를 문서로 재확인한 뒤, 저장소의 실제 상태(실행 구조·콘텐츠·UI/UX·기술 상태)를 조사해 v0.4.0(Steam Demo)에 필요한 항목을 필수/권장/선택/완료로 분류하고, 현실적인 데모 범위 안을 제안한다.
+- 소속: `docs/ROADMAP.md` v0.4.0(Steam Demo) 신규 EPIC-07(Steam Demo Readiness) 1단계
+- 선행 작업: v0.3.0 전체 완료(T074~T076 `[DONE]`, EPIC-06 `[DONE]`, Milestone 2 `[DONE]`) — 아래 "v0.3.0 완료 상태 재확인"에서 문서 근거로 확인함.
+- 작업 범위: 저장소·문서 조사, 필수/권장/선택/완료 분류, 데모 범위 안 A/B 비교 및 권장안 제시, v0.4.0 후속 Task 목록 제안(계획만, 구현 없음).
+- 제외 범위: 게임 코드·Scene 수정, Steamworks SDK 연동, Steam 페이지·빌드 업로드, 신규 Asset 제작, Git 작업, 버전 번호 변경, 후속 Task 구현.
+- 생성 파일: 없음
+- 수정 파일: 없음(문서만 갱신 — `docs/TASKS.md`, `docs/ROADMAP.md`, `docs/VERSION.md`, `docs/MILESTONES.md`)
+- 에디터 수동 작업: 없음.
+
+### v0.3.0 완료 상태 재확인
+
+- `docs/TASKS.md` 섹션 26~28(T074/T075/T076) 상단 상태 전부 `[x]` `[DONE]`, 각 섹션 말미에 사용자 승인 기록 존재.
+- `docs/ROADMAP.md`: v0.3.0 헤딩 "✅ 완료(EPIC-06 완료, 사용자 최종 승인)", EPIC-06 헤딩 "✅ 완료", FEATURE-06-A/B/C 전부 "✅ 완료".
+- `docs/VERSION.md`: Current Status "v0.3.0(Fun Physics Update) Complete — Milestone 2(Gameplay Expansion) Complete".
+- `docs/MILESTONES.md`: Milestone 2 헤딩 "✅ 완료", 완료 근거 기록 존재.
+- `docs/CHANGELOG.md`: `[0.3.0] — Fun Physics Update` 정식 항목으로 정리됨(더 이상 `[Unreleased]`가 아님).
+- **결론: 완료 상태 정상. 불일치 없음.** 이를 근거로 v0.4.0 준비 조사를 시작함.
+
+### 1. 실행 구조 조사
+
+- **Main Scene**: `project.godot`의 `run/main_scene`은 여전히 `res://scenes/level/PrototypeLevel.tscn`(싱글플레이). 로컬 협동용 `LocalCoopTest.tscn`은 Main Scene이 아니며, Godot 에디터에서 씬을 열어 F6(현재 씬 실행)으로만 실행 가능 — **빌드된 실행 파일에서는 도달할 방법이 전혀 없음**(진입 메뉴·씬 전환 코드 없음).
+- **싱글플레이 실행 경로**: 실행 파일 시작 → 즉시 `PrototypeLevel.tscn` 로드 → Player 조작 가능(메뉴·로딩 화면 없음).
+- **로컬 협동 실행 경로**: 없음(에디터 전용). 데모에 포함하려면 최소한 "Main Scene에서 이 씬으로 전환하는 방법"이 새로 필요함.
+- **에디터 밖 실행 가능 여부**: 미확인 — `export_presets.cfg` 파일 자체가 저장소에 존재하지 않음(Godot Export Preset이 한 번도 구성된 적 없음). 즉 **현재 Windows 실행 파일을 만들 수 없다**(에디터로 프로젝트를 열어야만 플레이 가능).
+- **Restart 및 게임 종료 방법**: Restart는 `R`키(`restart` 액션, `PrototypeLevel.gd`/`LocalCoopTest.gd`가 `get_tree().reload_current_scene()` 호출)로 정상 동작. **게임 종료 방법이 전혀 없음** — `quit`/`ui_cancel` 액션 자체가 Input Map에 없고, `get_tree().quit()`을 호출하는 코드가 프로젝트 어디에도 없다. `release_mouse`(ESC 키)는 마우스 캡처만 풀 뿐 종료가 아니다. 사용자는 Alt+F4나 작업 관리자로만 종료 가능 — **Steam 데모로서는 치명적 결함**.
+- **디버그 전용 기능 vs 데모 포함 가능 기능**: 콘솔 `print()`류 디버그 로그는 `KI-003`(Low)에 이미 기록된 대로 미미하게 남아있으나 화면에 노출되지 않아 데모에 실질적 영향 없음. 별도의 "디버그 전용" 씬·치트·개발자 콘솔은 존재하지 않는다. `LocalCoopTest.tscn`은 기능적으로는 실 플레이 가능하지만 "개발 검증용 이름/구조"(예: 임의의 스폰 좌표, 사용자 대상 설명 없음)라 그대로 노출하기보다 별도 정리가 필요.
+
+### 2. 현재 플레이 콘텐츠 조사
+
+- **플레이 흐름**: Spawn(0, 1.5, 0) → 가장 가까운 Package(2.5, 1, 0)까지 도보 약 2.5m → Grab(마우스 좌클릭 유지) → DeliveryZone(5, 0.5, 3)까지 도보 약 3.6m → 진입 즉시 배송 성공 판정 → `DELIVERY COMPLETE` 패널 표시(사라지지 않음, R로만 다음 시도 가능).
+- **평균 플레이 가능 시간**: "목표 지향" 최단 경로 기준 1분 미만. Stairs/Ramp/NarrowDoorway/TestWall/환경 물리 오브젝트(Barrel·Crate 2·SmallBox 3) 구역은 배송 경로 밖에 있어, 플레이어가 일부러 탐색하지 않으면 지나칠 수 있다 — 탐색까지 포함하면 3~5분 내외로 추정(측정된 수치 아님, 레벨 배치 기준 추정).
+- **반복 가능한 목표**: `DeliveryZone`은 `is_delivered` 플래그로 **최초 1회만** 성공 처리(T069 확정 사양) — Package/PackageB/PackageC 중 아무거나 먼저 들어오면 그걸로 끝, 이후 다른 Package를 넣어도 반응 없음. 반복 배송 루프 자체가 설계상 존재하지 않는다(MVP 완료 조건에는 포함되지 않았던 범위, `KI-002` 참고 배경과 유사).
+- **성공·실패 조건**: 성공 = 아무 Package나 DeliveryZone 진입. 실패 조건 없음(시간 제한·목숨·페널티 없음) — Core Loop가 "실패해도 웃긴 물리 코미디"(`PLAYER_EXPERIENCE.md`)라는 설계 의도상 자연스러우나, 데모에서는 "성공 후 무엇을 더 할 수 있는지"에 대한 안내가 없다는 점이 아쉬움.
+- **현재 레벨/테스트 공간**: `PrototypeLevel.tscn` 1개뿐(Floor 20×20, Stairs, Ramp, WallTestArea, NarrowDoorwayTestArea, PhysicsObjects 6개, Package 3개, DeliveryZone 1개). 전부 `BoxMesh`/`CapsuleMesh` 등 원시 도형(`TD-004`에 이미 기록된 프로토타입 지오메트리) — 미술적으로 다듬어지지 않음.
+- **Package/물리 오브젝트 종류**: Package 1종(3개 인스턴스), PhysicsBarrel/PhysicsCrate/SmallPhysicsBox 각 1종(총 6개 인스턴스) — 전부 `GrabbableBody` 공용 클래스, 시각적으로는 색만 다른 단색 상자/원통.
+- **로컬 협동의 데모 포함 가능 상태**: 물리·입력·UX 자체는 T074~T076에서 충분히 검증되어 **기능적으로는 포함 가능한 수준**이나, (a) Main Scene에서 도달할 방법이 없고, (b) 게임패드 연결 여부를 확인·안내하는 코드가 전혀 없어(연결 안 된 상태에서 P2는 그냥 조용히 움직이지 않음, 오류도 안내도 없음) 일반 사용자가 겪으면 "고장난 것"으로 오인하기 쉽다 — 데모 포함 시 최소한 이 두 가지는 반드시 보완이 필요.
+
+### 3. UI/UX 조사
+
+- **메인 메뉴**: 없음.
+- **싱글플레이·로컬 협동 선택**: 없음(각각 별도 씬을 에디터에서 직접 열어야 함).
+- **조작법 안내**: 없음(화면 내 텍스트·툴팁 전무). `KI-002`(목표 안내 `GoalLabel` 미구현)와 같은 배경 — 애초에 조작법 안내 자체가 범위에 없었음.
+- **일시정지 메뉴**: 없음(`pause` 액션 없음, `get_tree().paused` 사용 코드 없음).
+- **설정 메뉴**: 없음.
+- **게임패드 연결 안내**: 없음(위 참고).
+- **해상도·전체 화면 설정**: 없음. `project.godot`에 창 크기 명시 없음(Godot 기본값 1152×648 추정), `window/stretch/mode=canvas_items`만 설정, 전체 화면 기본값·전환 수단 없음.
+- **음량 설정**: 해당 없음 — 프로젝트에 `AudioStreamPlayer` 자체가 하나도 없음(사운드/음악 미구현).
+- **게임 종료 버튼**: 없음(위 "실행 구조" 참고, 치명적).
+- **Restart 안내**: `DeliveryHUD`의 `SuccessLabel`/`RestartLabel`("DELIVERY COMPLETE"/"Press R to Restart")로 존재하나, **성공 후에만** 보이고 평소에는 안내가 없다.
+- **배송 성공 피드백**: 텍스트 패널만(효과음·연출·페이드 없음), 한 번 표시되면 Restart 전까지 계속 남아있음.
+
+### 4. 기술 상태 조사
+
+- **Godot Export Preset**: 존재하지 않음(`export_presets.cfg` 파일 없음) — Windows 실행 파일을 만든 적이 없다.
+- **Windows 실행 파일 생성 가능 여부**: 현재 불가능(Export Preset 미구성). 프로젝트 자체(스크립트·씬)는 특별히 플랫폼 종속적인 코드가 없어 Preset만 추가하면 생성될 것으로 예상되나 실제 시도·검증은 하지 않았다.
+- **빌드 시 오류·경고**: 해당 없음(빌드 자체를 시도한 적 없음). 헤드리스 `--headless --import`/`--quit-after`는 매 Task마다 반복 검증되어 왔고 항상 오류 0건.
+- **외부 플러그인과 라이선스**: `addons/` 폴더 자체가 없음 — 서드파티 플러그인 미사용.
+- **사용 Asset의 배포 권한**: 외부 이미지·폰트·모델·사운드 Asset이 프로젝트에 전혀 없음(전부 Godot 기본 도형 Mesh와 기본 엔진 폰트만 사용) — **라이선스 위험 없음**(배포 권한 문제가 될 대상 자체가 없음).
+- **저장 데이터 사용 여부**: 없음(Save/Load 시스템 미구현, `CLAUDE.md` 금지 범위와도 일치).
+- **로그·크래시 확인 방법**: Godot 표준 `user://logs/` 경로 외 별도 로깅 체계 없음. 크래시 리포트 수집 체계 없음(데모 배포 시 Godot 기본 크래시 핸들러에 의존).
+- **평균 FPS 및 성능 위험**: 정식 프로파일링 미실시(`TECH_DEBT.md` TD-007). 씬 규모가 작아(물리 바디 십여 개 수준) 현재까지 성능 문제가 보고된 적은 없으나, 실제 빌드 환경에서의 FPS 실측은 없다. 분할 화면(로컬 협동)은 `TD-016`(루트 Viewport 소량 중복 렌더링)이 이미 비차단으로 기록됨.
+- **해상도 변경·화면 비율 대응**: `window/stretch/mode=canvas_items`만 설정되어 있어 UI는 어느 정도 대응하나, 실제 다양한 해상도·화면 비율에서의 검증은 없음.
+- **키보드·마우스/게임패드 연결 해제 대응**: 키보드·마우스는 OS 표준 입력이라 별도 처리 불필요. 게임패드는 연결 해제/미연결 시 조용히 무입력 처리될 뿐(크래시는 없음) 사용자 안내가 전혀 없다(위 참고).
+
+### Steam Demo 항목 분류
+
+**필수(없으면 일반 사용자가 정상 실행·종료 불가)**
+
+- Windows Export Preset 구성 및 빌드 검증(현재 미존재 — 가장 시급함)
+- 게임 종료 수단(현재 전무 — Alt+F4만 가능, 치명적)
+- 메인 메뉴(최소한 "시작"·"종료" 버튼)
+- 게임 모드 선택(안 A 채택 시 실질적으로 불필요 — 싱글만 있으면 선택 자체가 없어도 됨; 안 B 채택 시 필수)
+- 조작법 안내(현재 전무)
+- 일시정지(최소한 ESC로 메뉴 열기 정도)
+- 기본 설정(최소한 창/전체 화면 전환 정도)
+- 치명적 오류 방지(현재 헤드리스 검증상 크래시·NaN·속도 폭주 없음 — 이미 충족)
+- 라이선스 확인(외부 Asset 없음 — 이미 충족, 확인 완료)
+
+**권장(품질에 큰 영향이나 첫 실행 자체를 막지는 않음)**
+
+- 배송 성공 연출 개선(효과음·페이드 등, 현재 텍스트만)
+- 간단한 튜토리얼/목표 안내(`GoalLabel`, `KI-002` 해소)
+- 사운드·음악(현재 전무)
+- 설정 저장(현재 저장 시스템 자체가 없음 — v0.4.0에서도 필수는 아님, `CLAUDE.md` 저장 방식 변경 금지 범위와 충돌하지 않도록 신중히 검토)
+- 게임패드 연결 안내(현재 전무)
+- 성능 최적화(현재 문제 보고 없으나 실측 없음)
+- 플레이 흐름 개선(반복 배송·성공 후 다음 행동 안내 등)
+
+**선택(현재 데모 범위에서 제외 가능)**
+
+- Steam 업적/친구 초대(Steamworks 미연동, `ROADMAP.md` v0.4.0 Out of Scope와 일치)
+- 클라우드 저장(저장 시스템 자체가 없음)
+- 온라인 멀티플레이(`ROADMAP.md` v0.8.0 범위)
+- 정식 로비/캐릭터 선택(`ROADMAP.md` Out of Scope)
+- 대규모 콘텐츠 확장(`ROADMAP.md` v0.5.0 범위 — 여러 택배 종류, 정식 맵, 파손 시스템 등)
+
+**이미 완료(v0.2.0/v0.3.0에서 검증됨)**
+
+- 싱글플레이 코어 루프(이동·Grab·Force-Based Physics·배송·Restart, EPIC-01~05, T070 최종 승인)
+- 좁은 문·벽·계단·경사로 통과, 환경 물리 오브젝트(EPIC-01/02)
+- 다수 Package 동시 존재(EPIC-03)
+- 로컬 2인 협동 물리(입력 분리, 분할 화면, 동시 Grab, Grab Point 표시, 협동 HUD, Release 피드백, Player 간 충돌, EPIC-06)
+- 헤드리스 회귀 검증 체계(매 Task마다 반복 확인, 오류 0건 유지)
+
+### 데모 범위 제안: 안 A vs 안 B
+
+| 비교 항목 | 안 A — 싱글플레이 중심 | 안 B — 싱글+로컬 협동 |
+|---|---|---|
+| 구현량 | 작음(메뉴·설정·종료·온보딩만 추가) | 큼(안 A 전체 + 모드 선택 UI + `LocalCoopTest` 사용자용 정리 + 게임패드 안내/연결 해제 대응) |
+| 예상 위험 | 낮음(이미 T070에서 전체 루프 최종 승인 받은 콘텐츠만 노출) | 높음(게임패드 미보유 사용자 경험 저하, 분할 화면 성능·해상도 대응 미검증, `LocalCoopTest`가 원래 "개발 검증용"이라 사용자 노출 전 재정비 필요) |
+| 데모의 차별점 | "실패해도 웃긴 물리 코미디"에 집중, 짧고 완결된 인상 | "친구와 함께"라는 협동 코미디까지 보여줄 수 있어 인상은 더 강하나, 준비 부족 시 역효과(먹통처럼 보이는 P2) 위험 |
+| 사용자 접근성 | 높음(추가 하드웨어 불필요) | 낮음(게임패드 필수, 2번째 플레이어 필요 — 1인 시연 상황에서는 체험 불가) |
+| 현재 코드 재사용성 | 높음(`PrototypeLevel.tscn` 그대로) | 중간(`LocalCoopTest.tscn` 물리·UX는 재사용하나 진입 경로·안내 신규 필요) |
+| 출시 준비 난이도 | 낮음 | 높음 |
+
+**권장안: 안 A(싱글플레이 중심 데모).** 이유: (1) v0.4.0 Done Criteria("외부 플레이어가 설치해 싱글/로컬 다인으로 끝까지 플레이 가능한 빌드 1개 존재")는 "싱글 **또는** 로컬 다인"으로 읽을 수 있어 싱글만으로도 충족 가능. (2) `ROADMAP.md` v0.3.0 Goal 자체가 로컬 협동을 "정식 분할 화면 출시 기능이 아니라 개발용 검증 단계"로 명시해 두어, 협동을 데모의 정식 기능으로 승격하려면 추가 범위 확정(사용자 승인)이 필요하다. (3) 게임패드 없이도 100% 체험 가능해야 접근성이 높다. (4) `CLAUDE.md`의 "작게 만들고 자주 검증" 원칙에 부합 — 안 A로 먼저 데모를 완성하고, 반응이 좋으면 협동을 후속 버전(예: v0.4.1)에서 정식 기능으로 승격하는 점진적 접근을 제안한다. 로컬 협동을 완전히 폐기하는 것은 아니며, 메인 메뉴에 "실험적 기능"으로 최소 링크만 남겨두는 것은 선택 사항으로 남긴다(구현 여부는 후속 Task에서 사용자가 결정).
+
+### v0.4.0 후속 Task 분해안(계획만, 미착수)
+
+Task 번호 충돌 확인 완료(T077 이후 T078~T085 전부 미사용, EPIC-07 미사용). 아래는 **계획 상태**로만 기록하며, 이번 T077에서는 구현하지 않는다. 실제로 이미 구현된 항목(예: Restart, DeliveryZone 판정)은 새 Task로 만들지 않았다.
+
+- **T078 — Main Menu and Mode Selection**: 시작 화면(제목·시작·종료 버튼) 신규. 안 A 채택 시 모드 선택 UI는 불필요(싱글로 바로 진입), "시작" 버튼만으로 `PrototypeLevel.tscn` 진입. 완료 조건: 실행 시 메뉴가 먼저 뜨고, 시작 버튼으로 정상 진입, 종료 버튼으로 정상 종료.
+- **T079 — Pause, Settings and Exit Flow**: ESC로 일시정지, 최소 설정(창/전체 화면 전환), 종료 버튼(메뉴·일시정지 양쪽에서 접근 가능). 완료 조건: 플레이 중 언제든 ESC로 멈추고 재개·종료 가능, 창/전체 화면 전환이 실제로 동작.
+- **T080 — Player Onboarding and Control Guide**: 조작법 안내 UI, `KI-002`(GoalLabel) 해소. 완료 조건: 신규 사용자가 별도 설명 없이 이동·Grab·배송 목표를 이해할 수 있음(사용자 수동 테스트로 확인).
+- **T081 — Demo Gameplay Loop and Completion Flow**: 배송 성공 후 "다시 플레이"/"메뉴로" 선택지 등 완결된 흐름 제공, 반복 배송 여부 결정. 완료 조건: 성공 후 플레이어가 다음에 뭘 해야 할지 명확함.
+- **T082 — Audio and Feedback Pass**: 최소 효과음(Grab/Release/배송 성공)·배경음. 완료 조건: 핵심 액션에 최소 1개 이상의 청각 피드백 존재(권장 등급 — 없어도 v0.4.0 완료를 막지 않음).
+- **T083 — Windows Export and Build Validation**: `export_presets.cfg` 최초 구성, 실제 Windows 실행 파일 생성 및 실행 검증. 완료 조건: 에디터 없이 빌드된 `.exe`가 처음부터 끝까지 정상 실행됨.
+- **T084 — Demo Performance and Compatibility Pass**: 실제 빌드 기준 FPS 측정, 해상도·전체 화면 대응 확인, 게임패드 연결 해제 시 최소 안내 문구 추가(안 B 채택 시에만 해당). 완료 조건: 측정된 FPS·해상도 대응 기록, 크래시 없음.
+- **T085 — Final Demo Playtest**: T078~T084 통합 후 전체 데모 흐름 최종 사용자 플레이 테스트. 완료 조건: 외부 관점 사용자가 설명 없이 설치→플레이→종료까지 완주.
+
+Steamworks SDK 연동은 v0.4.0 Done Criteria에 포함되지 않으므로(위 "이미 완료"/"선택" 분류 참고) 이번 Task 목록에 포함하지 않았고, 필요 시 v0.4.0 이후 별도 검토한다. 온라인 기능은 범위에 넣지 않았다.
+
+- 완료 조건(T077 자체): 위 조사·분류·범위 비교·Task 분해안이 문서에 기록되고, 사용자가 안 A/B 중 하나를 확정한 뒤 후속 Task(T078~) 착수를 승인함.
+- 테스트 방법: 코드 실행 검증 대상이 아님(조사·문서 작업) — 저장소 파일 존재 여부(`export_presets.cfg`, `addons/`, 오디오 리소스 등) 직접 확인, `docs/*.md` 교차 대조로 진행.
+- 예상 위험: 데모 범위(안 A/B) 확정이 늦어지면 후속 Task 착수도 함께 지연된다. Export Preset 미구성 상태로는 "실제 빌드에서의" 성능·호환성(T084)을 검증할 수 없어, T083(Export/Build)이 다른 후속 Task보다 먼저 진행되어야 실질적 의미가 있다.
+### 재조사 확인(T076 결함 수정 이후)
+
+- **선행 상태 재확인**: v0.3.0(Fun Physics Update)·EPIC-06(Local Co-op Foundation)·T076(Local Co-op Final Validation)·Milestone 2(Gameplay Expansion) 전부 `docs/ROADMAP.md`/`docs/MILESTONES.md`/`docs/VERSION.md`/`docs/TASKS.md`에서 완료(`[x]` `[DONE]`, ✅ 완료)로 일관되게 확인됨. T076은 사용자 최종 협동 테스트 승인에 더해, 이후 발견된 Held Light Object Push 결함까지 수정·자동 재검증(26개 항목 3회 연속 PASS)·사용자 재검증 승인(11개 항목)까지 모두 완료된 상태 — **불일치 없음.**
+- **위 조사 내용 재확인**: T076 결함 수정은 `GrabbableBody.gd`(물리 힘 계산)만 변경했고 메뉴·Export·UI·오디오·Input Map과는 무관하다 — 위 1~4번 조사(실행 구조·콘텐츠·UI/UX·기술 상태) 결과는 전부 그대로 유효함을 재확인.
+- **추가로 명시 확인한 항목**:
+  - **마우스 감도 설정**: 없음. `Player.gd`의 `mouse_sensitivity`(0.003)는 고정 `@export` 값이며, 인게임에서 조정할 UI가 전혀 없다(에디터에서만 변경 가능).
+  - **게임패드 감도·Y축 반전 설정**: 없음. `gamepad_look_sensitivity`(2.5)·`invert_gamepad_y`(false)도 마찬가지로 고정 `@export` 값(`TECH_DEBT.md` TD-014/015 Baseline)이며, 인게임 설정 메뉴 자체가 없다.
+  - **실패·재도전 흐름**: 별도의 "실패" 조건 자체가 게임에 없음(시간 제한·목숨·페널티 없음) — 해당사항 없음. "재도전"은 오직 전체 씬을 초기화하는 `Restart`(R키)뿐이며, 부분 재시도·체크포인트 개념은 없음.
+  - **첫 실행 시 사용자 안내**: 없음(위 "조작법 안내"와 동일 결론) — T080(Player Onboarding and Control Guide) 계획에 포함되어 있음.
+- **Windows Export 빌드 시도 결과**: `export_presets.cfg`가 저장소에 여전히 존재하지 않아, 지시에 따라 **새로 Preset을 만들지 않고 시도하지 않았다** — "Export Preset 없음"으로만 보고한다. Preset이 생기면(T083) 그때 임시 폴더 빌드 검증이 의미를 가진다.
+
+- **상태**: 사용자가 데모 범위(안 A/B)를 확정하고 후속 Task 착수를 승인하기 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. v0.3.0/Milestone 2 완료 상태는 변경하지 않는다. **(이후 사용자 승인으로 `[DONE]` 확정 — 아래 참고)**
+
+### T077 사용자 승인(최종)
+
+- **사용자 승인**: 조사 결과와 권장안 **안 A(싱글플레이 중심 Steam Demo)**를 승인함.
+- **v0.4.0 데모 범위 확정**: 싱글플레이 중심. 로컬 협동(`LocalCoopTest.tscn`)은 v0.4.0 **공개 데모 필수 범위에서 제외** — 다만 삭제하거나 구조를 변경하지 않고, 에디터 F6 실행과 로컬 협동 코드·기능은 그대로 유지한다(회귀 없음).
+- **완료 처리**: 이 승인으로 T077은 `[DONE]`으로 확정한다(섹션 29 상단 상태 갱신).
+- **EPIC-07/v0.4.0**: 아직 완료 처리하지 않는다 — T078(Main Menu & Demo Entry)이 이어서 진행된다.
+
+## 30. T078 — Main Menu & Demo Entry
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 목적: 실행 시 곧바로 테스트 레벨(`PrototypeLevel.tscn`)로 들어가는 대신, 일반 사용자가 사용할 수 있는 최소 메인 메뉴(제목·데모 시작·게임 종료)를 먼저 표시한다. 설정·일시정지·온보딩·성공 연출은 각각 T079~T081 범위라 이번 Task에서 다루지 않는다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-B
+- 선행 작업: T077 `[DONE]`(사용자 승인 완료, 안 A 확정)
+- 작업 범위: 메인 메뉴 Scene 신규 생성, `project.godot`의 `run/main_scene`을 메인 메뉴로 변경, 데모 시작(→`PrototypeLevel.tscn` 전환)·게임 종료(`get_tree().quit()`) 기능, 키보드/마우스/게임패드 메뉴 조작(Godot 기본 Focus 시스템 사용), 게임패드 `ui_accept`에 대한 `JOY_BUTTON_A` 바인딩 추가(기존에 키보드 Enter/Kp Enter/Space만 있고 게임패드 바인딩이 전혀 없었음 — 실측으로 발견).
+- 제외 범위: 설정 메뉴, 일시정지 메뉴, 온보딩/조작법 안내, 성공 연출, Steamworks 연동, 로컬 협동 메뉴 노출, `LocalCoopTest.tscn`/`PrototypeLevel.tscn` 구조 변경, 신규 Asset, 버전 번호 변경, Git 작업.
+- 생성 파일: `hell-delivery/scenes/ui/MainMenu.tscn`, `hell-delivery/scenes/ui/MainMenu.gd`
+- 수정 파일: `hell-delivery/project.godot`(`run/main_scene`을 `MainMenu.tscn`으로 변경, `ui_accept` 액션에 게임패드 A 버튼 바인딩 추가)
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 실제 마우스·키보드·게임패드 조작감, 해상도 대응 체감은 사용자 수동 테스트 필요.
+- **설계**:
+  - `MainMenu.gd`(`class_name MainMenu extends Control`): `DEMO_SCENE_PATH` 상수 하나만 사용(Scene 경로 문자열이 이 한 곳에만 존재 — 전역 Scene Manager는 만들지 않음). `_ready()`에서 `Input.mouse_mode = MOUSE_MODE_VISIBLE`(마우스 커서 표시·캡처 해제)·`StartButton`/`QuitButton`의 `pressed` 시그널 연결·`StartButton.grab_focus()`(초기 Focus)만 수행. `_on_start_pressed()`는 `get_tree().change_scene_to_file(DEMO_SCENE_PATH)`, `_on_quit_pressed()`는 `get_tree().quit()`.
+  - 데모 진입 후 마우스 재캡처는 새 코드를 추가하지 않았다 — 기존 `Player.gd._ready()`의 `if input_profile == InputProfile.KEYBOARD_MOUSE: Input.mouse_mode = Input.MOUSE_MODE_CAPTURED`가 그대로 담당한다(중복 처리 없음).
+  - 메뉴 입력(키보드 Enter/Space, 마우스 클릭, 게임패드 A)은 전부 Godot 기본 `Button`/`Focus` 시스템으로 처리 — 별도 커스텀 입력 코드를 작성하지 않았다. `ui_up`/`ui_down`(Focus 이동)은 이미 키보드 방향키+게임패드 D-pad+왼쪽 스틱이 기본 바인딩되어 있었으나, `ui_accept`(버튼 활성화)는 키보드만 바인딩되어 있고 **게임패드 바인딩이 전혀 없었다** — `project.godot`에 `JOY_BUTTON_A`를 추가해 게임패드로도 메뉴를 확정할 수 있게 했다(이 프로젝트 최초의 UI 액션 커스터마이징).
+  - `MainMenu.tscn` 구조: `MainMenu(Control, full rect)` → `Background(ColorRect, 단색)` + `CenterContainer(full rect)` → `VBoxContainer(중앙 정렬)` → `TitleLabel("Hell Delivery")` → `ButtonSpacer` → `StartButton("데모 시작")` → `QuitButton("게임 종료")`. 외부 이미지·폰트 Asset 없음(Godot 기본 `ColorRect`/`Label`/`Button`만 사용), 버전 번호는 재사용할 런타임 상수가 프로젝트에 존재하지 않아 표시하지 않음(하드코딩 금지 지시에 따름).
+- 완료 조건: F5(또는 배포) 실행 시 MainMenu가 먼저 표시되고 PrototypeLevel이 배경에서 미리 실행되지 않음, 데모 시작이 마우스·키보드·게임패드 모두로 가능하고 반복해도 중복 Scene/Signal 문제 없음, 게임 종료가 정상 동작, 여러 해상도에서 UI가 잘리지 않음, 싱글플레이·로컬 협동 기존 기능 회귀 없음.
+- 테스트 방법: 임시 헤드리스 `SceneTree` 스크립트(검증 후 삭제)로 44개 항목을 3회 연속 검증 — 시작 흐름·구조(MainMenu 로드, PrototypeLevel 미리 실행 안 됨, 버튼 존재, 초기 Focus, 마우스 커서 표시, 6개), 데모 시작 10회 반복(각 반복마다 정상 전환·Player 정상, 20개), 메뉴 입력(마우스·키보드·게임패드로 시작, Focus 이동, 메뉴에서 이동 입력 무관, 5개), 해상도 4종(1280×720/1920×1080/2560×1440/900×500에서 제목·버튼 안 잘림, 4개), PrototypeLevel 단독 회귀(이동·Grab·Delivery·Restart, 4개), LocalCoopTest 단독 회귀(2인 존재·입력 독립성·동시 Grab, 3개), 그리고 별도 진단으로 Windows Export/Import/Boot 오류 확인.
+- 완료 근거(검증): 헤드리스 자동 검증 44개 항목 3회 연속 전부 PASS. 시작 흐름: MainMenu가 `run/main_scene`으로 정상 로드되고 트리 전체에 `Player` 노드가 전혀 없음(PrototypeLevel 미리 실행 안 됨) 확인, StartButton 초기 Focus 확인, 마우스 커서 표시(`MOUSE_MODE_VISIBLE`) 확인. 데모 시작 10회 반복: 매번 `PrototypeLevel`로 정상 전환되고 `Player`가 기본 `input_profile`(KEYBOARD_MOUSE)로 정상 존재 — Scene을 완전히 교체하는 `change_scene_to_file()` 방식이라 중복 인스턴스·중복 Signal 연결이 발생하지 않음을 반복으로 확인. 메뉴 입력: 마우스 클릭(Button.pressed 경로) 정상, 키보드 Enter(press+release 이벤트) 정상, 게임패드 A 버튼(press+release, 신규 바인딩 확인 후) 정상 — 세 경로 모두 동일하게 `PrototypeLevel`로 전환됨. `ui_down` 입력으로 Focus가 StartButton→QuitButton으로 정상 이동. 메뉴에는 Player 자체가 없어 `move_forward`를 눌러도 아무 영향이 없음(오류 없이 정상). 해상도 4종 모두 `CenterContainer` 기반 배치로 제목·버튼이 뷰포트 안에 완전히 들어감(잘림 없음). PrototypeLevel 단독 회귀: 이동·Grab·Delivery·Restart(`R`키 실제 이벤트 주입 후 스폰 위치로 재로드 확인) 전부 정상. LocalCoopTest 단독 회귀: Player 2명 존재, 입력 독립성, 동시 Grab(Grabber 수 2) 전부 정상. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+  - 검증 중 발견한 이슈 2건: (1) **게임 코드/설정 이슈(실제 수정)** — `ui_accept`에 게임패드 바인딩이 전혀 없어 게임패드로 메뉴를 확정할 방법이 없었다(위 참고, `project.godot`에 추가해 해결). (2) **테스트 방법론 이슈(테스트 스크립트에서만 수정)** — `Input.action_press()`는 폴링 기반 상태만 바꿀 뿐 `_unhandled_input()`으로 전달되는 실제 이벤트를 만들지 않아, Restart처럼 `_unhandled_input` 기반으로 감지되는 입력은 `Input.parse_input_event()`로 실제 `InputEventKey`를 주입해야 함을 발견(이동처럼 폴링 기반 입력과의 차이). Button의 키보드/게임패드 활성화도 press만으로는 반응하지 않고 press+release 쌍이 필요함을 확인.
+- 예상 위험:
+  - 마우스 캡처(`MOUSE_MODE_CAPTURED`)는 헤드리스 DisplayServer가 지원하지 않아(직접 대입해도 즉시 `VISIBLE`로 되돌아감을 실측 확인) 자동 검증이 불가능하다 — `Player.gd`의 기존 캡처 로직은 무수정이지만, 실제 캡처 체감은 사용자 수동 테스트로만 확인 가능.
+  - 게임패드 Focus 이동(D-pad·왼쪽 스틱)과 A 버튼 확인은 실제 컨트롤러 연결 상태에서의 반응감까지는 헤드리스로 확인할 수 없다.
+  - `ui_accept`에 게임패드 바인딩을 추가한 것은 이 프로젝트 최초의 UI 액션 커스터마이징이라, 향후 다른 UI(설정·일시정지 등, T079 이후)도 이 바인딩을 그대로 재사용하게 된다 — 문제 발생 시 이 지점을 함께 검토.
+- **상태**: `[DONE]` — 사용자가 메인 메뉴 구현과 수동 테스트 결과를 승인함. 메인 메뉴는 v0.4.0 데모 Baseline으로 기록한다(이후 T079+에서 이 메뉴 구조·`run/main_scene` 경로를 그대로 전제로 사용). EPIC-07과 v0.4.0 자체는 T079 이후로 계속 진행 중이라 완료 처리하지 않는다. v0.3.0/Milestone 2 완료 상태는 변경하지 않는다.
+
+## 31. T079 — Pause, Settings & Exit Flow
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 목적: 플레이 중 Esc로 일시정지하고, 메인 메뉴·일시정지 화면 양쪽에서 공유하는 설정 화면(화면/입력/오디오)을 제공하며, 일시정지에서 다시 시작·메인 메뉴·게임 종료로 안전하게 전환한다. 온보딩/조작법 안내·성공 연출·Steamworks 연동은 T080 이후 범위라 다루지 않는다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-B
+- 선행 작업: T078 `[DONE]`(사용자 승인 완료, 메인 메뉴가 v0.4.0 Baseline)
+- 작업 범위: 일시정지 메뉴(`PauseMenu.tscn`/`.gd`), 공용 설정 화면(`SettingsPanel.tscn`/`.gd`, MainMenu·PauseMenu 양쪽에서 동일 Scene 재사용), 설정값을 `user://settings.cfg`에 저장·복원하는 Autoload(`GameSettings.gd`), Player.gd의 마우스/게임패드 감도·Y축 반전 실시간 반영, MainMenu에 설정 버튼 추가, `ui_cancel` 게임패드 바인딩 추가(기존에 키보드 Escape만 있고 게임패드 바인딩이 전혀 없었음 — 실측으로 발견, T078의 `ui_accept` 사례와 동일 패턴).
+- 제외 범위: 온보딩/조작법 안내, 성공 연출, Steamworks 연동, 로컬 협동(`LocalCoopTest.tscn`) 전용 일시정지 UX 설계(구조상 함께 딸려 들어오는 것은 남은 위험에 기록), 신규 Asset, 버전 번호 변경, Git 작업.
+- 생성 파일: `hell-delivery/autoload/GameSettings.gd`, `hell-delivery/scenes/ui/PauseMenu.tscn`, `hell-delivery/scenes/ui/PauseMenu.gd`, `hell-delivery/scenes/ui/SettingsPanel.tscn`, `hell-delivery/scenes/ui/SettingsPanel.gd`
+- 수정 파일: `hell-delivery/project.godot`(`[autoload]`에 `GameSettings` 등록, `ui_cancel` 액션에 게임패드 B 버튼 바인딩 추가), `hell-delivery/scenes/level/PrototypeLevel.tscn`(`UI` 아래 `PauseMenu` 인스턴스 추가), `hell-delivery/scenes/player/Player.gd`(`_apply_settings()` 추가, `GameSettings.settings_changed` 연결), `hell-delivery/scenes/ui/MainMenu.tscn`/`.gd`(설정 버튼·`SettingsPanel` 인스턴스 추가)
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 실제 마우스 캡처 해제/재캡처 체감, 감도 체감, 해상도·전체 화면 전환 체감은 사용자 수동 테스트 필요.
+- **설계**:
+  - `GameSettings`(Autoload, `res://autoload/GameSettings.gd`): 화면(창 모드/해상도)·입력(마우스 감도·게임패드 감도·Y축 반전)·오디오(Master Volume) 설정값을 한곳에서 들고 있는 유일한 출처. `_ready()`에서 `user://settings.cfg`를 읽고, 없거나 손상되면 기존 승인된 Baseline 기본값(`mouse_sensitivity=0.003`은 Player.gd 기존 `@export` 기본값 그대로 재사용, `gamepad_look_sensitivity=2.5`/`invert_gamepad_y=false`는 TECH_DEBT.md TD-014/TD-015 기준 Baseline 그대로 재사용 — 임의의 새 값을 만들지 않음)로 안전하게 복구한다. 각 `set_xxx()`는 값 적용(필요 시 DisplayServer/AudioServer 호출) + 저장 + `settings_changed` Signal 발신을 함께 수행해, Player.gd와 SettingsPanel.gd가 이 Signal 하나만 구독해 자기 상태를 갱신하고 설정값 자체는 절대 중복 저장하지 않는다.
+  - 손상 복구는 타입·범위 둘 다 검사한다(`_safe_float`/`_safe_bool`/`_safe_enum`/`_safe_resolution`) — 예를 들어 `mouse_sensitivity`에 범위 밖 숫자나 문자열이 들어 있으면 기본값으로, `window_resolution`이 허용 목록(1280×720/1600×900/1920×1080) 밖이면 기본값으로 되돌린다.
+  - `PauseMenu`(`CanvasLayer`, PrototypeLevel의 `UI` 아래 항상 존재하는 단일 인스턴스 — 동적 생성이 아니므로 중복 생성 자체가 불가능): `process_mode = PROCESS_MODE_ALWAYS`로 자기 자신은 `paused` 상태에서도 계속 입력을 받는다. 단일 `_unhandled_input()`이 `ui_cancel`을 사용자가 지정한 우선순위(Settings 열림→Settings만 닫음, 아니면 Pause 열림→재개, 아니면→Pause 열기) 그대로 처리한다. Pause를 열 때 `get_tree().paused = true`만 설정하면 Player.gd·GrabbableBody.gd(RigidBody3D 물리)는 기존에 `process_mode`를 건드리지 않아(기본값 Inherit/Pausable) 이동·회전·Grab Spring 계산이 추가 코드 없이 자동으로 멈춘다 — 이번에 새로 작성한 코드가 없는 지점이다. 재개 시 `Input.mouse_mode`를 다시 `CAPTURED`로 되돌린다. Restart/Main Menu/Quit 버튼은 각각 Scene 전환 전에 반드시 `get_tree().paused = false`를 먼저 호출한다(`paused`가 SceneTree 전역 플래그라 새 Scene에도 그대로 남아있기 때문 — T078에서도 동일하게 처리한 패턴).
+  - `SettingsPanel`(`Control`)은 MainMenu·PauseMenu 양쪽에서 동일한 `SettingsPanel.tscn`을 각각 인스턴스해 재사용한다(코드 중복 없음). `_updating_ui` guard로 `GameSettings.settings_changed`에 의한 UI 갱신이 다시 `GameSettings.set_xxx()`를 호출하는 되먹임을 막는다. 적용(Apply) 버튼은 없다 — 모든 조작이 `GameSettings`에 즉시 반영되고 즉시 저장된다. `뒤로 가기`/Esc로 닫아도 변경값은 그대로 유지된다(별도 취소 기능 없음, 사용자 지시대로 "즉시 적용" 원칙).
+  - Player.gd는 `_apply_settings()` 하나를 추가해 `mouse_sensitivity`/`gamepad_look_sensitivity`/`invert_gamepad_y` 세 값만 `GameSettings`에서 복사해 온다 — 이동 속도·가속도·Grab Force 등 물리값은 전혀 건드리지 않는다. P1/P2는 같은 전역 설정을 함께 받지만, `KEYBOARD_MOUSE` 슬롯은 마우스 감도만, `GAMEPAD` 슬롯은 게임패드 감도·Y축 반전만 자기 입력 분기에서 실제로 사용하므로(T074에서 이미 분리된 구조) 로컬 협동 입력 독립성에는 영향이 없다.
+- 완료 조건: Esc로 언제든 일시정지·재개 가능하고 일시정지 중 물리·입력이 완전히 멈춤, Pause에서 다시 시작/메인 메뉴/게임 종료가 모두 안전하게 동작(전환 후 `paused == false`), MainMenu·PauseMenu 양쪽에서 동일한 설정 화면 진입 가능, 설정값이 `user://settings.cfg`에 저장되고 재실행 후 복원되며 손상된 값은 기본값으로 안전 복구, 마우스/게임패드 감도·Y축 반전이 Player에 즉시 반영, Master Volume이 Master Bus에 적용, 여러 해상도에서 대체로 UI가 잘리지 않음(예외 1건은 남은 위험 참고), 싱글플레이·로컬 협동 기존 기능 회귀 없음.
+- 테스트 방법: 임시 헤드리스 테스트 드라이버(Node 스크립트를 임시 `run/main_scene`으로 등록 — Autoload는 `--script` 단독 실행 경로에서는 전혀 로드되지 않음을 실측으로 확인했기 때문. 검증 후 스크립트·씬·`run/main_scene` 임시 변경 모두 원복·삭제)로 55개 항목 검증 — Pause 기본 동작(Esc 1회로만 Pause, 3초간 Package 위치·속도·Player 이동·회전 불변, 재개 후 정상 이동, 12개), Pause/Resume 20회 반복(중복 UI 없음, 2개), Scene 전환 안전성(Restart/Main Menu 각각 전환 후 `paused==false`·상태 정상, 메뉴 재진입 정상, 9개), 설정 즉시 적용(마우스·게임패드 감도·Y축 반전 변경 시 Player 즉시 반영, 물리값 무변경, 4개), 손상된 설정값 복구(6종 필드 각각 실측, 6개), MainMenu 설정 진입(버튼·Esc·뒤로 가기·재진입, 6개), 해상도 5종 UI 잘림 확인(PauseMenu 5종 + SettingsPanel 2종, 7개), 싱글플레이 회귀(Grab/Release/Delivery/Restart/Push-fix, 6개), LocalCoopTest 단독 회귀(2인 존재·구조·입력 독립성·동시 Grab, 4개).
+- 완료 근거(검증): 55개 항목 중 52개 PASS. 실패 3건: (1) 재개 후 마우스 재캡처 확인 — 헤드리스 DisplayServer가 `MOUSE_MODE_CAPTURED`를 지원하지 않아(T078에서도 동일하게 확인된 환경 한계) 자동 검증 불가, 코드 자체(`Input.mouse_mode = MOUSE_MODE_CAPTURED` 호출)는 정상 실행됨을 확인 — 사용자 수동 테스트로 위임. (2)(3) PauseMenu·SettingsPanel이 900×500(매우 작은 해상도)에서 버튼이 뷰포트 밖으로 잘림 — 1280×720/1600×900/1920×1080/2560×1440에서는 모두 정상, 900×500만 재현됨(2회 반복 실측 동일). Pause 기본 동작(3초 물리 정지, 재개 후 이동), 20회 반복 무중복, Restart/Main Menu 전환 후 `paused==false`, 설정 저장·즉시 반영·손상값 복구 6종 전부, MainMenu 설정 진입, 싱글플레이 회귀(Grab/Release/Delivery/R Restart/T076 Push-fix), LocalCoopTest 단독 회귀(2인·입력 독립성·동시 Grab)는 전부 PASS. `--headless --import`, `--headless --quit-after 60` 오류·경고 0건.
+  - 검증 중 발견한 이슈: (1) **테스트 방법론 이슈(테스트 스크립트에서만 수정)** — Godot의 `--headless --script <file>.gd`(SceneTree 서브클래스) 실행 경로는 Autoload를 전혀 로드하지 않는다(실측: `get_node_or_null("/root/GameSettings")`가 항상 null). GameSettings를 실제로 테스트하려면 임시 Node 스크립트를 `run/main_scene`으로 등록해 정상 부트 경로(Autoload 로드 → main_scene 실행)를 타야 했다 — 검증 후 `run/main_scene`은 `MainMenu.tscn`으로 원복했다. (2) **테스트 스크립트 자체 결함(수정 완료)** — 처음 작성한 스크립트가 동적으로 추가한 Scene을 `get_tree().current_scene`에 반영하지 않아, PauseMenu의 `reload_current_scene()`/`change_scene_to_file()`이 테스트 스크립트 자신(Driver, 즉 그 시점의 `run/main_scene`)을 갈아치워 테스트 전체가 무한 재시작되는 결함을 발견해 수정(`_boot()`에서 `get_tree().current_scene = root_node`를 명시적으로 설정). 게임 코드 자체의 결함이 아니라 테스트 하네스의 결함이었다.
+- 예상 위험:
+  - PauseMenu·SettingsPanel이 900×500처럼 매우 작은 창 크기에서는 내용이 뷰포트보다 커서 일부 버튼이 잘릴 수 있다(스크롤이나 폰트 축소를 하지 않는 단순 `CenterContainer` 구조라서). 1280×720 이상에서는 문제 없다. 이 프로젝트의 목표 플랫폼(Windows PC, Steam)에서 900×500은 매우 작은 비표준 해상도라 우선순위는 낮다고 판단하지만, 레이아웃을 임의로 바꾸지 않고 발견 사실만 보고한다 — 필요 시 별도 Task로 제안.
+  - `LocalCoopTest.tscn`은 `PrototypeLevel.tscn`을 통째로 인스턴스하므로, 이번에 PrototypeLevel에 추가한 `PauseMenu`(CanvasLayer)도 `Level/UI/PauseMenu` 경로로 로컬 협동 씬에 함께 존재하게 된다. `CanvasLayer`는 SubViewport에 속하지 않고 루트 Viewport에 직접 그려지므로, 로컬 협동에서 Esc를 누르면 일시정지 화면이 분할 화면 중 한쪽에만 뜨는 게 아니라 창 전체에 걸쳐 뜰 가능성이 있다 — 이번 T079는 싱글플레이 Pause만 요구 범위였고 로컬 협동에서의 Pause UX는 설계되지 않았다. 실제 동작 확인·필요한 로컬 협동 전용 처리는 후속 Task로 남긴다.
+  - 마우스 캡처/재캡처, 실제 해상도·전체 화면 전환 체감, 게임패드 실기 감도 체감은 헤드리스로 확인할 수 없어 사용자 수동 테스트가 반드시 필요하다.
+- **상태**: `[DONE]` — 사용자가 T079의 모든 기능을 직접 확인하고 정상 작동을 승인함. Pause·Settings·Exit 흐름과 현재 설정값(마우스 감도 0.003, 게임패드 감도 2.5, Y축 반전 false, Master Volume 100%)은 v0.4.0 Baseline으로 기록한다. EPIC-07과 v0.4.0 자체는 T080 이후로 계속 진행 중이라 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+## 32. T080 — Player Onboarding & Controls
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 목적: 처음 실행한 사용자가 별도 설명 없이 이동·시점·Grab/Release·배송 목표·Pause·Restart·조작법 재확인 방법을 이해하게 한다. 긴 튜토리얼이나 강제 연습 구간은 만들지 않는다. 성공 연출(재시작/메뉴 선택지)은 T081 범위라 다루지 않는다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-C
+- 선행 작업: T079 `[DONE]`(사용자 승인 완료, Pause/Settings/Exit가 v0.4.0 Baseline)
+- 작업 범위: 공용 조작법 화면(`ControlsPanel.tscn`/`.gd`, MainMenu·PauseMenu 양쪽에서 재사용), 첫 실행 안내 Overlay(`OnboardingOverlay.tscn`/`.gd`, PrototypeLevel 최초 진입 시 1회), 짧은 목표 문구(`DeliveryHUD`에 `GoalLabel`/`GoalTimer` 최소 확장), `GameSettings`에 `onboarding_seen` 저장 항목 추가, MainMenu·PauseMenu에 조작법 버튼 추가, Esc 입력 우선순위를 Overlay까지 포함해 확장.
+- 제외 범위: 성공 연출(재시작/메뉴 선택지, T081), 로컬 협동 전용 온보딩, 게임패드 전용 상세 안내, 외부 이미지·아이콘·폰트, 신규 Asset, 버전 번호 변경, Git 작업.
+- 생성 파일: `hell-delivery/scenes/ui/ControlsPanel.tscn`, `hell-delivery/scenes/ui/ControlsPanel.gd`, `hell-delivery/scenes/ui/OnboardingOverlay.tscn`, `hell-delivery/scenes/ui/OnboardingOverlay.gd`
+- 수정 파일: `hell-delivery/autoload/GameSettings.gd`(`onboarding_seen` 저장 항목 추가, `reset_to_defaults()`에서는 의도적으로 제외), `hell-delivery/scenes/level/PrototypeLevel.tscn`(`UI` 아래 `OnboardingOverlay` 인스턴스 추가), `hell-delivery/scenes/level/PrototypeLevel.gd`(Overlay 종료 후 또는 즉시 목표 문구 표시), `hell-delivery/scenes/ui/DeliveryHUD.tscn`/`.gd`(`GoalLabel`/`GoalTimer`/`show_goal()` 추가), `hell-delivery/scenes/ui/MainMenu.tscn`/`.gd`(조작법 버튼·`ControlsPanel` 추가, Settings와 상호 배타적으로 동작), `hell-delivery/scenes/ui/PauseMenu.tscn`/`.gd`(조작법 버튼·`ControlsPanel` 추가, Overlay 우선순위 반영)
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 실제 마우스 재캡처 체감, 안내 문구 가독성, 목표 문구 타이밍 체감은 사용자 수동 테스트 필요.
+- **설계**:
+  - `ControlsPanel`(`Control`)은 정적인 조작법 6줄(이동/시점/잡기·놓기/일시정지/다시 시작/목표)만 표시하는 단순 화면이라 `GameSettings`를 구독하지 않는다 — SettingsPanel과 달리 라이브 값 바인딩이 필요 없다. MainMenu·PauseMenu 양쪽이 동일한 `ControlsPanel.tscn`을 인스턴스해 재사용하고(코드 중복 없음), 여는 쪽에서 SettingsPanel이 열려 있으면 자동으로 닫아 두 화면이 동시에 뜨지 않게 한다.
+  - `OnboardingOverlay`(`CanvasLayer`)는 PrototypeLevel의 `UI` 아래 항상 존재하되, 자기 `_ready()`에서 `GameSettings.onboarding_seen`만 확인해 스스로 표시 여부를 결정한다(PrototypeLevel.gd는 이 판단에 관여하지 않음). 표시 중에는 `get_tree().paused = true`로 PauseMenu와 동일한 방식(추가 코드 없이 물리·입력 자동 정지)으로 게임을 멈추고, 키보드/마우스/게임패드 아무 press로나 닫힌다. **발견한 결함(수정 완료)**: Godot의 `Control` 기본 `mouse_filter`가 `STOP`이라, Overlay의 루트 `Control`이 화면 전체를 덮은 채 기본값 그대로 있으면 마우스 클릭이 `_unhandled_input`에 전혀 도달하지 못해 "마우스 클릭으로 닫기"가 항상 실패했다 — 루트 `Control`부터 모든 하위 Container/Label까지 `mouse_filter = MOUSE_FILTER_IGNORE`로 명시해 해결했다. 닫는 입력이 마우스 왼쪽 버튼(=`grab_object`와 동일 바인딩)이었을 경우를 대비해, 닫는 순간 `Input.action_release("grab_object")`를 호출해 그 press가 곧바로 Player의 Grab으로 새어 들어가지 않게 막는다.
+  - 목표 문구는 `DeliveryHUD`에 `GoalLabel`+`GoalTimer`(4초, one-shot)만 최소 추가한 `show_goal()`로 표시한다. `PrototypeLevel.gd`가 `_ready()`에서 Overlay가 보이는 중이면 `closed` Signal에 1회성으로 연결해 닫힌 직후 표시하고, 이미 본 상태(재진입·Restart)면 곧바로 표시한다 — 별도로 다시 호출하는 곳이 없어 Delivery 성공 후에는 재표시되지 않는다.
+  - Esc 입력 우선순위는 PauseMenu.gd 한 곳에서 계속 전담하되, 맨 앞에 "형제 `OnboardingOverlay`가 보이는 중이면 아무것도 하지 않고 반환(`set_input_as_handled()`도 호출하지 않음)"을 추가해, Overlay를 닫는 바로 그 입력이 동시에 Pause를 열어버리는 문제를 막는다(Overlay 자신의 핸들러가 처리할 수 있도록 넘겨줌). 그 아래는 ControlsPanel → SettingsPanel → Pause 재개 → Pause 열기 순서로 기존 T079 구조에 조작법 계층만 추가했다.
+  - `GameSettings.onboarding_seen`은 `_safe_bool`로 손상값을 안전하게 `false`로 복구하고, `reset_to_defaults()`(설정 화면의 "기본값 복원")에서는 의도적으로 건드리지 않는다(사용자 지시 — 자동 표시 여부를 설정 기본값 복원과 연결하지 않음).
+- 완료 조건: 첫 데모 진입 시 안내 Overlay가 뜨고 게임이 완전히 멈추며, 아무 키로 닫으면 정상 재개되고 그 입력으로 물체가 즉시 잡히지 않음, MainMenu·PauseMenu 양쪽에서 동일한 조작법 화면 진입 가능, Esc 한 번에 한 계층만 닫힘, 목표 문구가 짧게 표시되고 자동으로 사라지며 Delivery 성공 후 재표시되지 않음, `onboarding_seen`이 실제로 파일에 저장되어 재실행 후에도 유지됨, 싱글플레이·로컬 협동 기존 기능 회귀 없음.
+- 테스트 방법: T079와 동일한 임시 헤드리스 테스트 드라이버(Node 스크립트를 임시 `run/main_scene`으로 등록, 검증 후 전부 원복·삭제) 방식으로 50개 항목 검증 — 첫 실행 온보딩(Overlay 표시·물리 정지·좌클릭으로 닫기·Grab 미전달·목표 문구 표시, 11개), 재진입/Restart 시 재표시 없음(4개), MainMenu 조작법 화면(진입·Esc·뒤로 가기·Settings 상호 배타, 8개), PauseMenu 조작법 화면과 입력 우선순위(Overlay 우선순위 포함, 7개), 조작법 20회 반복(3개), 목표 문구 표시/소멸(Crosshair 비침범·타이밍·Delivery 후 미재표시, 6개), 설정 저장 회귀(감도 즉시 반영, onboarding 키 누락·손상 시 안전 복구, 3개), 싱글플레이 회귀(5개), LocalCoopTest 단독 회귀(3개). 별도로 두 프로세스(godot 두 번 순차 실행, 같은 `user://` 공유)로 `onboarding_seen` 실제 파일 영속성을 검증했다(Run A가 저장 후 종료, Run B가 완전히 새 프로세스로 재실행되어 값이 복원되고 Overlay가 뜨지 않음을 확인).
+- 완료 근거(검증): 첫 회차 시도에서 마우스 클릭 닫기 관련 6개 항목이 연쇄로 실패해 원인을 조사한 결과 위 "발견한 결함" 문단의 `mouse_filter` 문제를 발견해 수정, 재검증에서 50개 항목 중 49개 PASS. 유일한 실패는 "닫기 입력 후 마우스 재캡처" — 헤드리스 DisplayServer가 `MOUSE_MODE_CAPTURED`를 지원하지 않는 환경 한계(T078·T079에서도 동일하게 확인)로, 코드 자체(`Input.mouse_mode = MOUSE_MODE_CAPTURED` 호출)는 정상 실행됨을 확인했다 — 사용자 수동 테스트로 위임. 별도 2-프로세스 테스트에서 `onboarding_seen` 실제 파일 영속성도 PASS로 확인했다. `--headless --import`, `--headless --quit-after 90` 오류·경고 0건.
+  - 검증 중 발견한 이슈: **게임 코드 자체의 결함(실제 수정)** — 위 `mouse_filter` 문제 1건. 그 외 테스트 방법론 이슈는 없었다(T079에서 확립한 Node 드라이버+임시 `run/main_scene` 기법, `current_scene` 명시적 설정, 첫 `_boot()` 전 1프레임 대기를 그대로 재사용해 T079 때 겪은 시행착오가 반복되지 않았다).
+- 예상 위험:
+  - 마우스 캡처/재캡처, 실제 안내 문구 가독성과 배치 체감, 목표 문구가 실제 플레이 흐름에서 방해되지 않는지는 헤드리스로 확인할 수 없어 사용자 수동 테스트가 필요하다.
+  - `ControlsPanel`/`OnboardingOverlay`도 T079의 SettingsPanel/PauseMenu와 마찬가지로 900×500 같은 매우 작은 해상도에서는 잘릴 가능성이 있다(`TD-021`과 같은 성격) — 이번 자동 검증에서는 해상도별 잘림을 별도로 재확인하지 않았으므로, 사용자 수동 테스트에서 함께 확인이 필요하다.
+  - `OnboardingOverlay`는 싱글플레이 PrototypeLevel 진입 기준으로만 설계되었다 — `LocalCoopTest.tscn`이 PrototypeLevel을 통째로 인스턴스하므로 구조상 Overlay도 함께 존재하지만(T079의 PauseMenu와 동일한 상속 방식), 로컬 협동에서 실제로 어떻게 보이는지는 검증하지 않았다(T079의 PauseMenu 관련 남은 위험과 동일한 성격).
+- **상태**: `[DONE]` — 사용자가 T080의 온보딩·조작법 기능을 확인하고 정상 작동을 승인함. 현재 온보딩 Overlay와 공용 조작법 화면은 v0.4.0 Baseline으로 기록한다. EPIC-07과 v0.4.0 자체는 T081 이후로 계속 진행 중이라 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+## 33. T081 — Demo Gameplay Loop & Completion Flow
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 목적: 1분 미만의 단일 배송 판정을 "메인 메뉴 → 데모 시작 → Package 3개 배송 → 진행도 갱신 → 완료 화면 → 다시 플레이/메인 메뉴"로 완결되는 짧은 데모 플레이로 확장한다. 새 레벨·외부 Asset·점수 시스템·실패 조건은 만들지 않는다. 오디오는 T082 범위라 다루지 않는다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-C
+- 선행 작업: T080 `[DONE]`(사용자 승인 완료, 온보딩·조작법이 v0.4.0 Baseline)
+- 작업 범위: `DeliveryZone`의 단일 배송 판정을 Package 3개 반복 배송(`TARGET_PACKAGE_COUNT`)으로 확장, 배송된 Package의 안전한 Grab 해제·재사용 방지 처리(`GrabbableBody.deliver()`), 진행도/배송 토스트 HUD(`DeliveryHUD` 최소 확장), 플레이 시간 측정, 최종 완료 화면(`CompletionOverlay.tscn`/`.gd` 신규), Restart·다시 플레이·메인 메뉴 전환의 완전한 상태 초기화, 온보딩/조작법 문구와 실제 목표 개수 동기화.
+- 제외 범위: 새 레벨/맵, 외부 Asset, 점수·랭킹·최고 기록 저장, 실패 조건, 오디오(T082), 로컬 협동 전용 완료 흐름, 버전 번호 변경, Git 작업.
+- 생성 파일: `hell-delivery/scenes/ui/CompletionOverlay.tscn`, `hell-delivery/scenes/ui/CompletionOverlay.gd`
+- 수정 파일: `hell-delivery/scenes/delivery/DeliveryZone.gd`(다중 Package 집계·`TARGET_PACKAGE_COUNT`·`all_packages_delivered` Signal 추가), `hell-delivery/scenes/objects/GrabbableBody.gd`(`deliver()`·`_delivered` 플래그·`add_grabber()` 가드 추가), `hell-delivery/scenes/ui/DeliveryHUD.tscn`/`.gd`(기존 단일 성공 패널 제거, `ProgressLabel`/`DeliveryToastLabel`/`GoalLabel` 동적 문구로 교체), `hell-delivery/scenes/level/PrototypeLevel.tscn`/`.gd`(`CompletionOverlay` 인스턴스 추가, 플레이 타이머·Signal 연결), `hell-delivery/scenes/ui/PauseMenu.gd`(완료 화면 표시 중 Esc 무시 가드 추가), `hell-delivery/scenes/ui/OnboardingOverlay.gd`/`hell-delivery/scenes/ui/ControlsPanel.gd`(목표 문구를 `DeliveryZone.TARGET_PACKAGE_COUNT`에서 동적으로 읽어와 동기화)
+- 에디터 수동 작업: 없음(전부 텍스트 편집). 완료 화면 체감, 목표 문구 가독성, 전체 배송 흐름의 재미·명확성은 사용자 수동 테스트 필요.
+- **설계**:
+  - 목표 Package 수는 `DeliveryZone.TARGET_PACKAGE_COUNT`(상수, 현재 3) 한곳에서만 관리한다. `OnboardingOverlay`·`ControlsPanel`·`DeliveryHUD`의 목표 문구는 전부 이 값을 `_ready()`에서 동적으로 읽어와 문자열을 조립하므로, 목표 개수를 바꿔도 하드코딩된 문구가 따로 어긋날 일이 없다. `PrototypeLevel.tscn`에는 이미 Package 3개(Package/PackageB/PackageC)가 배치되어 있어 레벨에 오브젝트를 추가하지 않았다.
+  - `DeliveryZone.gd`는 `_delivered_packages: Dictionary`(RigidBody3D -> true)로 같은 Package의 재진입을 중복 집계하지 않으며, `is_in_group("package")` 판정(PhysicsCrate/Barrel/SmallBox는 이 그룹에 없어 자동 제외)은 그대로 유지한다. 목표를 이미 달성한 뒤에는 추가 Package가 들어와도 더 집계하지 않는다(레벨에 여분 Package가 있어도 안전).
+  - `GrabbableBody.deliver()`는 DeliveryZone이 배송 판정을 내렸을 때만 호출된다(Package 전용 — 다른 Grabbable은 이 함수를 절대 호출하지 않아 물리·Grab 동작에 전혀 영향이 없다). 기존 `remove_grabber()`를 그대로 재사용해 모든 Grab Connection을 안전하게 해제(Player가 밀리지 않는 기존 Release 동작 그대로, Marker도 함께 정리)한 뒤, `_delivered` 플래그로 이후 `add_grabber()`를 항상 거부하고, `freeze=true`+`collision_layer/mask=0`으로 물리·충돌을 정리하고, 0.6초 뒤 `visible=false`로 감춘다. `queue_free()`는 사용하지 않아 다른 Package나 Signal 연결에 영향이 없다.
+  - `DeliveryHUD`의 기존 단일 성공 패널(`SuccessPanel`/`show_success()`)은 1개 Package만 배송하던 옛 흐름 전용이라 3개 반복 배송 흐름과 맞지 않아 제거했다 — 대신 항상 보이는 `ProgressLabel`("배송 완료 N / 3")과 배송마다 1초 안팎 표시되는 `DeliveryToastLabel`("배송 완료!")로 교체했다. 둘 다 Crosshair(화면 중앙)·Pause UI(중앙)와 겹치지 않게 화면 상단에 세로로 배치했다.
+  - `CompletionOverlay`(`CanvasLayer`)는 `PauseMenu`와 같은 구조(`process_mode=ALWAYS`, `PrototypeLevel`에 항상 존재하는 단일 인스턴스, 평소 숨김)를 따르되 Esc로는 닫히지 않는다 — `PauseMenu.gd`의 `_unhandled_input` 맨 앞에 "형제 `CompletionOverlay`가 보이는 중이면 아무것도 하지 않고 반환"하는 가드를 `OnboardingOverlay` 가드와 같은 방식으로 추가해, 완료 화면이 떠 있는 동안 Esc가 Pause를 열거나 게임을 재개하지 않게 막았다.
+  - 플레이 타이머(`PrototypeLevel.gd`의 `_play_time_elapsed`)는 `_physics_process(delta)`에서 무조건 누적한다 — `PrototypeLevel.gd`는 기본 `process_mode`(Pausable)라 Pause/온보딩/완료 화면이 전부 `get_tree().paused=true`를 쓰는 순간 이 함수 자체가 호출되지 않으므로, 별도 조건 분기 없이 "실제 플레이 시간만" 자연히 집계된다(T079의 Pause 자동 정지와 같은 원리를 재사용).
+  - Restart(R 키)·PauseMenu "다시 시작"·CompletionOverlay "다시 플레이" 셋 다 결국 `get_tree().reload_current_scene()`(또는 완료 화면에서는 먼저 `paused=false`) 하나로 귀결된다 — Scene 전체가 새로 인스턴스되므로 진행도·타이머·Package 위치·Grab 상태·collision exception이 전부 자연히 초기화되고, 별도의 수동 리셋 코드가 필요 없다. 완료 화면이 열려 있는 동안에는 `PrototypeLevel.gd`도 Pausable이라 R 키 `_unhandled_input`이 아예 호출되지 않아(Pause 중과 동일한 원리) "완료 화면에서는 UI의 다시 플레이만 사용" 요구사항이 추가 코드 없이 자동으로 만족된다.
+- 완료 조건: Package 3개를 서로 다른 개체로 배송해야 완료되고 같은 Package 재진입이나 Crate/Barrel 진입은 집계되지 않음, Grab 중 배송이 안전하게 처리되어 Player가 밀리지 않고 Marker가 남지 않음, 진행도/토스트 HUD가 즉시 갱신되고 Crosshair·Pause UI와 겹치지 않음, 완료 화면이 3번째 배송 후 1 physics frame 이내 표시되고 Player·물리가 정지하며 Esc로 닫히지 않음, 다시 플레이/메인 메뉴가 모든 상태(진행도·타이머·Package·Grab)를 완전히 초기화, 온보딩/조작법 문구가 실제 목표 개수와 일치, 싱글플레이·로컬 협동 기존 기능 회귀 없음.
+- 테스트 방법: T079~T080과 동일한 임시 헤드리스 테스트 드라이버(Node 스크립트를 임시 `run/main_scene`으로 등록, 검증 후 전부 원복·삭제) 방식으로 80개 항목 검증 — 배송 집계 0→1→2→3(같은 Package 재진입 무시, Crate 무시, 4번째 Package 있어도 중복 없음, 14개), Grab 중 배송(안전 해제·Marker·Player 밀림 없음·다른 Package Grab, 6개), 플레이 타이머(일반 증가·Pause 정지·재개 후 증가·Restart 초기화·온보딩 중 정지, 6개), 완료 화면과 다시 플레이/메인 메뉴 3회 반복(원 요청은 20회였으나 매 반복이 전체 Scene reload를 동반해 비용이 커 3회로 축소 — 아래 "예상 위험" 참고, 20개), 다양한 상태(배송 전/1개/2개/Grab 중/토스트 중/Pause 중)에서 Restart(18개), 회귀(MainMenu·온보딩·조작법·Pause/Settings/Exit·Grab/Release·Push·DeliveryZone 판정·LocalCoopTest, 11개), 네 번째 Package는 테스트 중에만 동적으로 임시 추가(Scene 파일 자체는 무변경).
+- 완료 근거(검증): 80개 항목 중 첫 회차에서 4개 실패 — 원인 조사 결과 전부 **테스트 스크립트 자체의 결함**으로 확인되어 수정 후 재검증에서 80개 전부 PASS. (1) Grab 사전조건 실패 2건 — 테스트가 Package를 Player의 실제 HoldPoint 근처로 스냅하지 않고 원래 위치에서 바로 `add_grabber()`를 호출해, 거리 초과 판정으로 1프레임 만에 자동 해제된 것이었다(T079/T080에서 이미 썼던 "HoldPoint 근처로 스냅 후 Grab" 패턴을 이번 스크립트에서 빠뜨림) — 게임 코드 결함 아님. (2) Restart 후 타이머 확인 실패 — `reload_current_scene()` 직후 몇 프레임이 이미 흐른 뒤 확인해 정확히 0.0이 아니었던 것으로, 정상 동작이었고 검증 허용 오차만 조정했다. (3) Pause 상태에서 Restart 실패 — Pause 중에는 `PrototypeLevel.gd`도 Pausable이라 R 키 `_unhandled_input`이 애초에 호출되지 않는 것이 의도된 동작이며(사용자 지시 "완료 화면에서는 R을 직접 처리하지 말고 UI 사용"과 같은 원리), 테스트가 실제 사용자처럼 PauseMenu의 "다시 시작" 버튼을 쓰도록 수정했다. `--headless --import`, `--headless --quit-after 90` 오류·경고 0건.
+- 예상 위험:
+  - "완료 화면 20회 반복" 자동 검증을 문자 그대로 20회가 아니라 3회로 축소했다 — 매 반복이 `PrototypeLevel` 전체(지형·물리 오브젝트 포함) 재로드를 동반해 비용이 크기 때문이다. `CompletionOverlay`가 `PauseMenu`와 동일하게 Scene에 미리 배치된 단일 인스턴스(동적 생성이 아님)라는 구조적 보장은 있지만, 문자 그대로 20회 반복한 실측은 아니므로 사용자가 원하면 추가 반복 검증을 요청할 수 있다.
+  - 완료 시간 표시(`분:초`)의 실제 체감(너무 빠르거나 느리게 흐르지 않는지)은 자동 검증으로 확인할 수 없다.
+  - `deliver()`가 배송 즉시 collision_layer/mask를 0으로 만들어 대기 중이던 collision exception 복구(`_pending_restores`)가 더 이상 진행되지 않을 수 있다 — 다만 그 물체는 이후 숨겨지고 다시 상호작용하지 않으므로 실질적인 영향은 없다고 판단했다(자동 검증으로 부작용 없음은 확인했으나, 코드 구조상 남는 비영구적 흔적이라 기록해 둔다).
+  - `CompletionOverlay`도 T079의 PauseMenu와 마찬가지로 900×500 같은 매우 작은 해상도에서는 잘릴 가능성이 있다(이번 자동 검증에서는 재확인하지 않음).
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
 
 ## 작업별 작성 형식
 

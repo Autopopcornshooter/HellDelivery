@@ -51,6 +51,13 @@ func _ready() -> void:
 	delivery_hud.crosshair.visible = false
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	# T076: PrototypeLevel.gd와 동일한 Restart 동작 — 로컬 협동 씬에는 이 처리가 없어
+	# Restart 입력이 아무 효과도 없던 결함을 발견해 수정(신규 기능 추가 아님, 기존 동작 승계).
+	if event.is_action_pressed("restart"):
+		get_tree().reload_current_scene()
+
+
 func _on_grab_connection_lost(reason: int, crosshair: Crosshair) -> void:
 	match reason:
 		GrabbableBody.DisconnectReason.DISTANCE_EXCEEDED:

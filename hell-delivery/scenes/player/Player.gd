@@ -57,6 +57,18 @@ func _ready() -> void:
 	if input_profile == InputProfile.KEYBOARD_MOUSE:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_apply_visual_layer_for_slot()
+	_apply_settings()
+	GameSettings.settings_changed.connect(_apply_settings)
+
+
+func _apply_settings() -> void:
+	# T079: 마우스/게임패드 감도·Y축 반전만 GameSettings(Autoload)에서 실시간으로 반영한다 —
+	# 이동 속도·Grab Force 등 물리값은 여기서 전혀 건드리지 않는다. P1/P2 모두 같은 전역 설정을
+	# 그대로 받되, KEYBOARD_MOUSE는 mouse_sensitivity만, GAMEPAD는 나머지 두 값만 실제로
+	# 쓰이므로(각자의 입력 분기 코드 참고) 서로의 입력 독립성에는 영향이 없다.
+	mouse_sensitivity = GameSettings.mouse_sensitivity
+	gamepad_look_sensitivity = GameSettings.gamepad_look_sensitivity
+	invert_gamepad_y = GameSettings.invert_gamepad_y
 
 
 func _apply_visual_layer_for_slot() -> void:

@@ -77,11 +77,11 @@ res://
 
 | 씬 | 책임 | 루트 노드 | 비고 |
 |---|---|---|---|
-| `Main.tscn` | 게임 진입점, 향후 메뉴/씬 전환 지점 | (미생성) | MVP-1에서는 별도 파일로 만들지 않는다 — 섹션 5 참고 |
+| `MainMenu.tscn` | 게임 진입점, 제목·데모 시작·게임 종료(T078) | `Control` | 프로젝트의 `run/main_scene`으로 지정(v0.4.0부터) — 섹션 5 참고 |
 | `Player.tscn` | 이동, 카메라 조작, 상호작용 감지, 잡은 물체 요청 | `CharacterBody3D` | |
 | `Package.tscn` | 물리 충돌, 잡힘/놓임/던져짐 상태와 그에 따른 물리 반응 | `RigidBody3D` | |
 | `DeliveryZone.tscn` | 올바른 Package 도착 감지, 배송 성공 판정 및 통지 | `Area3D` | |
-| `PrototypeLevel.tscn` | 지형 배치, 하위 씬 조립, 배송 성공 신호를 UI로 연결, `restart` 입력 처리, MVP-1에서 Main 역할 겸임 | `Node3D` | 프로젝트의 `run/main_scene`으로 지정 |
+| `PrototypeLevel.tscn` | 지형 배치, 하위 씬 조립, 배송 성공 신호를 UI로 연결, `restart` 입력 처리 | `Node3D` | MVP-1~v0.3.0에서는 `run/main_scene`이었으나, v0.4.0부터 `MainMenu`의 "데모 시작" 선택 시 전환되는 대상으로 바뀜(구조·로직 무변경) |
 | `DeliveryHUD.tscn` | 성공/재시작 안내 텍스트 표시, 화면 중앙 조준점 표시(T073, `Crosshair` 자식 노드에 위임) | `CanvasLayer` | 게임 상태를 직접 판정하지 않음. 조준 대상 판정은 `Player.gd`가 하고 `DeliveryHUD`는 상태값만 받아 표시. 목표 안내(`GoalLabel`)는 아직 구현되지 않음(섹션 13 참고) |
 
 ### 4.1 `Player.tscn`
@@ -165,20 +165,47 @@ T071 이전에는 잡기·놓기·던지기·추종 로직 전체가 `Package.gd
 - MVP-1에는 타이틀 화면, 메뉴, 여러 레벨 간 전환이 없다 (`docs/GAME_DESIGN.md` MVP 필수 기능 기준).
 - `Main`이 하는 일이 사실상 "`PrototypeLevel`을 띄운다" 하나뿐이라면, 별도 씬으로 분리하는 것은 섹션의 지시대로 불필요한 계층이다.
 
-**결정**: MVP-1에서는 `PrototypeLevel.tscn`을 프로젝트의 실행 씬(`run/main_scene`)으로 직접 지정한다. `Main.tscn`은 별도 파일로 만들지 않는다. 메뉴/여러 레벨 전환이 필요해지는 Phase(예: Phase 8 정식 맵, Phase 9 Steam 준비)에서 `Main.tscn`을 다시 분리해 씬 전환 진입점으로 되살린다.
+**결정(MVP-1, 이력)**: MVP-1에서는 `PrototypeLevel.tscn`을 프로젝트의 실행 씬(`run/main_scene`)으로 직접 지정했다. `Main.tscn`은 별도 파일로 만들지 않았다. 메뉴/여러 레벨 전환이 필요해지는 Phase(예: Phase 8 정식 맵, Phase 9 Steam 준비)에서 메뉴/진입점을 다시 분리하기로 예정해 두었다.
+
+**갱신(v0.4.0 Steam Demo, T078)**: 예정대로 Phase 9(Steam 준비) 단계에서 진입점을 분리했다. `scenes/ui/MainMenu.tscn`(`Control` 루트, `MainMenu.gd`)을 신규 생성해 `run/main_scene`으로 지정했다 — 위에서 검토했던 "`Main.tscn`"의 역할을 이 씬이 맡으며, 별도 이름(`Main.tscn`이 아니라 `MainMenu.tscn`)을 쓴 이유는 실제로 하는 일이 메뉴(제목·데모 시작·게임 종료)이기 때문이다. `PrototypeLevel.tscn`은 더 이상 `run/main_scene`이 아니며, `MainMenu.gd`가 "데모 시작" 선택 시 `get_tree().change_scene_to_file()`로 전환하는 대상이 되었다(구조·내부 로직은 무변경). `LocalCoopTest.tscn`은 메뉴에 노출하지 않고 기존과 동일하게 에디터 F6 전용으로 유지한다.
+
+**갱신(v0.4.0 Steam Demo, T079)**: 일시정지·설정·안전한 종료를 추가했다. `PrototypeLevel.tscn`의 `UI` 그룹 아래 `PauseMenu.tscn`(`CanvasLayer`, 항상 존재하되 평소 숨김) 인스턴스를 추가했고, `MainMenu.tscn`에는 `SettingsButton`과 `SettingsPanel.tscn` 인스턴스를 추가했다. `MainMenu`와 `PauseMenu` 양쪽 모두 같은 `SettingsPanel.tscn`을 재사용한다(설정 UI를 두 번 만들지 않음). 설정값 저장을 위해 이 프로젝트 최초의 Autoload `GameSettings`(`res://autoload/GameSettings.gd`)를 등록했다 — 섹션 8·13에서 반복해 온 "전역 Manager/Autoload를 만들지 않는다" 원칙에 대한 예외로, 여러 Scene(MainMenu·PauseMenu·Player)이 반드시 공유해야 하는 사용자 설정값(`user://settings.cfg`로 영속화)이라는 명확한 이유가 있을 때만 예외로 허용한다.
+
+**갱신(v0.4.0 Steam Demo, T080)**: 첫 실행 온보딩과 공용 조작법 화면을 추가했다. `PrototypeLevel.tscn`의 `UI` 그룹 아래 `OnboardingOverlay.tscn`(`CanvasLayer`, `GameSettings.onboarding_seen`이 `false`일 때만 스스로 표시) 인스턴스를 추가했고, `MainMenu.tscn`·`PauseMenu.tscn` 양쪽에 `ControlsButton`과 `ControlsPanel.tscn` 인스턴스를 추가했다(SettingsPanel과 동일하게 재사용 — 설정 UI를 두 번 만들지 않는 것과 같은 원칙). `DeliveryHUD.tscn`에는 `GoalLabel`/`GoalTimer`만 최소 추가했다(별도 GoalManager 없음).
+
+**갱신(v0.4.0 Steam Demo, T081)**: 단일 배송 판정을 Package 3개 반복 배송 + 완료 화면으로 확장했다. `DeliveryZone.gd`가 `TARGET_PACKAGE_COUNT`(현재 3, 목표 개수를 관리하는 유일한 지점)까지 여러 Package를 집계하도록 확장되었고, `PrototypeLevel.tscn`의 `UI` 그룹 아래 `CompletionOverlay.tscn`(`CanvasLayer`, `PauseMenu`와 동일한 구조 — 항상 존재하되 평소 숨김) 인스턴스를 추가했다. `DeliveryHUD.tscn`의 기존 단일 성공 패널(`SuccessPanel`)은 제거되고 상시 진행도 표시(`ProgressLabel`)와 배송별 짧은 토스트(`DeliveryToastLabel`)로 대체되었다.
 
 ```text
-PrototypeLevel   (프로젝트 실행 씬, MVP-1에서 Main 역할 겸임)
+MainMenu         (프로젝트 실행 씬, run/main_scene, T078)
+├─ Background
+├─ CenterContainer
+│  └─ VBoxContainer
+│     ├─ TitleLabel
+│     ├─ StartButton     → get_tree().change_scene_to_file(PrototypeLevel.tscn)
+│     ├─ ControlsButton  → ControlsPanel 표시 (T080)
+│     ├─ SettingsButton  → SettingsPanel 표시 (T079)
+│     └─ QuitButton      → get_tree().quit()
+├─ SettingsPanel  (T079, 평소 숨김 — 아래 공용 SettingsPanel.tscn 참고)
+└─ ControlsPanel  (T080, 평소 숨김 — 아래 공용 ControlsPanel.tscn 참고)
+
+PrototypeLevel   (데모 시작 시 전환되는 실제 플레이 씬 — 내부 구조는 MVP-1과 동일)
 ├─ Environment    (바닥, 계단, 경사로 — StaticBody3D 모음)
 ├─ Gameplay
 │  ├─ Player
-│  ├─ Package
-│  └─ DeliveryZone
+│  ├─ Package / PackageB / PackageC   (배송 목표 3개, T081)
+│  └─ DeliveryZone                     (TARGET_PACKAGE_COUNT=3 관리, T081)
 └─ UI
-   └─ DeliveryHUD
+   ├─ DeliveryHUD          (GoalLabel/ProgressLabel/DeliveryToastLabel, T080/T081)
+   ├─ PauseMenu            (T079, 평소 숨김 — CanvasLayer, process_mode=ALWAYS)
+   │  ├─ SettingsPanel     (공용 SettingsPanel.tscn 인스턴스, 평소 숨김)
+   │  └─ ControlsPanel     (공용 ControlsPanel.tscn 인스턴스, 평소 숨김, T080)
+   ├─ OnboardingOverlay    (T080, onboarding_seen 기반 자기 표시 — CanvasLayer, process_mode=ALWAYS)
+   └─ CompletionOverlay    (T081, 평소 숨김 — CanvasLayer, process_mode=ALWAYS, Esc로 닫히지 않음)
 ```
 
 (실제 구현은 `Player`/`Package`/`DeliveryZone`을 `Gameplay` 그룹 노드 아래, `DeliveryHUD`를 `UI` 그룹 노드 아래 배치한다 — 최초 씬 뼈대 생성 시점의 구조가 그대로 유지되었다. 기능상 차이는 없다.)
+
+**참고**: `LocalCoopTest.tscn`은 `PrototypeLevel.tscn`을 통째로 인스턴스하므로, 위 `PauseMenu`·`OnboardingOverlay`·`CompletionOverlay`도 각각 `Level/UI/PauseMenu`·`Level/UI/OnboardingOverlay`·`Level/UI/CompletionOverlay` 경로로 로컬 협동 씬에 함께 존재하게 된다(구조상 자동으로 딸려 들어옴, 별도 추가 작업 없음). 다만 `CanvasLayer`는 SubViewport가 아니라 루트 Viewport에 직접 그려지므로, 로컬 협동의 분할 화면 중 한쪽에만 뜨는 것이 아니라 창 전체에 걸쳐 뜰 가능성이 있다 — 로컬 협동에서의 Pause·온보딩·완료 화면 동작 자체는 각각 T079·T080·T081 범위 밖이라 설계되지 않았고, 실제 동작 확인과 필요한 처리는 후속 Task로 남겨 둔다(`docs/TASKS.md` T079·T080·T081 참고).
 
 ## 6. 플레이어 구조
 
@@ -353,30 +380,34 @@ Spring 상수, 감쇠 계수, Grabber별 힘 상한 등 정확한 수치는 expo
 
 - `Area3D` + `CollisionShape3D`(트리거) + `MeshInstance3D`(시각 확인용).
 - **감지 방법**: `body_entered(body: Node3D)` 시그널을 연결한다.
-- **성공 조건**: `body.is_in_group("package")`이고 아직 `is_delivered`가 `false`인 경우.
-- **성공 이벤트 전달**: `DeliveryZone.gd`가 커스텀 시그널 `package_delivered`를 발생시킨다. `PrototypeLevel.gd`가 이 시그널을 구독해 `DeliveryHUD.show_success()`를 호출한다. (발신: `DeliveryZone` / 수신: `PrototypeLevel`)
-- **중복 성공 방지**: `DeliveryZone.gd` 내부의 `var is_delivered: bool = false` 플래그를 최초 성공 시 `true`로 바꾸고, 이후 진입은 무시한다.
-- **다시 시작 흐름**: `restart` 액션 입력은 `DeliveryZone.gd`가 아니라 `PrototypeLevel.gd`가 감지한다. `PrototypeLevel.gd`가 `get_tree().reload_current_scene()`을 호출해 현재 씬(`PrototypeLevel.tscn`)을 다시 로드한다. MVP-1에는 저장해야 할 영속 상태가 없으므로 씬 재로드만으로 충분하다. (별도의 수동 리셋 로직을 만들지 않는다.)
+- **성공 조건**: `body.is_in_group("package")`이고 아직 집계되지 않은(같은 Package가 아니고, 목표를 아직 채우지 못한) 경우.
+- **갱신(T081)**: 단일 배송(`is_delivered: bool`)에서 반복 배송으로 확장했다. `DeliveryZone.gd`의 `const TARGET_PACKAGE_COUNT`(현재 3)가 목표 개수를 관리하는 유일한 지점이며, `_delivered_packages: Dictionary`(RigidBody3D -> true)로 같은 Package의 재진입을 중복 집계하지 않는다. 목표를 이미 채운 뒤에는 추가 Package가 들어와도 더 집계하지 않는다.
+- **성공 이벤트 전달**: `DeliveryZone.gd`가 `package_delivered(package, delivered_count, target_count)`와 `all_packages_delivered`(목표 달성 시 1회) 두 시그널을 발생시킨다. `PrototypeLevel.gd`가 이를 구독해 각각 `DeliveryHUD.update_progress()`/`show_delivery_toast()`, `CompletionOverlay.show_completion()`을 호출한다. (발신: `DeliveryZone` / 수신: `PrototypeLevel`)
+- **배송된 Package의 후처리(T081)**: `DeliveryZone`이 배송을 확정하면 `body.deliver()`(`GrabbableBody.gd`, Package 전용 흐름)를 호출한다 — 기존 Grab Connection을 안전하게 해제하고, 이후 다시 잡히지 않게 하며, 물리·충돌을 정리한 뒤 짧은 지연 후 숨긴다. `queue_free()`는 쓰지 않는다(다른 Package·Signal에 영향 없음).
+- **다시 시작 흐름**: `restart` 액션 입력은 `DeliveryZone.gd`가 아니라 `PrototypeLevel.gd`가 감지한다. `PrototypeLevel.gd`가 `get_tree().reload_current_scene()`을 호출해 현재 씬(`PrototypeLevel.tscn`)을 다시 로드한다. 진행도·타이머·Package 상태·Grab 연결이 전부 Scene 재로드로 자연히 초기화되므로 별도의 수동 리셋 로직을 만들지 않는다. `PauseMenu`의 "다시 시작"과 `CompletionOverlay`의 "다시 플레이"도 동일하게 `reload_current_scene()`으로 귀결된다(T081).
 
 ## 13. UI 구조
 
 MVP UI 요소 (`docs/GAME_DESIGN.md` MVP UI 범위와 동일):
 
-- 현재 목표 안내 (`GoalLabel`, 고정 텍스트로 시작 시 표시) — **아직 구현되지 않음**(T052에서 "성공 표시만 구현"으로 범위 축소, `GAME_DESIGN.md` 완료 조건에는 포함되지 않아 MVP-1 판정에는 영향 없음)
-- 배송 성공 메시지 (`SuccessLabel`, 성공 시에만 표시) — 구현됨
-- 다시 시작 안내 (`RestartLabel`, 성공 시 `SuccessLabel`과 함께 표시) — 구현됨
+- 현재 목표 안내 (`GoalLabel`, 첫 진입 시 짧게 표시 후 자동으로 사라짐) — T080에서 구현됨
+- 배송 진행도 (`ProgressLabel`, "배송 완료 N / 3" 상시 표시) — T081에서 구현됨
+- 배송 성공 피드백 (`DeliveryToastLabel`, 배송마다 1초 안팎 표시) — T081에서 구현됨(기존 `SuccessLabel`/`RestartLabel`은 1개만 배송하던 옛 흐름 전용이라 T081에서 제거하고 대체)
+- 최종 완료 화면 (`CompletionOverlay`, 목표 달성 시 표시 — 배송 완료 문구·완료 시간·다시 플레이/메인 메뉴 버튼) — T081에서 구현됨
 
-`DeliveryHUD.gd`는 `show_success()`처럼 표시 상태를 바꾸는 함수만 제공한다. 배송 성공 여부를 스스로 확인(폴링)하지 않고, `PrototypeLevel.gd`가 `DeliveryZone`의 시그널을 받아 호출해줄 때만 반응한다. 별도의 UI Manager(Autoload)는 만들지 않는다.
+`DeliveryHUD.gd`는 `update_progress()`/`show_delivery_toast()`/`show_goal()`처럼 표시 상태를 바꾸는 함수만 제공한다. 배송 성공 여부를 스스로 확인(폴링)하지 않고, `PrototypeLevel.gd`가 `DeliveryZone`의 시그널을 받아 호출해줄 때만 반응한다. `CompletionOverlay`도 마찬가지로 `PrototypeLevel.gd`가 `all_packages_delivered` 시그널을 받아 호출해줄 때만 표시된다. 별도의 UI Manager(Autoload)는 만들지 않는다.
 
 ## 14. 게임 흐름 및 상태
 
 ```text
-시작 → 플레이 가능 → 택배 배송 구역 진입 → 배송 성공 → 성공 메시지 → 재시작
+시작 → 플레이 가능 → Package 3개 배송(진행도 갱신) → 전부 배송 → 완료 화면 → 다시 플레이 또는 메인 메뉴
 ```
 
-MVP-1은 사실상 "성공 전 / 성공 후" 두 상태뿐이다. 이는 이미 `DeliveryZone.gd`의 `is_delivered: bool` 하나로 표현된다. 재시작은 상태를 이어가는 것이 아니라 씬 자체를 새로 로드하는 방식(섹션 12)이므로, 별도의 "재시작 상태"도 필요 없다.
+(T081 갱신 — MVP-1 시절의 "1개 배송 → 성공 메시지 → 재시작" 단일 흐름을 대체한다.)
 
-**결정**: 정식 상태 머신(State Machine)을 도입하지 않는다. `PrototypeLevel.gd`는 자체 상태 변수를 두지 않고, `DeliveryZone`의 시그널만 받아 `DeliveryHUD`를 갱신하는 얇은 연결 역할만 한다.
+MVP-1 시절에는 "성공 전 / 성공 후" 두 상태뿐이었다(`is_delivered: bool` 하나로 표현). T081에서 반복 배송으로 확장되며 상태는 `DeliveryZone.gd`의 `delivered_count: int`(0~`TARGET_PACKAGE_COUNT`)로 대체되었지만, 여전히 정식 상태 머신 없이 하나의 정수와 `all_packages_delivered` 시그널만으로 충분하다. 재시작은 상태를 이어가는 것이 아니라 씬 자체를 새로 로드하는 방식(섹션 12)이므로, 별도의 "재시작 상태"도 필요 없다.
+
+**결정**: 정식 상태 머신(State Machine)을 도입하지 않는다. `PrototypeLevel.gd`는 자체 진행도 상태 변수를 두지 않고, `DeliveryZone`의 시그널만 받아 `DeliveryHUD`/`CompletionOverlay`를 갱신하는 얇은 연결 역할만 한다(플레이 시간 측정용 `_play_time_elapsed`만 예외적으로 직접 들고 있다).
 
 ## 15. Input Map
 
@@ -392,6 +423,8 @@ MVP-1은 사실상 "성공 전 / 성공 후" 두 상태뿐이다. 이는 이미 
 | `interact` | `E` | T072 기준 코드 경로 없음 — 향후 버튼/문/레버 등 범용 상호작용을 위해 예약 (섹션 10.2) |
 | `restart` | `R` | `PrototypeLevel.gd`가 처리, 씬 재로드 (섹션 12) |
 | `release_mouse` | `Esc` | 마우스 캡처 해제 |
+| `ui_accept` | `Enter`/`Kp Enter`/`Space`/게임패드 `A` | Godot 기본 액션. 게임패드 `A` 바인딩은 원래 없었고 T078에서 추가(MainMenu 버튼 확정용) |
+| `ui_cancel` | `Esc`/게임패드 `B` | Godot 기본 액션. 게임패드 `B` 바인딩은 원래 없었고 T079에서 추가(PauseMenu/SettingsPanel 뒤로 가기·일시정지 토글용) — `release_mouse`와 같은 `Esc` 키를 공유하지만 서로 다른 액션이며 각자 다른 스크립트가 소비한다 |
 
 차량과 문 관련 입력(`CLAUDE.md` 섹션 6, `docs/GAME_DESIGN.md` 섹션 27 제외 기능)은 MVP-1 Input Map에 추가하지 않는다.
 

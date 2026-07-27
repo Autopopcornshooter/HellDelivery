@@ -8,9 +8,57 @@
 
 ---
 
-## [Unreleased] — Fun Physics Update (In Progress)
+## [Unreleased] — Steam Demo (In Progress)
 
-v0.3.0 범위의 구현 작업 착수. `docs/TASKS.md` T074(Local Co-op Test Environment) `[DONE]`(사용자 수동 테스트 승인 완료) — EPIC-06(Local Co-op Foundation)의 첫 Task로, 온라인 멀티플레이가 아닌 **로컬 2인 물리 검증 기반**을 구현했다. 이어서 T075(Local Co-op Interaction UX) `[REVIEW]` — 협동 상태(누가 무엇을 잡았는지, 같은 물체를 함께 잡았는지, 연결이 왜 끊겼는지)를 직관적으로 알 수 있도록 UX를 보강했다. 자동 검증(39개 항목 3회 연속) 완료, 사용자 수동 테스트 대기 중이라 v0.3.0은 아직 완료 처리하지 않는다.
+v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit & Scope Lock) `[DONE]` — 조사 전용 Task로 코드 변경은 없으며, 사용자가 권장안(안 A — 싱글플레이 중심 데모)을 승인해 v0.4.0 범위를 확정했다. T078(Main Menu & Demo Entry) `[DONE]`(사용자 승인) — 실행 시 곧바로 테스트 레벨로 들어가던 것을 멈추고, 제목·데모 시작·게임 종료만 갖춘 최소 메인 메뉴를 먼저 보여주도록 했으며, v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow) `[DONE]`(사용자 승인) — Esc 일시정지, MainMenu·PauseMenu 공용 설정 화면(화면/입력/오디오), `user://settings.cfg` 저장·복원을 추가했으며, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls) `[DONE]`(사용자 승인) — 첫 실행 안내 Overlay, MainMenu·PauseMenu 공용 조작법 화면, 짧은 목표 문구를 추가했으며, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow) `[REVIEW]` — 단일 배송 판정을 Package 3개 반복 배송으로 확장하고, 진행도/토스트 HUD, 플레이 타이머, 완료 화면(다시 플레이/메인 메뉴)을 추가했다. 자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기 중이라 v0.4.0은 아직 완료 처리하지 않는다.
+
+### Added
+
+- `scenes/ui/MainMenu.tscn`/`MainMenu.gd` 신규 — 제목("Hell Delivery")·데모 시작·게임 종료 버튼만 있는 최소 메인 메뉴. Scene 경로는 `DEMO_SCENE_PATH` 상수 하나로만 관리(전역 Scene Manager 없음). 데모 시작은 `get_tree().change_scene_to_file()`로 `PrototypeLevel.tscn` 전환, 게임 종료는 `get_tree().quit()`(T078)
+- `project.godot`의 `ui_accept` 액션에 게임패드 `JOY_BUTTON_A` 바인딩 추가 — 기존에는 키보드(Enter/Kp Enter/Space)만 있고 게임패드 확인 버튼이 전혀 없어 메뉴를 게임패드로 확정할 방법이 없었다(T078에서 실측으로 발견해 추가, 이 프로젝트 최초의 UI 액션 커스터마이징)
+- `autoload/GameSettings.gd` 신규(이 프로젝트 최초의 Autoload) — 화면(창 모드/해상도)·입력(마우스·게임패드 감도, Y축 반전)·오디오(Master Volume) 설정값을 `user://settings.cfg`에 저장·복원하는 유일한 출처. 손상되거나 범위를 벗어난 값은 안전하게 기본값으로 복구되며, 값이 바뀔 때마다 `settings_changed` Signal을 발신해 Player·UI가 각자 반영한다(T079)
+- `scenes/ui/PauseMenu.tscn`/`PauseMenu.gd` 신규 — `PrototypeLevel.tscn`의 `UI` 아래 항상 존재하는 일시정지 메뉴(계속하기/다시 시작/설정/메인 메뉴/게임 종료). Esc(`ui_cancel`) 하나로 Settings→Pause→게임플레이 우선순위대로 닫히며, Pause 중에는 `get_tree().paused = true`만으로 Player 이동·카메라 회전·물리(RigidBody3D)·Grab Spring 계산이 추가 코드 없이 전부 멈춘다(T079)
+- `scenes/ui/SettingsPanel.tscn`/`SettingsPanel.gd` 신규 — MainMenu와 PauseMenu 양쪽이 동일하게 재사용하는 공용 설정 화면. 창 모드/해상도, 마우스·게임패드 시점 감도, 게임패드 Y축 반전, Master Volume, 기본값 복원을 제공하며 별도 적용 버튼 없이 즉시 `GameSettings`에 반영·저장된다(T079)
+- `project.godot`의 `ui_cancel` 액션에 게임패드 `JOY_BUTTON_B` 바인딩 추가 — 기존에는 키보드 Escape만 있고 게임패드 뒤로 가기/일시정지 버튼이 전혀 없었다(T078의 `ui_accept` 사례와 동일 패턴으로 T079에서 실측으로 발견해 추가)
+- `Player.gd`에 `_apply_settings()` 추가 — `GameSettings`의 마우스 감도·게임패드 감도·Y축 반전을 `_ready()`와 `settings_changed` Signal 수신 시 즉시 반영한다(이동 속도·Grab Force 등 물리값은 무변경, T079)
+- `scenes/ui/OnboardingOverlay.tscn`/`OnboardingOverlay.gd` 신규 — `PrototypeLevel.tscn`의 `UI` 아래 항상 존재하며, `GameSettings.onboarding_seen`이 아직 `false`일 때만 스스로 표시되는 첫 실행 안내. 표시 중에는 `get_tree().paused = true`로 PauseMenu와 동일한 방식으로 게임이 멈추고, 키보드/마우스/게임패드 아무 press로나 닫힌다(T080)
+- `scenes/ui/ControlsPanel.tscn`/`ControlsPanel.gd` 신규 — MainMenu와 PauseMenu 양쪽이 재사용하는 공용 조작법 화면(이동/시점/잡기·놓기/일시정지/다시 시작/목표 6줄, 정적 안내라 GameSettings 구독 없음)(T080)
+- `GameSettings.gd`에 `onboarding_seen` 저장 항목과 `set_onboarding_seen()` 추가 — 손상값은 안전하게 `false`로 복구되며, "기본값 복원"(`reset_to_defaults()`)에서는 의도적으로 제외한다(T080)
+- `DeliveryHUD.tscn`/`.gd`에 `GoalLabel`/`GoalTimer`/`show_goal()` 추가 — 목표 문구를 4초간 표시한 뒤 자동으로 사라지게 하는 최소 확장(T080)
+- `MainMenu.tscn`/`.gd`, `PauseMenu.tscn`/`.gd`에 조작법 버튼과 `ControlsPanel` 진입 기능 추가 — 여는 쪽에서 SettingsPanel이 열려 있으면 자동으로 닫아 두 화면이 동시에 뜨지 않는다(T080)
+- `scenes/ui/CompletionOverlay.tscn`/`CompletionOverlay.gd` 신규 — Package `TARGET_PACKAGE_COUNT`개를 전부 배송했을 때 표시하는 최종 완료 화면(배송 완료 문구, 완료 시간, 다시 플레이/메인 메뉴 버튼). `PauseMenu`와 같은 구조(`CanvasLayer`, `process_mode=ALWAYS`, `PrototypeLevel`에 항상 존재하는 단일 인스턴스)를 따르되 Esc로는 닫히지 않는다(T081)
+- `DeliveryZone.gd`에 `TARGET_PACKAGE_COUNT` 상수(현재 3)와 `all_packages_delivered` Signal 추가 — 같은 Package의 재진입은 중복 집계하지 않고, 목표 개수는 이 상수 하나에서만 관리해 온보딩·조작법·HUD 문구가 전부 이 값을 동적으로 읽어온다(T081)
+- `GrabbableBody.gd`에 `deliver()`와 `_delivered` 플래그 추가 — DeliveryZone이 배송 판정을 내렸을 때만 호출되는(Package 전용) 안전한 은퇴 처리: 기존 `remove_grabber()`로 모든 Grab Connection을 먼저 해제하고, 이후 `add_grabber()`를 항상 거부하며, `freeze`+`collision_layer/mask=0`으로 물리를 정리한 뒤 0.6초 후 숨긴다(T081)
+- `DeliveryHUD.tscn`/`.gd`에 `ProgressLabel`("배송 완료 N / 3")과 `DeliveryToastLabel`("배송 완료!", 1초) 추가(T081)
+- `PrototypeLevel.gd`에 플레이 시간 측정(`_play_time_elapsed`, `_physics_process`에서 누적) 추가 — Pause/온보딩/완료 화면 모두 `get_tree().paused`를 쓰므로 이 함수 자체가 호출되지 않아 별도 조건 없이 실제 플레이 시간만 집계된다(T081)
+
+### Changed
+
+- `project.godot`의 `run/main_scene`을 `PrototypeLevel.tscn`에서 `MainMenu.tscn`으로 변경 — F5(또는 배포 실행) 시 메인 메뉴가 먼저 표시되고, "데모 시작" 선택 시에만 `PrototypeLevel.tscn`으로 전환된다. 로컬 협동(`LocalCoopTest.tscn`)은 메뉴에 노출하지 않으며 기존과 동일하게 에디터 F6으로만 실행한다(T078)
+- `MainMenu.tscn`/`MainMenu.gd`에 설정 버튼과 `SettingsPanel` 진입 기능 추가(데모 시작, 설정, 게임 종료 순서) — 기존 데모 시작·게임 종료 동작은 무변경(T079). 이후 T080에서 버튼 순서가 데모 시작·조작법·설정·게임 종료로 확장되었다.
+- `PauseMenu.gd`의 Esc(`ui_cancel`) 처리 우선순위가 ControlsPanel → SettingsPanel → Pause 재개 → Pause 열기로 확장되었고, 맨 앞에 형제 `OnboardingOverlay`가 보이는 동안에는 아무것도 하지 않고 반환하는 가드가 추가되었다(T080). T081에서 `CompletionOverlay`가 보이는 동안 아무것도 하지 않는 동일한 가드가 하나 더 추가되었다.
+- `DeliveryHUD.tscn`/`.gd`의 기존 단일 성공 패널(`SuccessPanel`/`show_success()`)을 제거 — 1개 Package만 배송하던 옛 흐름 전용이라 3개 반복 배송 흐름과 맞지 않아, 상시 진행도 표시와 배송별 짧은 토스트로 대체했다(T081)
+- `OnboardingOverlay.gd`·`ControlsPanel.gd`의 목표 문구가 `DeliveryZone.TARGET_PACKAGE_COUNT`를 동적으로 읽어와 실제 배송 목표(Package 3개)와 항상 일치하도록 변경되었다(T081)
+
+### Fixed
+
+- `OnboardingOverlay`의 루트 `Control`이 Godot 기본값(`mouse_filter=STOP`)을 그대로 쓰면 화면 전체를 덮은 채 마우스 클릭을 전부 흡수해 `_unhandled_input`에 전달되지 않아, "마우스 클릭으로 닫기"가 전혀 동작하지 않던 결함을 발견해 루트부터 모든 하위 Container/Label까지 `mouse_filter = MOUSE_FILTER_IGNORE`로 수정했다(T080, 자동 검증 중 발견)
+
+### Known Notes
+
+- 마우스 캡처(`MOUSE_MODE_CAPTURED`)는 헤드리스 환경에서 자동 검증이 불가능하다(직접 대입해도 즉시 `VISIBLE`로 되돌아감을 실측 확인, 엔진 자체 제약) — 데모 진입 후 실제 캡처 여부는 사용자 수동 테스트로 확인
+- PauseMenu·SettingsPanel은 900×500처럼 매우 작은 창 크기에서는 버튼이 뷰포트 밖으로 잘릴 수 있다(1280×720 이상에서는 문제 없음, 실측 확인) — 우선순위 낮은 것으로 판단, 필요 시 별도 Task로 제안. ControlsPanel·OnboardingOverlay·CompletionOverlay도 같은 성격의 위험이 있으나 T080·T081 자동 검증에서는 재확인하지 않았다.
+- `LocalCoopTest.tscn`은 `PrototypeLevel.tscn`을 통째로 인스턴스하므로 새 `PauseMenu`·`OnboardingOverlay`·`CompletionOverlay`도 구조상 함께 존재하게 되지만, `CanvasLayer`가 SubViewport가 아닌 루트 Viewport에 그려져 분할 화면 한쪽이 아니라 창 전체에 걸쳐 뜰 가능성이 있다 — 로컬 협동에서의 Pause·온보딩·완료 화면 UX는 각각 T079·T080·T081 범위 밖이라 설계되지 않았다
+- "완료 화면 20회 반복" 자동 검증은 매 반복이 전체 Scene reload를 동반해 비용이 커 3회로 축소해 검증했다(T081)
+- 오디오 Asset·Windows Export는 아직 없음(각각 T082·T083 계획)
+
+---
+
+## [0.3.0] — Fun Physics Update
+
+v0.3.0 범위의 구현 작업 전체 완료. `docs/TASKS.md` T074(Local Co-op Test Environment)·T075(Local Co-op Interaction UX)·T076(Local Co-op Final Validation) 전부 자동 검증(각 46/39/46개 항목 3회 연속 PASS)과 사용자 테스트를 거쳐 EPIC-06(Local Co-op Foundation)이 완료되었다. 온라인 멀티플레이가 아닌 **로컬 2인 물리 검증 기반**으로, T074가 입력 슬롯 분리·분할 화면·실제 2인 동시 Grab을 구현했고, T075가 협동 상태(누가 무엇을 잡았는지, 같은 물체를 함께 잡았는지, 연결이 왜 끊겼는지)를 직관적으로 알 수 있도록 UX를 보강했으며, T076이 새 기능 추가 없이 전체 플레이 흐름의 통합 안정성을 검증했다. **T076 사용자 최종 승인 이후 진행된 추가 수동 테스트에서 차단 결함(Held Light Object가 Heavy Object를 과도하게 미는 문제)이 발견되어 T076이 잠시 재오픈되었으나**, 원인 규명·수정·자동 재검증(26개 항목 3회 연속 PASS)과 사용자 재검증(11개 항목)을 모두 마쳐 다시 완료 확정되었다(아래 Fixed 참고) — 이로써 v0.3.0과 Milestone 2(Gameplay Expansion)가 최종 완료되었다.
+
+**한눈에 보는 v0.3.0 (사용자 관점 요약)**: 로컬에서 두 번째 Player(게임패드)와 함께 하나의 물리 월드를 공유하며 플레이한다 — 화면이 좌우로 분할되고, 각자 독립된 입력(P1 키보드+마우스, P2 게임패드 왼쪽 스틱 이동/오른쪽 스틱 시점/트리거+A로 Grab)과 조준점·HUD를 가진다. 같은 물체를 둘이 동시에 잡으면 각자의 힘이 합산되어 혼자보다 확실히 더 잘 들리고, 화면에는 "협동 운반" 표시와 각자의 Grab Point 마커(색으로 구분)가 나타난다. 한 명이 놓아도 다른 한 명의 연결은 그대로 유지되며, 거리 초과나 장애물로 인해 자기 연결만 예기치 않게 끊기면 그 사람 화면에만 짧게 표시된다. 혼자 운반하는 것도 여전히 그대로 가능하다.
 
 ### Added
 
@@ -33,11 +81,14 @@ v0.3.0 범위의 구현 작업 착수. `docs/TASKS.md` T074(Local Co-op Test Env
 
 - Player 2명이 로컬에서 동시에 존재할 때, 한 Player가 `sprint`(Shift)나 `jump`(Space)를 누르면 게임패드를 쓰는 다른 Player에게도 그대로 적용되던 입력 누수 → 두 액션 모두 `input_profile == KEYBOARD_MOUSE`로 게이트해 해결(T074)
 - `Player.tscn`의 `collision_mask`(21)에 Player 자신의 레이어(2)가 빠져 있어 Player끼리 물리적으로 전혀 충돌하지 않던 문제 → `collision_mask`를 23으로 수정해 해결(T074)
+- `LocalCoopTest.gd`에 `PrototypeLevel.gd`와 달리 `restart` 입력 처리가 전혀 없어 로컬 협동 씬에서 R키가 아무 효과도 없던 문제 → 기존 `PrototypeLevel.gd`와 동일한 패턴을 승계해 해결(T076)
+- **(T076 사용자 승인 후 재발견·수정)** 가벼운 물체를 Grab한 채로 무거운 물체에 밀착해 전진하면 빈손으로 미는 것보다 더 쉽게 밀리던 결함 → 원인 2가지를 모두 수정: (1) `max_force_per_grabber`(300N)가 held object 질량과 무관하게 적용되던 것을, 무관한 다른 RigidBody와 접촉해 누르는 압축 힘 성분만 `mass * push_transmission_accel`(신규 값, 12.0 N/kg)로 제한하도록 `GrabbableBody.gd`에 `_limit_push_transmission()` 추가. (2) `GrabCollisionBarrier`(Player를 그대로 따라가는 kinematic Body)가 막힌 held object 쪽으로 파고들어 Spring Force와 무관하게 큰 속도를 주입하던 경로를, 무관한 물체와 접촉 중인 동안 Barrier 충돌 mask를 잠시 해제하는 `_update_barrier_mask_for_contact()`로 차단. 공중 운반·swing·release·다중 Grabber 힘 합산은 전혀 변경하지 않음. 자동 검증(26개 항목 3회 연속 PASS)과 사용자 재검증(11개 항목) 모두 승인 완료(T076)
 
 ### Known Notes
 
 - `gamepad_look_sensitivity`(2.5)·`move_deadzone`/`look_deadzone`(각 0.2)은 T074에서 사용자 승인된 프로토타입 기준값(Baseline)(`TECH_DEBT.md` TD-014)
 - `gamepad_grab_trigger_threshold`(0.5)·`invert_gamepad_y`(기본 false)는 T075에서 새로 도입된, 아직 실측 후보 비교를 거치지 않은 초기값(`TECH_DEBT.md` TD-015)
+- `push_transmission_accel`(12.0 N/kg)은 T076 재오픈 결함 수정에서 새로 도입되어 사용자 재검증으로 승인된 v0.3.0 프로토타입 기준값(Baseline) — 여러 후보 실측 비교는 아직 거치지 않은 비차단 튜닝 항목으로 유지(`TECH_DEBT.md` TD-019)
 - 기존 `GrabbableBody`의 다중 `grab_connections` 구조(T072)는 T074에서 실제 Player 2명으로 처음 검증되었다 — 별도의 2인 전용 물리나 인원수 배율 없이, 기존 Grabber별 힘 합산만으로 협동 효과가 발생함을 확인(1인 대비 2인이 Crate를 더 높이·더 정확하게 들어올림)
 
 ---
