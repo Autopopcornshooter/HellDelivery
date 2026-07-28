@@ -1,0 +1,70 @@
+[gd_scene load_steps=8 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_Frame"]
+albedo_color = Color(0.35, 0.33, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Door"]
+albedo_color = Color(0.7, 0.55, 0.25, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_Post"]
+size = Vector3(0.2, 2.5, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Post"]
+material = SubResource("Mat_Frame")
+size = Vector3(0.2, 2.5, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Door"]
+size = Vector3(1.3, 2.2, 0.08)
+
+[sub_resource type="BoxMesh" id="Mesh_Door"]
+material = SubResource("Mat_Door")
+size = Vector3(1.3, 2.2, 0.08)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_Door"]
+friction = 0.5
+
+[node name="DemoGate" type="Node3D"]
+
+[node name="PostHinge" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 1.25, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PostHinge"]
+shape = SubResource("Shape_Post")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PostHinge"]
+mesh = SubResource("Mesh_Post")
+
+[node name="PostLatch" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 1.25, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PostLatch"]
+shape = SubResource("Shape_Post")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="PostLatch"]
+mesh = SubResource("Mesh_Post")
+
+[node name="Door" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.75, 1.25, 0)
+mass = 8.0
+physics_material_override = SubResource("PhysicsMaterial_Door")
+linear_damp = 2.0
+angular_damp = 1.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Door"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 0, 0)
+shape = SubResource("Shape_Door")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Door"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 0, 0)
+mesh = SubResource("Mesh_Door")
+
+[node name="Hinge" type="HingeJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.75, 1.25, 0)
+node_a = NodePath("../PostHinge")
+node_b = NodePath("../Door")
+params/limit_lower = 0.0
+params/limit_upper = 1.9
+params/motor_target_velocity = -0.6
+params/motor_max_impulse = 0.2
+flags/use_limit = true
+flags/enable_motor = true

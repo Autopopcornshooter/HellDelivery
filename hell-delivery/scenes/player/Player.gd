@@ -285,6 +285,10 @@ func _handle_grab_input() -> void:
 		if held_grabbable == null and _detected_grabbable != null:
 			if _detected_grabbable.add_grabber(self, hold_point, _detected_grab_point):
 				held_grabbable = _detected_grabbable
+				# T082: Grab 성공 순간에만 재생 — 실패(add_grabber()==false) 시에는 이 분기 자체에
+				# 들어오지 않으므로 성공음이 잘못 재생될 수 없다. 물체 위치에서 3D로 재생해 로컬
+				# 협동에서도 어느 Player가 무엇을 잡았는지 방향감으로 구분된다.
+				AudioManager.play_3d(AudioManager.Sfx.GRAB_SUCCESS, held_grabbable.global_position)
 				# T075: Release 피드백(사유 구분)을 위해, 이 물체가 "이 Player"의 연결을 해제할 때
 				# 알려주도록 연결한다. 같은 물체를 다시 잡을 때 중복 연결되지 않도록 확인 후 연결.
 				if not held_grabbable.grabber_disconnected.is_connected(_on_held_grabbable_disconnected):
@@ -301,6 +305,12 @@ func _on_held_grabbable_disconnected(grabber: Node3D, reason: int) -> void:
 	# held_grabbable과 마찬가지로 이 Player 인스턴스 스스로만 판단, 다른 Player 상태에 관여하지 않음).
 	if grabber != self:
 		return
+	# T082: 이 콜백은 held_grabbable이 아직 null로 정리되기 전에 호출되므로(_handle_grab_input()의
+	# remove_grabber() 호출 도중 동기적으로 발신됨) 물체의 마지막 위치를 그대로 재생 지점으로 쓸 수 있다.
+	# 수동 해제(MANUAL)는 부드러운 Release음, 거리 초과·차단에 의한 강제 해제는 구분되는 경고성 음.
+	if is_instance_valid(held_grabbable):
+		var sfx: int = AudioManager.Sfx.GRAB_RELEASE if reason == GrabbableBody.DisconnectReason.MANUAL else AudioManager.Sfx.GRAB_FORCED_RELEASE
+		AudioManager.play_3d(sfx, held_grabbable.global_position)
 	grab_connection_lost.emit(reason)
 
 

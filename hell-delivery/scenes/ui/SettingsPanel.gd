@@ -98,4 +98,5 @@ func _on_reset_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_BACK)
 	closed.emit()

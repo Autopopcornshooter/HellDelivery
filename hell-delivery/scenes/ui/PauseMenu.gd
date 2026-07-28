@@ -57,6 +57,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _open_pause() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_PAUSE_OPEN)
 	visible = true
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -70,6 +71,7 @@ func _resume() -> void:
 
 
 func _open_settings() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	controls_panel.visible = false
 	settings_panel.visible = true
 	settings_panel.grab_initial_focus()
@@ -81,6 +83,7 @@ func _close_settings() -> void:
 
 
 func _open_controls() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	settings_panel.visible = false
 	controls_panel.visible = true
 	controls_panel.grab_initial_focus()
@@ -92,6 +95,7 @@ func _close_controls() -> void:
 
 
 func _on_restart_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	# Scene 전환 전에는 항상 pause를 먼저 해제한다 — paused 상태가 SceneTree 전역 플래그라
 	# 새 Scene에도 그대로 남아 있으면 재시작된 게임이 처음부터 멈춰 있는 상태가 된다.
 	get_tree().paused = false
@@ -99,11 +103,13 @@ func _on_restart_pressed() -> void:
 
 
 func _on_main_menu_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE_PATH)
 
 
 func _on_quit_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().paused = false
 	get_tree().quit()

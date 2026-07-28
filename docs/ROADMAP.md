@@ -195,15 +195,15 @@ T064·T067과 마찬가지로 Epic 분해에 없던 범위다. EPIC-05(T072) 완
 - **Player Value**: 없음(개발 준비 단계). 이후 Task들의 실제 작업 범위를 낭비 없이 정하기 위한 선행 조사.
 - **Dependencies**: v0.3.0 전체 완료(`[DONE]`).
 - **Estimated Scope**: Small(조사·문서화만, 코드 변경 없음).
-- **진행 상태**: `docs/TASKS.md` T077 `[DONE]`(사용자 승인 완료, 안 A 확정) — 실행 구조·콘텐츠·UI/UX·기술 상태 조사, 필수/권장/선택/완료 분류, 데모 범위 비교, 후속 Task(T078~T085) 계획 완료. T078 `[DONE]`(사용자 승인 완료) — 메인 메뉴(데모 시작·게임 종료, 키보드/마우스/게임패드 조작) 구현·자동 검증(44개 항목 3회 연속 PASS) 완료, v0.4.0 데모 Baseline으로 기록. T079 `[DONE]`(사용자 승인 완료) — 일시정지 메뉴·공용 설정 화면·`GameSettings` Autoload·안전한 Scene 전환 구현·자동 검증(55개 항목 중 52개 PASS) 완료, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록됨. T080 `[DONE]`(사용자 승인 완료) — 첫 실행 안내 Overlay, 공용 조작법 화면(MainMenu·PauseMenu 재사용), 짧은 목표 문구 구현·자동 검증(50개 항목 중 49개 PASS) 완료, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록됨. T081 `[REVIEW]` — Package 3개 반복 배송·진행도/토스트 HUD·플레이 타이머·완료 화면(다시 플레이/메인 메뉴) 구현·자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기.
+- **진행 상태**: `docs/TASKS.md` T077 `[DONE]`(사용자 승인 완료, 안 A 확정) — 실행 구조·콘텐츠·UI/UX·기술 상태 조사, 필수/권장/선택/완료 분류, 데모 범위 비교, 후속 Task(T078~T085) 계획 완료. T078 `[DONE]`(사용자 승인 완료) — 메인 메뉴(데모 시작·게임 종료, 키보드/마우스/게임패드 조작) 구현·자동 검증(44개 항목 3회 연속 PASS) 완료, v0.4.0 데모 Baseline으로 기록. T079 `[DONE]`(사용자 승인 완료) — 일시정지 메뉴·공용 설정 화면·`GameSettings` Autoload·안전한 Scene 전환 구현·자동 검증(55개 항목 중 52개 PASS) 완료, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록됨. T080 `[DONE]`(사용자 승인 완료) — 첫 실행 안내 Overlay, 공용 조작법 화면(MainMenu·PauseMenu 재사용), 짧은 목표 문구 구현·자동 검증(50개 항목 중 49개 PASS) 완료, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록됨. T081 `[DONE]`(사용자 승인 완료) — Package 3개 반복 배송·진행도/토스트 HUD·플레이 타이머·완료 화면(다시 플레이/메인 메뉴) 구현·자동 검증(80개 항목 전부 PASS) 완료, 완결된 데모 플레이 흐름이 v0.4.0 데모 Baseline으로 기록됨. T082 `[DONE]`(사용자 승인 완료) — 절차적 효과음 8종(외부 음원 없음)과 `AudioManager` Autoload, DeliveryZone 시각 Pulse·배송 Toast·완료 화면 진입 연출 구현·자동 검증(82개 항목 3회 연속 PASS) 및 사용자 수동 테스트 승인 완료. T083 `[BLOCKED]` — `export_presets.cfg`(Windows Desktop Release Preset) 신규 구성·검증 완료(설정 오류 0건), 다만 로컬에 Godot 4.7.1.stable용 Export Template이 설치되어 있지 않아 실제 `.exe` 생성·실행 검증은 진행하지 못함(임의 다운로드 금지 지시에 따라 정확한 설치 방법만 보고).
 
 | Feature | MoSCoW | Task 후보 |
 |---|---|---|
 | FEATURE-07-A Demo Readiness Audit & Scope Lock | Must | ✅ 완료(`docs/TASKS.md` T077 `[DONE]`) |
 | FEATURE-07-B Main Menu / Pause / Settings / Exit | Must | ✅ 완료(`docs/TASKS.md` T078 `[DONE]`, T079 `[DONE]`) |
-| FEATURE-07-C Onboarding & Demo Completion Flow | Must | 🔶 진행 중(`docs/TASKS.md` T080 `[DONE]`, T081 `[REVIEW]`) — 온보딩 완료, 완료 화면 구현 완료, T081 사용자 수동 테스트 대기 |
-| FEATURE-07-D Audio & Feedback Pass | Should | 계획됨(T082) — 착수 전 |
-| FEATURE-07-E Windows Export & Build Validation | Must | 계획됨(T083) — 착수 전 |
+| FEATURE-07-C Onboarding & Demo Completion Flow | Must | ✅ 완료(`docs/TASKS.md` T080 `[DONE]`, T081 `[DONE]`) — 온보딩·완료 화면 모두 사용자 승인 완료 |
+| FEATURE-07-D Audio & Feedback Pass | Should | ✅ 완료(`docs/TASKS.md` T082 `[DONE]`) — 사용자 승인 완료 |
+| FEATURE-07-E Windows Export & Build Validation | Must | 🔶 `docs/TASKS.md` T083 `[BLOCKED]` — Preset 구성 완료, Export Template 설치 대기 |
 | FEATURE-07-F Performance & Compatibility Pass | Should | 계획됨(T084) — 착수 전 |
 | FEATURE-07-G Final Demo Playtest | Must | 계획됨(T085) — 착수 전 |
 

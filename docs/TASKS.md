@@ -649,10 +649,12 @@ MVP-1 완료 및 사용자의 명시적 승인 전에는 다음 작업을 생성
 
 ## 13. 현재 다음 작업
 
-- 작업 ID: T073
-- 작업명: First-Person Camera Transition and Grab Usability
-- 상태: `[REVIEW]` — 구현·자동 검증(128개 항목) 완료, 사용자 수동 테스트 대기 중.
-- 이유: 3인칭 카메라가 캐릭터로 잡은 물체와 조준 대상을 가리는 문제를 해결하기 위해 사용자 지시로 1인칭 시점 전환을 진행했다(섹션 25 참고). T072의 Force-Based Grab 구조는 그대로 유지하고, 카메라·조준점·Grab 판정 정렬만 재설계했다. T070(Final Playtest and Fun Validation)은 조작·시점이 다시 바뀌었으므로 T073 승인 전까지 다시 `[BLOCKED]`다(섹션 22 참고).
+- 작업 ID: T085A
+- 작업명: Delivery Demo Level Design & Greybox (재정의)
+- 상태: `[REVIEW]` — 신규 독립 Scene `scenes/level/DeliveryDemoLevel.tscn`(6구역 A~F Greybox), 설계 문서 `docs/LEVEL_DESIGN_DEMO.md`, 신규 `PackageLong.tscn`/`PackageHeavy.tscn`/`DemoGate.tscn` 구현 완료. 헤드리스 자동 검증 39개 항목 3회 연속 PASS, Release Export 재확인(정상 기동, 메모리 283.7MB). 사용자 수동 테스트 승인 대기 중.
+- 이유: 사용자가 T084 승인 후 T085A를 세 번째로 재정의했다 — 기존 `PrototypeLevel.tscn` 기반의 "Art Direction & Delivery Map Blockout"(구 T085A, 섹션 37-ARCHIVE로 이동)과 "Environment Art, Lighting, Visual Target Pass"(구 T085B, 동일 섹션으로 이동)를 대체하고, `PrototypeLevel.tscn`은 물리 회귀 테스트 전용(에디터 F6)으로 보존한 채 완전히 새로운 6구역(트럭 마당→서비스 골목→경사 하역장→공사 중 안뜰→좁은 후문·계단→배송 로비) Greybox 레벨을 신규 설계·구현하는 것으로 범위를 확장했다(섹션 37 참고). T085B(Environment Art & Lighting)·T085C(Level Polish & Balance)·T086(Final Demo Playtest)은 새 레벨 기준으로 `[TODO]` 재설정되었다. EPIC-07과 v0.4.0은 계속 미완료로 유지한다.
+
+(T072~T080의 진행 경과는 섹션 24~32 각 Task 항목과 `docs/ROADMAP.md` EPIC-05~07 참고.)
 
 변경된 순서(기록용): T030 → T031 → T032 → T033 → T034 → T040 → (T041~T054) → T022 → T023 → T060 → T061 → T023(경사로, T062 FAIL 이후 순서를 되돌려 완료) → T045(재검증) → T062(재검토, PASS) → T063(문서 동기화).
 
@@ -1407,7 +1409,7 @@ Steamworks SDK 연동은 v0.4.0 Done Criteria에 포함되지 않으므로(위 "
 
 ## 33. T081 — Demo Gameplay Loop & Completion Flow
 
-- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- 상태: `[x]` `[DONE]` (구현·자동 검증·사용자 수동 테스트 승인 모두 완료 — 아래 "T081 사용자 수동 테스트 승인" 참고)
 - 목적: 1분 미만의 단일 배송 판정을 "메인 메뉴 → 데모 시작 → Package 3개 배송 → 진행도 갱신 → 완료 화면 → 다시 플레이/메인 메뉴"로 완결되는 짧은 데모 플레이로 확장한다. 새 레벨·외부 Asset·점수 시스템·실패 조건은 만들지 않는다. 오디오는 T082 범위라 다루지 않는다.
 - 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-C
 - 선행 작업: T080 `[DONE]`(사용자 승인 완료, 온보딩·조작법이 v0.4.0 Baseline)
@@ -1433,6 +1435,292 @@ Steamworks SDK 연동은 v0.4.0 Done Criteria에 포함되지 않으므로(위 "
   - `deliver()`가 배송 즉시 collision_layer/mask를 0으로 만들어 대기 중이던 collision exception 복구(`_pending_restores`)가 더 이상 진행되지 않을 수 있다 — 다만 그 물체는 이후 숨겨지고 다시 상호작용하지 않으므로 실질적인 영향은 없다고 판단했다(자동 검증으로 부작용 없음은 확인했으나, 코드 구조상 남는 비영구적 흔적이라 기록해 둔다).
   - `CompletionOverlay`도 T079의 PauseMenu와 마찬가지로 900×500 같은 매우 작은 해상도에서는 잘릴 가능성이 있다(이번 자동 검증에서는 재확인하지 않음).
 - **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+### T081 사용자 수동 테스트 승인
+
+- **사용자 수동 테스트 결과: 승인.** 데모 시작 시 진행도 0/3 표시, 배송마다 1/3·2/3·3/3 갱신, 같은 Package 재진입 무집계, Crate/Barrel 미집계, Grab 중 배송 안전 해제, 3개 배송 후 완료 화면과 완료 시간 표시, 완료 화면 중 Player·물리 정지, 다시 플레이/메인 메뉴 전환 후 완전 초기화, R Restart 및 PauseMenu 다시 시작 회귀, 온보딩 안내와 실제 목표 개수 일치, 전체 배송 흐름을 모두 확인해 승인함.
+- **완료 처리**: 이 승인으로 T081을 `[DONE]`으로 확정한다(위 섹션 상단 상태 갱신). EPIC-07·v0.4.0은 T082 이후 남은 작업이 있어 계속 미완료로 유지한다.
+- **T082 착수**: T081 완료로 다음 작업인 T082(Audio & Feedback Pass)를 진행 상태로 전환한다. T083 이후는 아직 착수하지 않는다.
+
+## 34. T082 — Audio and Feedback Pass
+
+- 상태: `[DONE]` (사용자 수동 테스트 승인 완료)
+- 목적: 무음 상태였던 데모에 메뉴 선택·Grab/Release·강제 해제·배송·최종 완료·DeliveryZone 인식에 대한 최소한의 절차적 효과음과 시각 피드백을 추가해, 오디오가 꺼져 있어도 상태를 이해할 수 있으면서 오디오가 켜져 있으면 각 행동이 명확하게 느껴지도록 한다. 대규모 음악·환경음·발소리 시스템은 이번 범위가 아니다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-D
+- 선행 작업: T081(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 절차적 효과음 8개 생성(외부 음원 없음), `autoload/AudioManager.gd` 신규(UI/2D/3D 재생, 고정 크기 풀, 없는 Stream 안전 무시), `Player.gd`(Grab 성공·수동 Release·강제 해제 3D 효과음), `DeliveryHUD.gd`(배송 성공 2D 효과음 + Toast 확대·복귀), `PrototypeLevel.gd`(최종 완료 2D 효과음), `MainMenu.gd`/`PauseMenu.gd`/`SettingsPanel.gd`/`ControlsPanel.gd`/`CompletionOverlay.gd`(UI 효과음), `CompletionOverlay.gd`(Fade+Scale 진입 연출), `DeliveryZone.gd`(느린 밝기 Pulse, 순수 시각)
+- 제외 범위: 배경음악, 환경음, 발소리, 외부 음원/Asset, 새 SFX Volume 설정 UI(기존 Master Volume만 사용), Godot UI Focus 이동 전체에 대한 효과음, `DeliveryZone`의 Collision·판정 범위 변경
+- 생성 파일: `hell-delivery/autoload/AudioManager.gd`, `hell-delivery/assets/audio/generated/*.wav`(8개 — `ui_select`/`ui_back`/`ui_pause_open`/`grab_success`/`grab_release`/`grab_forced_release`/`delivery_success`/`delivery_complete`)
+- 수정 파일: `hell-delivery/project.godot`(autoload 등록), `hell-delivery/scenes/player/Player.gd`, `hell-delivery/scenes/ui/DeliveryHUD.gd`, `hell-delivery/scenes/level/PrototypeLevel.gd`, `hell-delivery/scenes/delivery/DeliveryZone.gd`, `hell-delivery/scenes/ui/MainMenu.gd`, `hell-delivery/scenes/ui/PauseMenu.gd`, `hell-delivery/scenes/ui/SettingsPanel.gd`, `hell-delivery/scenes/ui/ControlsPanel.gd`, `hell-delivery/scenes/ui/CompletionOverlay.gd`
+- 에디터 수동 작업: 없음(전부 텍스트 편집 + 헤드리스 도구 스크립트로 WAV 생성, headless import/boot로 검증)
+- **오디오 생성 방식**: 외부 음원을 전혀 쓰지 않고, 1회성 헤드리스 도구 스크립트(`_tmp_generate_sfx.gd`, 실행 후 TD-008 관례대로 삭제)로 순수 사인파/화이트노이즈를 직접 합성해 22050Hz 16bit mono WAV 8개를 생성했다(라이선스 문제 없음). 정확한 합성 방식(파형·주파수·길이·Envelope)은 재현 가능하도록 `AudioManager.gd` 상단 주석에 전부 기록해 두었다 — 클릭 노이즈 방지를 위해 모든 사운드가 최대 5ms Attack 후 끝까지 선형 감쇠하는 퍼커시브 Envelope를 공유한다:
+  - `ui_select`(700→1000Hz 스윕, 70ms), `ui_back`(600→400Hz, 70ms), `ui_pause_open`(500→750Hz, 140ms)
+  - `grab_success`(350→550Hz, 55ms, 펀치감 있게 짧음), `grab_release`(500→320Hz, 90ms, 부드러움), `grab_forced_release`(220Hz 사인 60%+화이트노이즈 40%, 고정 시드, 110ms, 경고성 buzz)
+  - `delivery_success`(660→880Hz 연속 2음, 200ms), `delivery_complete`(523→659→784Hz 도-미-솔 연속 3음, 400ms)
+- **AudioManager 구조**: `autoload/AudioManager.gd` — `GameSettings`와 동일하게 씬 트리 경로 없이 어디서나 직접 참조하는 Autoload. `play_ui()`(UI, 비공간)·`play_2d()`(월드지만 비공간, 배송 피드백용)·`play_3d(sfx, position)`(위치 기반) 세 API만 제공한다. 각 카테고리마다 고정 크기 `AudioStreamPlayer`/`AudioStreamPlayer3D` 풀(UI 4개, 2D 4개, 3D 8개)을 `_ready()`에서 한 번만 생성해 재사용하고, 풀이 전부 사용 중이면 조용히 재생을 건너뛴다(요청마다 새 노드를 만들지 않음, 동일 효과음의 과도한 중첩을 풀 크기 자체로 자연히 제한). 존재하지 않는 Stream을 가리키는 Sfx 요청은 `_streams.has(sfx)` 확인 후 조용히 무시한다. 모든 재생은 기본 `"Master"` Bus를 그대로 사용해, `GameSettings._apply_audio_settings()`가 이미 관리하는 Master Volume이 추가 배선 없이 그대로 적용된다. UI/2D 풀은 `process_mode = PROCESS_MODE_ALWAYS`로 Pause 중에도(PauseMenu 버튼음 등) 재생 가능하다.
+- **UI·Grab·Delivery 이벤트 연결 방식**: 별도 Signal 계층을 추가하지 않고, 이미 있던 정확한 호출 지점에서 `AudioManager.play_*()`를 직접 호출한다(기존에 `Player.gd`가 `GameSettings`를 직접 참조하던 방식과 동일한 패턴).
+  - Grab 성공: `Player._handle_grab_input()`의 `add_grabber()` 성공 분기에서만 `play_3d(GRAB_SUCCESS, held_grabbable.global_position)` — 실패 시 이 분기에 들어오지 않아 성공음이 잘못 재생될 수 없다.
+  - Release/강제 해제: 기존 T075 `grabber_disconnected(grabber, reason)` → `Player._on_held_grabbable_disconnected()` 콜백을 그대로 재사용 — `remove_grabber()`가 아직 `held_grabbable`을 null로 정리하기 전에 동기 호출되므로 물체의 마지막 위치를 그대로 쓸 수 있다. `reason == MANUAL`이면 `GRAB_RELEASE`, 그 외(`DISTANCE_EXCEEDED`/`BLOCKED`)면 `GRAB_FORCED_RELEASE`.
+  - 배송: `DeliveryHUD.show_delivery_toast()`(기존 T081 토스트 표시 함수) 안에서 `play_2d(DELIVERY_SUCCESS)`. 최종 완료는 `PrototypeLevel._on_all_packages_delivered()`에서 `CompletionOverlay.show_completion()`(paused=true 설정) 호출보다 먼저 `play_2d(DELIVERY_COMPLETE)`를 호출한다.
+  - UI: `MainMenu`/`PauseMenu`의 각 버튼 핸들러, `SettingsPanel`/`ControlsPanel`의 `_on_back_pressed()`, `PauseMenu._open_pause()`, `CompletionOverlay`의 두 버튼 핸들러에 직접 삽입. Godot 기본 Focus 이동에는 넣지 않았다(요구사항).
+- **DeliveryZone과 배송 시각 피드백**: `DeliveryZone.gd`의 `MeshInstance3D`에 `emission_enabled=true`인 `StandardMaterial3D`를 프로그램적으로 부여하고, `_process(delta)`에서 `emission_energy_multiplier`를 사인파로 2.4초 주기(느린 Pulse, 빠른 점멸 아님)로 오간다 — `CollisionShape3D`/`Area3D`/판정 로직은 전혀 건드리지 않아 Grab·배송 판정에 영향이 없다. 배송 성공 시각 피드백은 "Toast의 짧은 확대·복귀"(`DeliveryHUD._play_toast_pop()`, 0.12초 왕복 Tween, 반복 호출 시 이전 Tween 정리)만 적용했다(DeliveryZone 밝기 변화·진행도 숫자 강조는 중복 연출 방지를 위해 적용하지 않음). 최종 완료는 `CompletionOverlay._play_entrance()`(Fade 0→1 + Scale 0.9→1.0, 0.35초, `TRANS_BACK`/`EASE_OUT`)로 진입한다 — `CanvasLayer`가 `PROCESS_MODE_ALWAYS`라 `paused=true` 이후에도 Tween이 계속 진행되고, Focus는 연출 시작 전에 이미 주어 버튼 입력을 지연시키지 않는다.
+- 완료 조건: 8개 효과음이 각각 정확한 이벤트에서만 재생(성공/실패, 수동/강제 구분, 중복 재진입·Crate 무재생 포함), AudioStreamPlayer가 무제한 생성되지 않고 풀로 재사용됨, 없는 Stream 요청이 오류 없이 무시됨, Master Volume 100/50/0%가 실제 Bus에 반영되고 0%에서 완전 음소거, Pause 중 새 월드 효과음이 재생되지 않으면서 UI 효과음은 재생 가능, Restart/Scene 전환 후 이전 효과음이나 중복 Signal이 남지 않음, DeliveryZone Pulse와 Toast/완료 연출이 판정·Collision·버튼 입력에 영향을 주지 않음, 기존 싱글플레이·로컬 협동 기능 회귀 없음.
+- 테스트 방법: `godot --headless --import`, `--headless --quit-after`로 파싱/부팅 오류 확인, 임시 `SceneTree` 스크립트(검증 후 삭제)로 Stream/Bus(8개 Stream 로드 확인 등 15개), AudioManager API 자체(풀 재생·풀 포화 시 무생성·20회 연타 무제한 생성 없음 등 8개), Master Volume(100/50/0%, 음소거 등 4개), DeliveryZone Pulse(느린 주기·판정 무영향 2개), Grab 이벤트(성공/실패/수동 Release/중복 Release/강제 해제 각각의 정확한 효과음 매칭 9개), 배송 이벤트(Crate 무시·1~3번째 배송·재진입 무시·최종 완료 8개), 완료 화면(표시·paused·진입 연출·20회 반복 무중복 4개), 다시 플레이/MainMenu/ControlsPanel/SettingsPanel/PauseMenu(Pause 열기·Pause 중 무음·Resume·Restart 등 12개), LocalCoopTest 로드 회귀(1개) 총 82개 항목을 자동 검증(3회 연속 실행). 실제 음질·음량 체감, 조작 피로감, 시각 피드백 가독성은 자동 검증 대상이 아님 — **사용자 수동 테스트 필요**.
+- 예상 위험:
+  - 8개 효과음의 정확한 주파수·길이·음량은 여러 후보를 실측 비교하지 않은 초기 추정값이다 — 사용자 수동 테스트에서 너무 크거나 거슬리면 조정이 필요할 수 있다(`docs/TECH_DEBT.md` TD-022 참고).
+  - `AudioManager`의 UI/2D/3D 풀 크기(4/4/8)는 "너무 많이 만들지 않으면서도 짧은 연타에서 부족하지 않을 정도"로 추론한 값이며, 로컬 협동(Player 2명이 동시에 Grab/Release를 자주 반복하는 상황)에서 3D 풀 8개가 부족하게 느껴질 가능성은 실측 반복(50회)까지만 확인했다.
+  - 검증 중 발견한 테스트 방법론 이슈(게임 코드와 무관): `reload_current_scene()` 직후 곧바로 오디오 재생 상태를 확인하면, Scene 재로드 자체의 실제 소요 시간(벽시계 기준) 동안 70ms짜리 매우 짧은 UI 효과음이 이미 재생을 마쳐 "지금 playing 중" 확인만으로는 놓칠 수 있음을 발견 — `AudioStreamPlayer.finished` Signal까지 함께 감시하도록 테스트 스크립트를 보강해 우회했다(게임 코드는 무수정).
+- 완료 근거(검증): 헤드리스 자동 검증 82개 항목 3회 연속 전부 PASS(0건 실패). Grab 성공/실패, 수동 Release/강제 해제가 각각 의도한 효과음만 정확히 재생하고 서로 혼동되지 않음을 확인(배송 완료된 오브젝트에 대한 `add_grabber()` 거부로 "Grab 실패" 재현). Package 3개 배송(Crate 무시 포함) 각각에서 `delivery_success`가, 최종 3번째 배송에서는 `delivery_success`와 `delivery_complete`가 함께 재생됨을 확인. Master Volume 100/50/0%가 실제 `AudioServer` Master Bus 볼륨/음소거에 반영됨을 확인. Pause 진입 시 `ui_pause_open`이 재생되고 Pause 중에는 새 Grab 관련 3D 효과음이 재생되지 않음(Player가 Pausable이라 물리 자체가 멈춤)을 확인. 완료 화면 20회 반복 호출해도 UI 하위 노드 수·CompletionOverlay 인스턴스 수가 불변임을 확인(Signal·오버레이 중복 없음). 다시 플레이/PauseMenu 다시 시작 모두 UI_SELECT가 재생되고 Scene 재로드 후 진행도·paused 상태가 완전히 초기화됨을 확인. `LocalCoopTest.tscn` 로드·인스턴스화 성공(F6 실행 경로 회귀 없음). `--headless --import`, `--headless --quit-after 90` 모두 오류·경고 0건.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+### T082 사용자 수동 테스트 승인
+
+- **사용자 수동 테스트 결과: 승인.** 오디오·시각 피드백을 직접 확인해 정상 작동을 승인함.
+- **완료 처리**: 이 승인으로 T082를 `[DONE]`으로 확정한다(위 섹션 상단 상태 갱신). EPIC-07·v0.4.0은 T083~T085가 남아 있어 계속 미완료로 유지한다.
+- **T083 착수**: T082 완료로 다음 작업인 T083(Windows Export and Build Validation)을 진행 상태로 전환한다. T084 이후는 아직 착수하지 않는다.
+
+## 35. T083 — Windows Export and Build Validation
+
+- 상태: `[DONE]` (사용자 EXE 수동 테스트 승인 완료)
+- 목적: 데모를 Windows용 실행 파일로 Export하고, 에디터 없이 정상 플레이 가능한지 검증한다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-E
+- 선행 작업: T082(`[DONE]`, 사용자 승인 완료)
+- 사전 확인 결과:
+  - `project.godot`: `run/main_scene="res://scenes/ui/MainMenu.tscn"`(T078), Autoload 2개(`GameSettings`, `AudioManager`), `config/name="HellDelivery"`, `config/icon="res://icon.svg"`(Godot 기본 로봇 아이콘), `rendering_device/driver.windows="d3d12"`.
+  - `export_presets.cfg`: 저장소에 존재하지 않았음(이전 T083 시도 기록 — 섹션 27 참고 — 당시에는 지시에 따라 생성하지 않고 "Preset 없음"으로만 보고했었다). 이번에 신규 생성.
+  - `MainMenu.gd`: `DEMO_SCENE_PATH="res://scenes/level/PrototypeLevel.tscn"`로 데모 시작 시 `change_scene_to_file()`, 게임 종료는 `get_tree().quit()`(T078) — Export 시 Scene 전환 경로에 문제 없음.
+  - `GameSettings.gd`: `SETTINGS_PATH="user://settings.cfg"`(T079) — Export 빌드에서는 실제 Windows `%APPDATA%\Godot\app_userdata\HellDelivery\settings.cfg`에 저장되며, 에디터 실행 때와 별도 위치임을 확인.
+  - 설치된 Godot: `Godot_v4.7.1-stable_win64_console.exe` (버전 `4.7.1.stable.official.a13da4feb`) — `project.godot`의 `config/features=("4.7", "Forward Plus")`와 일치.
+  - Export Template: `%APPDATA%\Godot\export_templates\` 폴더가 비어 있음 — **4.7.1.stable용 Windows Export Template이 설치되어 있지 않다.**
+- 작업 범위: `export_presets.cfg` 신규 생성(Windows Desktop Release Preset).
+- 제외 범위: Steamworks 연동, 설치 프로그램 제작, 코드 서명, 게임 기능 재작성, Export 때문이 아닌 결함 수정, Export Template 임의 다운로드·설치.
+- 생성 파일: `hell-delivery/export_presets.cfg`
+- 수정 파일: 없음(Export 때문에 발견된 게임 실행 차단 결함이 없어 게임 코드는 무변경)
+- 에디터 수동 작업: 없음(전부 텍스트 편집 및 CLI `--export-release`). **단, Export Template 설치는 에디터 또는 수동 다운로드가 필요 — 아래 "차단 사유" 참고.**
+- **Preset 설계**: Windows Desktop / `runnable=true` / `export_filter="all_resources"`(프로젝트 리소스 전체 포함) / `binary_format/architecture="x86_64"` / `debug/export_console_wrapper=1`("Debug Only" — Release Export에는 콘솔 창을 여는 `_console.exe`가 생성되지 않아 일반 사용자에게 콘솔이 노출되지 않음) / `application/product_name="Hell Delivery"`(`project.godot`의 `config/name`은 무변경) / `application/icon=""`(기존 Godot 기본 아이콘 사용, 신규 아이콘 제작 없음) / `application/export_d3d12=true`(`project.godot`의 `rendering_device/driver.windows="d3d12"` 설정과 일치시키기 위해 활성화 — 비활성 시 D3D12 Agility SDK가 빌드에 포함되지 않아 실제 실행 시 렌더러가 프로젝트 설정과 어긋날 수 있다고 판단) / `codesign/enable=false`(코드 서명 금지 지시에 따름) / `export_path="../../HellDeliveryBuild/HellDelivery.exe"`(저장소 밖 — `hell-delivery/` 기준 두 단계 상위, 즉 `d:\Program Files\GitHub\HellDeliveryBuild\`) / Steamworks 관련 옵션 없음(해당 프로젝트에 Steam SDK 자체가 없어 추가할 것도 없음).
+- **차단 사유(Export Template 없음)**: `godot --headless --export-release "Windows Desktop" ...` 시도 결과 Preset 자체는 오류 없이 파싱·검증되었으나(설정 오류 0건), 다음 두 파일이 없어 Export가 즉시 실패했다:
+  - `C:/Users/firet/AppData/Roaming/Godot/export_templates/4.7.1.stable/windows_debug_x86_64.exe`
+  - `C:/Users/firet/AppData/Roaming/Godot/export_templates/4.7.1.stable/windows_release_x86_64.exe`
+  - 지시(`Template이 없거나 버전이 다르면 임의 다운로드하지 말고 정확한 설치 필요 사항을 보고`)에 따라 임의로 다운로드하지 않고 아래 설치 방법만 보고한다:
+    1. (권장) Godot 4.7.1 에디터 실행 → 상단 메뉴 `편집기(Editor)` → `내보내기 템플릿 관리(Manage Export Templates)` → 현재 버전(`4.7.1.stable`)의 "다운로드 및 설치(Download and Install)" 클릭. 인터넷에서 자동으로 받아 올바른 경로에 설치한다.
+    2. (오프라인) https://godotengine.org/download/archive/4.7.1-stable/ 에서 `Godot_v4.7.1-stable_export_templates.tpz`를 받아, 에디터의 같은 메뉴에서 "파일에서 설치(Install from File)"로 그 `.tpz`를 지정하거나, 압축을 풀어 `C:\Users\firet\AppData\Roaming\Godot\export_templates\4.7.1.stable\` 폴더에 직접 배치한다.
+  - 설치 후 동일한 CLI 명령을 다시 실행하면 이어서 검증을 진행할 수 있다(추가 코드 변경 불필요).
+- 완료 조건(Template 설치 후 재개 시): `.exe`와 필요한 데이터 파일이 저장소 밖 `d:\Program Files\GitHub\HellDeliveryBuild\`에 생성됨, 에디터 없이 실행되어 MainMenu 표시, 데모 시작→PrototypeLevel 진입, Pause/Resume/Restart/설정/조작법/종료, Package 3개 배송과 완료 화면, 오디오와 Master Volume, `user://settings.cfg` 생성·복원, 재실행 시 설정·온보딩 상태 복원, 리소스 누락·스크립트 오류·크래시 없음, 종료 후 프로세스 잔류 없음.
+- 테스트 방법: `godot --headless --import`, `godot --headless --export-release "Windows Desktop" <경로>`(Template 설치 후), 생성된 `.exe`를 CLI로 실행 후 `--quit-after` 상당의 자동 종료 확인(러너블 GUI 앱이라 완전 자동화는 제한적 — 창 로드까지 프로세스 생존 확인 후 강제 종료), 나머지 실제 입력·오디오·해상도 항목은 사용자 수동 테스트.
+- 예상 위험:
+  - Export Template이 설치되기 전까지 이 Task의 핵심 목표(실행 가능한 `.exe` 검증)를 완료할 수 없다.
+  - `application/export_d3d12=true`로 설정했지만 Agility SDK 관련 DLL이 실제로 export 결과물에 올바르게 포함되는지는 Template 설치 후 실제 Export를 해봐야 확인 가능하다 — 문제가 있으면 D3D12 대신 Vulkan으로 폴백하는지, 아니면 실행 실패하는지도 함께 확인 필요.
+  - `export_presets.cfg`가 저장소에 커밋되면(사용자 결정 사항, Git 작업은 수행하지 않음) 기기별 절대 경로가 아닌 상대 경로(`export_path`)를 썼으므로 다른 개발 환경에서도 큰 문제 없이 동작할 것으로 예상되나 실측하지 않았다.
+- **상태**: Export Template 설치 전까지 `[BLOCKED]` 유지. 사용자가 Template을 설치하거나 다운로드를 명시적으로 승인하면 이어서 실제 Export·실행 검증을 진행한다. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+### T083 Export 재개 및 검증 결과
+
+- **Template 확인**: 사용자가 설치를 완료해 `C:\Users\firet\AppData\Roaming\Godot\export_templates\4.7.1.stable\`에 `windows_debug_x86_64.exe`(약 103MB)·`windows_release_x86_64.exe`(약 109MB) 등 전체 Template 세트가 존재함을 확인했다(버전 폴더명이 정확히 `4.7.1.stable`로 설치된 Godot 버전과 일치). 기존 `export_presets.cfg`의 "Windows Desktop" Preset을 그대로 재사용했고 Preset 파일은 재작성하지 않았다.
+- **실행한 Export 명령**: `"C:\Users\firet\Downloads\Godot_v4.7.1-stable_win64.exe\Godot_v4.7.1-stable_win64_console.exe" --headless --path "d:\Program Files\GitHub\HellDelivery\hell-delivery" --export-release "Windows Desktop" "D:\Program Files\GitHub\HellDeliveryBuild\HellDelivery.exe"` — Export 대상 폴더(`D:\Program Files\GitHub\HellDeliveryBuild\`, 저장소 밖)는 사전에 생성해 두었다. 기존 빌드가 없어 최초 생성이었다(이후 재실행 시 동일 경로에 덮어쓰기됨).
+- **생성된 파일**: `D:\Program Files\GitHub\HellDeliveryBuild\HellDelivery.exe`(109,112,320 bytes) / `HellDelivery.pck`(133,920 bytes, `binary_format/embed_pck=false`라 분리 저장) — 둘 다 0바이트 아님, 저장소 밖 경로라 `git status`에 영향 없음(확인됨).
+- **EXE 실행 검증**: `Start-Process`로 직접 실행 후 5초 이상 프로세스 생존·응답(`Responding=True`) 확인, 윈도우 제목 `HellDelivery`(정상 표시), Forward+ 렌더 파이프라인 Shader 컴파일 흔적(`%APPDATA%\Godot\app_userdata\HellDelivery\shader_cache\`에 다수 생성) 확인, 해당 실행 세션의 런타임 로그(`app_userdata\HellDelivery\logs\godot2026-07-28T00.19.45.log`)에 오류·경고·리소스 누락 메시지 0건(시작 배너 외 내용 없음). 이후 `Stop-Process`로 종료 후 `Get-Process`로 재확인해 잔류 프로세스 없음을 확인. 콘솔 창은 뜨지 않음(`debug/export_console_wrapper=1`이 의도대로 동작). 자동화로는 MainMenu 진입(창 로드·크래시 없음)까지만 확인했고, 실제로 메뉴가 화면에 정상 렌더링되는지·클릭 가능한지는 사용자 수동 테스트가 필요하다(헤드리스 자동 입력으로는 실제 GUI 클릭을 재현하지 않았다).
+- **완료 처리**: Export와 자동 실행 확인이 성공해 T083의 `[BLOCKED]` 상태를 해제한다. 사용자의 EXE 수동 테스트 승인 전까지 `[REVIEW]`로 유지한다(위 섹션 상단 상태 갱신). EPIC-07과 v0.4.0은 T084·T085가 남아 있어 계속 미완료로 유지한다. 버전 번호는 변경하지 않는다.
+
+### T083 사용자 수동 테스트 승인
+
+- **사용자 수동 테스트 결과: 승인.** Windows Release EXE를 직접 실행해 MainMenu, 데모 시작, Grab 및 Package 3개 배송, 완료 화면, Pause·Restart·메인 메뉴 복귀, 설정 저장·복원, 오디오·Master Volume, 정상 종료 및 프로세스 정리가 모두 정상임을 확인해 승인함.
+- **완료 처리**: 이 승인으로 T083을 `[DONE]`으로 확정한다(위 섹션 상단 상태 갱신). EPIC-07·v0.4.0은 T085가 남아 있어 계속 미완료로 유지한다.
+- **T084 착수**: T083 완료로 다음 작업인 T084(Performance & Compatibility Pass)를 진행 상태로 전환한다. T085는 아직 착수하지 않는다.
+
+## 36. T084 — Performance & Compatibility Pass
+
+- 상태: `[DONE]` (사용자 수동 테스트 승인 완료)
+- 목적: 현재 Windows Release 빌드(T083)의 성능과 일반적인 PC 환경 호환성을 점검하고, 명확한 문제만 최소 수정한다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — FEATURE-07-F
+- 선행 작업: T083(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 성능(구간별 프레임 시간·메모리) 측정, 해상도 6종(1280×720/1600×900/1920×1080/2560×1440/900×500/1000×1300 비16:9)에서 UI 잘림·Crosshair 중앙 유지 확인, 입력 호환성(키보드·마우스 단독 플레이·게임패드 부재·Alt+Tab·Pause 중 Focus 손실) 코드 검토, Release 빌드 안정성(실제 EXE 10회 시작·종료, 헤드리스로 Restart 10회·MainMenu↔PrototypeLevel 왕복 10회), `user://settings.cfg` 손상값 안전 복구 재확인.
+- 제외 범위: 그래픽 품질 옵션, 고급 최적화 메뉴, 새 콘텐츠, 불필요한 대규모 최적화, 확정되지 않은 추정에 근거한 코드 수정.
+- 생성 파일: 없음(임시 검증 스크립트 `_tmp_t084_verify.gd`/`_tmp_t084_stretch_probe.gd`는 실행 후 삭제, TD-008 관례)
+- 수정 파일: 없음 — 아래 "결과" 참고. 자동 검증에서 명확한 실행 차단 결함이 발견되지 않아 게임 코드를 전혀 수정하지 않았다(수정 원칙에 따라 "명확한 문제"만 고치므로, 근거가 불확실한 상태에서 UI 구조를 임의로 바꾸지 않았다).
+- 에디터 수동 작업: 없음.
+- **성능 측정 결과(헤드리스, CPU/물리 부하 프록시)**: `--headless`는 렌더링 드라이버가 없는 더미 렌더러라 실제 GPU 프레임 비용은 측정할 수 없다 — 대신 `physics_frame`/`process_frame` 사이의 실제 wall-clock 간격을 구간별로 측정해 CPU·물리 연산 부하만 프록시로 확인했다. MainMenu 유휴(avg 16.68ms), Spawn 직후(16.63ms), 물리 오브젝트 밀집 구역에서 다수 RigidBody에 충격을 준 뒤(16.66ms), Package Grab 후 빠른 Swing 중(16.64ms), DeliveryZone 진입 전후(16.55ms), Completion Overlay 표시 후 Pause 상태에서의 process 프레임(6.90ms, Pausable 물리가 멈춰 오히려 더 가벼움) — 전 구간이 60fps 기준(16.67ms) 근방이거나 그보다 가벼웠고, 30fps(33ms) 완화 기준으로는 전부 여유 있게 통과했다. 각 구간 전후 `OS.get_static_memory_usage()` 델타는 -13KB~7KB로 유의미한 누적 증가 없음.
+- **실제 Release EXE 안정성 결과**: `D:\Program Files\GitHub\HellDeliveryBuild\HellDelivery.exe`를 10회 연속 시작→3초 대기→종료했다 — 10회 전부 크래시 없음, `WorkingSet64` 메모리 323.6~325.2MB(뚜렷한 증가 추세 없음), 매회 종료 후 프로세스 잔류 없음, 런타임 로그에 오류 없음(빠른 강제 종료 특성상 일부 로그가 배너조차 기록되기 전에 종료돼 0바이트였으나, 이는 로그 flush 타이밍 문제일 뿐 크래시나 오류 증거가 아님 — 정상 종료(게임 내 "게임 종료" 버튼)는 이미 T083에서 확인됨).
+- **Restart/MainMenu↔Level 왕복 결과(헤드리스 로직 재현)**: 실제 EXE에 클릭을 시뮬레이션할 입력 주입 수단이 없어, 동일한 `.gd`/`.tscn` 코드를 헤드리스로 구동해 논리적으로 재현했다. `reload_current_scene()` 10회 반복 — 메모리 81,560KB→81,619KB(약 59KB 증가, 노이즈 수준), 루트 자식 노드 수 3→3(고정, 누수 없음). MainMenu↔PrototypeLevel 10회 왕복 — 메모리 82,905KB에서 전혀 변화 없음(0KB). `AudioManager`의 UI/2D/3D 풀 크기가 반복 후에도 각각 4/4/8로 고정 유지됨을 재확인(무제한 생성 없음, T082 설계 그대로).
+- **해상도·Crosshair 자동 검증에 대한 중요한 방법론적 발견**: 최초에는 `root.size`를 직접 변경해 6개 해상도에서 MainMenu/SettingsPanel/ControlsPanel/PauseMenu/CompletionOverlay의 UI 잘림과 Crosshair 중앙 위치를 헤드리스로 검사했다. 그 결과 1280×720~2560×1440에서는 전부 통과했으나 900×500에서만 MainMenu/SettingsPanel/ControlsPanel/CompletionOverlay 잘림과 Crosshair 중앙 이탈이, 그리고 **모든** 해상도에서 Crosshair 중앙 이탈이 보고되었다(예: 1920×1080에서 기대값 (960,540) 대신 항상 (576,324) 고정 관측). 이 결과를 그대로 결함으로 처리하기 전에, `DisplayServer.window_set_size()`(GameSettings.gd가 실제로 사용하는 API)와 `root.size` 두 방식이 `--headless` 환경에서 실제로 무엇을 바꾸는지 별도 진단 스크립트로 확인했다: `DisplayServer.window_get_size()`는 시도와 무관하게 항상 `(0, 0)`을 반환하고, `root.get_viewport().get_visible_rect()`는 `root.size`를 아무리 바꿔도 프로젝트의 기본 참조 해상도(1152×648, `project.godot`에 명시적 `viewport_width/height`가 없어 엔진 기본값 사용)에 가까운 값에 고정된 채 실제 요청한 해상도를 반영하지 않았다(`--headless`는 실제 DisplayServer/렌더링 백엔드가 없는 더미 드라이버이기 때문). 즉 이 프로젝트가 쓰는 `canvas_items` + `expand` Stretch 모드는 실제 창에서는 OS 리사이즈 이벤트로 정상적으로 재계산되지만, 헤드리스 환경에는 애초에 그 재계산을 유발할 실제 창 자체가 없어 **자동 검증이 구조적으로 신뢰할 수 없다**(이전 세션에서 확인된 "`MOUSE_MODE_CAPTURED`가 헤드리스에서 즉시 되돌아감" 제약과 같은 종류의 엔진 한계). 따라서 이 6×6=36개 해상도/UI 체크 결과(PASS 26 · FAIL 10, 3회 반복 모두 동일 패턴)는 **실제 창 동작을 대표하지 않는 것으로 판단해 자동 검증 결과에서 제외**했고, 이를 근거로 한 코드 수정은 하지 않았다. Crosshair는 `anchor_left=anchor_right=anchor_top=anchor_bottom=0.5`(정중앙 앵커)로 설계돼 있어(T073) 실제 창에서는 해상도와 무관하게 항상 화면 정중앙에 그려지는 것이 설계상 보장되지만, 이 보장을 헤드리스로 직접 재확인하지는 못했다.
+- **입력 호환성(코드 검토)**: 싱글플레이 기본 `input_profile=KEYBOARD_MOUSE`라 게임패드 없이 전체 데모 진행 가능(코드 경로상 게임패드 관련 함수는 `input_profile==GAMEPAD`일 때만 실행되어 싱글플레이에서는 아예 호출되지 않음). `Input.get_joy_axis`/`is_joy_button_pressed`는 게임패드가 없어도 Godot 표준 API상 안전한 기본값을 반환해 오류 위험이 없다. 마우스 캡처는 `MOUSE_MODE_CAPTURED` 중 OS 포커스를 잃으면 엔진이 자동으로 해제하고, 창 클릭 시 `Player._unhandled_input()`이 다시 `MOUSE_MODE_CAPTURED`로 전환하는 기존 구조(T073)를 그대로 재확인했다(Alt+Tab 자동 검증은 이전 세션과 마찬가지로 헤드리스에서 불가능한 항목). Pause 중 물리 정지는 `get_tree().paused=true`가 Focus 상태와 무관하게 전역 적용되므로 구조적으로 이미 보장된다. 이상 모두 기존 코드 검토로 확인했으며 변경하지 않았다.
+- **손상된 `user://settings.cfg` 복구 재확인**: `window_mode`/`window_resolution`/`mouse_sensitivity`/`gamepad_look_sensitivity`/`master_volume`/`onboarding_seen`에 각각 범위를 벗어나거나 타입이 잘못된 값을 직접 기록한 뒤 `GameSettings.load_settings()`를 호출 — 6개 항목 전부 안전하게 기본값으로 복구됨을 재확인(T079의 `_safe_*` 방어 로직 그대로 유효, 원본 설정 파일은 테스트 후 그대로 복원).
+- 완료 조건: 60fps(또는 헤드리스 프록시 기준 33ms) 대비 지속적인 프레임 저하 없음, 메모리 누수 없음, Release 빌드 10회 시작·종료·Restart 10회·메뉴 왕복 10회에서 크래시·오류 없음, 명확한 결함만 최소 수정. 해상도/입력 호환성 최종 확인은 사용자 수동 테스트로 완결.
+- 테스트 방법: `_tmp_t084_verify.gd`(헤드리스 SceneTree, 성능/Restart·메뉴 왕복/설정 복구/해상도 총 57개 체크, 3회 연속 실행 — 해상도 관련 10개는 위 방법론적 사유로 결과 판정에서 제외, 나머지 47개는 3회 모두 PASS) + 실제 `HellDelivery.exe` PowerShell 기반 10회 시작·종료 스트레스 테스트.
+- 예상 위험:
+  - 해상도/UI 잘림·Crosshair 중앙 유지는 헤드리스로 신뢰성 있게 자동 검증할 수 없어(위 방법론 참고), 900×500과 2560×1440·비16:9 비율은 사용자 수동 테스트로만 최종 확인 가능하다. 기존 `TECH_DEBT.md` TD-021(900×500 잘림, T079에서 유사한 방식으로 발견)도 같은 한계를 공유할 가능성이 있어 TD-021에 이번 발견을 보강해 두었다(비차단 유지, 코드 변경 없음).
+  - 게임패드 연결·해제·Alt+Tab 포커스 복구는 하드웨어/OS 이벤트라 코드 검토로만 안전성을 확인했고 실제 자동 실행 검증은 하지 않았다.
+  - 헤드리스 프레임 시간 측정은 GPU 렌더링 비용을 포함하지 않는 CPU/물리 부하 프록시라, 실제 화면 렌더링이 60fps를 유지하는지는 사용자 수동 테스트가 필요하다.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
+
+### T084 사용자 수동 테스트 승인
+
+- **사용자 수동 테스트 결과: 승인.** 실제 Release EXE의 성능(체감 프레임)·해상도/화면 전환·입력 호환성을 직접 확인해 문제없음을 승인함.
+- **완료 처리**: 이 승인으로 T084를 `[DONE]`으로 확정한다(위 섹션 상단 상태 갱신). EPIC-07·v0.4.0은 T085가 남아 있어 계속 미완료로 유지한다.
+- **T085 착수**: T084 완료로 다음 작업인 T085를 진행 상태로 전환한다. 사용자 지시에 따라 T085의 명칭·범위를 "Final Demo Playtest"에서 "Delivery-Themed Demo Map Pass"로 재정의하고(섹션 37 참고), 기존 Final Demo Playtest 내용은 T086 `[TODO]`로 옮긴다(섹션 38 참고).
+
+## 37. T085A — Delivery Demo Level Design & Greybox
+
+- 상태: `[REVIEW]` — 신규 Scene·설계 문서·Greybox 구현·헤드리스 검증(39/39, 3회 연속)·Release Export 재확인 완료. 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않는다.
+- 목적: T084 승인 후 사용자가 T085A를 세 번째로 재정의했다. 기존 `PrototypeLevel.tscn`을 계속 넓히는 대신, "언덕 아래 배송 트럭 → 낡은 상가·주거 복합건물의 서비스 골목 → 경사진 하역장 → 공사 중인 안뜰 → 좁은 후문과 계단 → 위쪽 건물 현관의 DeliveryZone"이라는 명확한 서사를 가진 완전히 새로운 독립 Scene `scenes/level/DeliveryDemoLevel.tscn`을 설계·Greybox 구현한다. `PrototypeLevel.tscn`은 물리 회귀 테스트 전용 Scene으로 그대로 보존하며(에디터 F6으로 계속 실행 가능, 공개 메뉴에는 노출하지 않음), `LocalCoopTest.tscn`도 삭제하지 않고 공개 메뉴에 노출하지 않는다. 완성 아트·조명은 T085B, 폴리시·밸런스는 T085C로 넘긴다. 기존 "Art Direction & Delivery Map Blockout"(구 T085A)과 "Environment Art, Lighting, Visual Target Pass"(구 T085B) 작업 내용은 섹션 37-ARCHIVE로 이동했다 — `PrototypeLevel.tscn`에는 그 결과물이 그대로 남아 있으나(회귀 테스트용으로 보존), 공개 데모 레벨로서의 역할은 이번 신규 `DeliveryDemoLevel.tscn`으로 완전히 대체된다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness)
+- 선행 작업: T084(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 설계 문서 `docs/LEVEL_DESIGN_DEMO.md`(Scene 작업 전 선행 작성), 신규 Scene `scenes/level/DeliveryDemoLevel.tscn`(A~F 6구역 Greybox, `PrototypeLevel.gd` 재사용·신규 스크립트 없음), 신규 `scenes/package/PackageLong.tscn`/`PackageHeavy.tscn`(Package.gd 재사용, 크기·질량만 차별화), 신규 `scenes/environment/DemoGate.tscn`(HingeJoint3D 기반 자동 닫힘 게이트), `scenes/ui/MainMenu.gd`의 데모 진입 경로를 새 레벨로 변경.
+- 제외 범위: 완성 아트·조명·대량 외부 Asset(T085B), Player 이동·Grab 물리 전면 개편, 차량 운전·NPC·전투·점수 시스템, 다중 DeliveryZone, 의미 없는 맵 규모 확장, `PrototypeLevel.tscn`/`LocalCoopTest.tscn` 삭제·구조 변경, Git·버전 변경.
+- 생성 파일: `docs/LEVEL_DESIGN_DEMO.md`, `hell-delivery/scenes/level/DeliveryDemoLevel.tscn`, `hell-delivery/scenes/package/PackageLong.tscn`, `hell-delivery/scenes/package/PackageHeavy.tscn`, `hell-delivery/scenes/environment/DemoGate.tscn`.
+- 수정 파일: `hell-delivery/scenes/ui/MainMenu.gd`(`DEMO_SCENE_PATH`를 `DeliveryDemoLevel.tscn`으로 변경, `PrototypeLevel.tscn` 보존 취지 주석 추가). `PrototypeLevel.gd`/`PrototypeLevel.tscn`/`Package.gd`/`GrabbableBody.gd`/`Player.gd`/`DeliveryZone.gd` 등 기존 게임 코드·Scene은 전혀 수정하지 않았다(순수 재사용).
+- 에디터 수동 작업: 없음(전부 텍스트 편집으로 `.tscn` 작성, 좌표는 직접 계산·헤드리스 검증으로 확인 — 실제 시각적 인상·조작감은 사용자 수동 테스트 필요).
+- **설계 문서 요약(`docs/LEVEL_DESIGN_DEMO.md`)**: 6구역 Critical Path(A→B→C→D→E→F, F→D 복귀 지름길 1개 예외)를 Mermaid 다이어그램·구역별 표·Package 3종 표·솔로/협동 해법 표·물리 오브젝트 목록·치수 근거 표(병목 1.3m, 게이트 통과 1.6m, 경사 12°, 회복 구간, 턱 0.5m)·예상 플레이 시간(최초 10~15분/재플레이 6~9분)·소프트락 방지 원칙·T085B 에셋 우선순위 표·T085C 검증 항목을 먼저 작성한 뒤 Scene 구현을 시작했다.
+- **구역별 구현**:
+  - **A. 트럭 마당(학습 구간)**: `ZoneA_Floor`(14×1×10) + `DeliveryTruck` 인스턴스(재사용) + Package 3개(적재함 내부). Player 스폰은 트럭을 정면으로 바라보는 위치.
+  - **B. 서비스 골목(강제 L자 굴절 좁은 통로)**: 폭 2.0m 일반 구간 → 폭 **1.3m 병목**(`WallB_NarrowL/R`) → 정면 차단(`CapB`)으로 강제 L턴 → 동쪽 구간. 병목 폭은 Player 캡슐 지름 1.0m와 `PackageLong`의 긴 축 1.4m/짧은 축 0.5~0.6m을 기준으로, 세로로 들어야만 통과 가능하도록 산정했다(기존 검증된 `NarrowDoorwayTestArea`의 1.4m보다 의도적으로 더 좁음).
+  - **C. 경사진 하역장**: 낮은 회복 턱(`CurbWest/East`, 0.3m)과 평지 회복 구간(`ZoneC_Pocket`) → 약 12° 경사면(`SlopeC`) → 평평한 상단 착지 구역(`ZoneC_Top`). 회복 구간에서 떨어진 물체가 완전히 맵 밖으로 낙하하지 않도록 좌우 `GuardC_West/East` 벽으로 감쌌다.
+  - **D. 공사 중 안뜰(필수 기믹 2종)**: ① 자동 닫힘 게이트(`DemoGate` 인스턴스, HingeJoint3D + Motor) — 솔로는 근처 `GateProp`(SmallPhysicsBox)을 게이트 경첩 반대쪽 통행로에 밀어 넣어 버팀, 협동은 한 명이 게이트를 손으로 밀어 잡고 있는 동안 다른 한 명이 통과. ② 낮은 턱/틈(`LedgeD`, 0.5m 단차) — 솔로는 `LedgeCrate`(기존 `PhysicsCrate` 재사용)를 밀어 붙여 발판으로 사용, 협동은 직접 들어 올려 통과. 두 기믹 모두 새 게임 규칙 없이 기존 Grab/Push 물리만으로 해결된다.
+  - **E. 최종 접근(계단+턱 결합)**: 4단 계단(`Step1`~`Step4`, 각 0.15m 높이)으로 상승 후 폭 1.3m 좁은 문(`WallE_West/East` 사이)을 통과 — 스텝 폭 2.4m 대비 문 폭을 의도적으로 좁혀 마지막 20~30초를 가장 도전적인 구간으로 설계했다.
+  - **F. 배송 로비**: `DeliveryZone` 최종 목적지 + `ShortcutRamp`(경사로)를 통한 D구역으로의 복귀 지름길(정식 경로보다 짧게 설계, 재배송 시 이동 부담 경감).
+  - **Package 차별화**: `Package.tscn`(0.8×0.6×0.8, 질량15, 무변경) / `PackageLong.tscn`(1.4×0.5×0.6, 질량18, 신규) / `PackageHeavy.tscn`(0.9×0.8×0.9, 질량32, 신규) — 셋 다 동일 경로·동일 `DeliveryZone`으로 배송되며, 난이도 차이는 오직 형태·질량에서 나온다(경로 분기 없음). `Package.gd` 스크립트는 완전히 동일하게 재사용했다.
+  - **Scene 재사용 전략**: `DeliveryDemoLevel.tscn`은 `PrototypeLevel.gd`를 그대로 스크립트로 사용한다 — `$Gameplay/DeliveryZone`, `$Gameplay/Player`, `$UI/DeliveryHUD`, `$UI/CompletionOverlay`, `$UI/OnboardingOverlay` NodePath 구조를 동일하게 맞춰 신규 스크립트 코드 없이 기존 배송 흐름·HUD·Pause·온보딩·Completion 로직을 그대로 재사용했다.
+- **구현 중 발견·수정한 실제 버그 3건**:
+  1. **경사면 회전 부호 오류**: `SlopeC`의 회전 행렬 부호를 최초 손으로 두 번 검산했으나 실제로는 반대(Z 증가 방향으로 오히려 하강하는 경사)였다 — `SlopeBarrel`이 지지면 없이 y≈-107까지 자유낙하하는 것으로 발견, `PhysicsRayQueryParameters3D` 레이캐스트로 실제 표면 높이를 직접 측정해 근본 원인을 확인하고 부호를 수정, 재측정으로 정상 상승 표면(0.76→1.93m) 확인.
+  2. **게이트 문짝-기둥 충돌 겹침**: 문짝 폭(1.5m)이 두 기둥 사이 간격에 정확히 맞춰져 있어 각 기둥의 두께(0.2m)를 고려하지 않은 채 양쪽으로 0.1m씩 겹쳐, Motor·Limit을 꺼도 경첩이 사실상 완전히 고착된 것처럼 보이는 문제 — 문짝 폭을 1.3m로 줄여 해결.
+  3. **게이트 스윙 경로와 안뜰 벽 충돌**: 문짝이 열리다 특정 각도에서 멈추는 문제 — 경첩에서 문짝까지의 회전 반경이 안뜰 벽(`WallD_West/East`)과 겹치는 것이 원인으로 확인, 게이트 구간 벽을 스윙 여유 있는 폭으로, 턱 구간 벽은 별도의 좁은 폭으로 분리해 해결.
+- **자동 검증 결과**: 헤드리스 SceneTree 스크립트(`_tmp_t085a_demo_verify.gd`, 검증 후 삭제)로 39개 항목을 3회 연속 실행해 전부 PASS했다 — 솔로 Critical Path 전체 이동, 세 Package 종류 모두 실제 판정 경로(ShapeCast+입력 시뮬레이션)로 순차 회수, 게이트 구조 건전성(힘을 받으면 열림, 버팀목으로 열린 상태 유지), 경사면 물체 정착 안정성, Restart 후 상태 복구, `PrototypeLevel.tscn`(F6 상당)·`LocalCoopTest.tscn` 정상 로드 확인(신규 레벨 작업이 기존 두 Scene에 영향 없음).
+- **Release Export 재확인**: 기존 Preset으로 재실행, 설정 오류 0건, 재Export 후 실행 5초 이상 생존(크래시 없음, 메모리 283.7MB), 종료 후 프로세스 잔류 없음 확인.
+- 완료 조건: 설계 문서 선행 작성, 6구역 Greybox 구현, 필수 기믹 2종(게이트·턱) 솔로/협동 모두 해결 가능, Package 3종 차별화, 소프트락 없음, `PrototypeLevel.tscn`/`LocalCoopTest.tscn` 무영향, 헤드리스 검증 3회 연속 PASS, Release Export 정상. 실제 체감 난이도·플레이 시간·게이트 저항감/닫히는 속도의 "손맛"은 사용자 수동 테스트로 최종 확인.
+- 테스트 방법: `_tmp_t085a_demo_verify.gd`(39개 체크, 3회 연속 실행 전부 PASS) + 실제 `HellDelivery.exe` 재Export 후 실행 스모크 테스트.
+- 예상 위험:
+  - 게이트의 정확한 밀기 저항감·자동 닫힘 속도는 합성 torque 기반 헤드리스 테스트로는 정밀 검증이 불가능해(테스트 방법론 한계, 같은 조인트가 impulse에는 반응하지만 지속 torque에는 반응이 불안정한 것으로 확인) 구조적 건전성(고착 없음, 열림·버팀 가능)만 자동 검증했다 — 실제 "손맛"은 T085C에서 사용자 피드백 기반으로 튜닝 예정.
+  - 에디터 미리보기 없이 좌표를 계산으로 배치했다 — 물리적 통과 가능 여부는 헤드리스로 확인했지만 시각적 비례감·가독성은 사용자 수동 테스트 필요.
+  - `docs/LEVEL_DESIGN_DEMO.md`의 일부 수치(특히 정확한 구역별 Z 범위)는 설계 문서 작성 후 구현 중 미세 조정(게이트 벽 폭 분리 등)이 있었다 — 큰 구조적 차이는 없으나 문서와 최종 좌표 간 완전한 수치 일치는 후속 점검 대상.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호·Git 작업은 수행하지 않는다.
+
+## 37-ARCHIVE. 참고: 재정의 전 T085A/T085B 기록 — 구 `PrototypeLevel.tscn` 기반, `DeliveryDemoLevel.tscn`에는 무효
+
+사용자가 T085A를 "Delivery Demo Level Design & Greybox"(위 섹션 37, 신규 독립 Scene)로 세 번째로 재정의하면서, `PrototypeLevel.tscn`을 대상으로 이미 완료했던 아래 두 단계 작업은 새 공개 데모 레벨 기준으로는 더 이상 유효하지 않다. `PrototypeLevel.tscn` 자체는 물리 회귀 테스트 Scene으로 계속 보존되므로 이 구현 결과물은 파일 상에는 남아 있다 — 아래는 그 작업 기록의 보존이다.
+
+### (구) T085A — Art Direction & Delivery Map Blockout
+
+- 상태: `[DONE]` (사용자 수동 테스트 승인 완료, 단 새 공개 데모 레벨 기준으로는 대체됨)
+- 목적: 테스트 공간처럼 보이던 `PrototypeLevel`을 "택배 트럭에서 Package를 꺼낸다 → 물리 오브젝트로 길을 뚫는다 → 여러 구간을 지나 건물 배송 구역에 전달한다"를 처음부터 이해할 수 있는, 공간적으로 구분된 5구역(출발/초반/중반 장애물/후반 계단·좁은 문/최종 DeliveryZone) 데모 맵으로 재구성한다. 완성 아트보다 강한 맵 구조와 명확한 재미 포인트, 아트 방향성 확정이 이번 단계(T085A)의 목표다 — 환경 아트·조명 디테일은 T085B, 폴리시·플레이어빌리티는 T085C로 넘긴다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — 신규 Feature(사용자 지시로 T085를 T085A/B/C 세 단계로 세분화, 기존 "Final Demo Playtest"는 T086 `[TODO]`로 이동, 섹션 38 참고)
+- 선행 작업: T084(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 신규 Scene `scenes/environment/DeliveryTruck.tscn`(운전 불가능한 정적 택배 트럭), `PrototypeLevel.tscn`의 `Player`/`Package`/`PackageB`/`PackageC`/`DeliveryZone`/`PhysicsObjects` 6종 Transform 재배치, `Environment`에 `DeliveryTruck` 인스턴스·`DeliveryBuilding`(건물 파사드)·바닥 표시(주차 구역·현관 매트)·안내 표지판(`Label3D`) 3종 추가.
+- 제외 범위: Grab·Player 이동·물리 수치 변경, Delivery 로직·UI 흐름 변경, MainMenu·LocalCoopTest 구조 변경, 외부 Asset, NPC·차량·교통 시스템, 새 게임 규칙, 기존 `Stairs`/`Ramp`/`WallTestArea`/`NarrowDoorwayTestArea`의 Transform·물리값 변경(전부 무변경 유지), Steamworks·설치 프로그램·코드 서명·Git 작업·버전 변경.
+- 생성 파일: `hell-delivery/scenes/environment/DeliveryTruck.tscn`(신규 폴더 `scenes/environment/`는 이번 지시에서 명시적으로 요청된 경로).
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(ext_resource·sub_resource 추가, 6개 기존 노드 Transform 재배치, `DeliveryTruck`/`DeliveryBuilding`/표지판/바닥 표시 노드 신규 추가). 그 외 게임 코드(`.gd`) 무수정 — `DeliveryZone.gd`/`GrabbableBody.gd`/`Player.gd` 등은 전혀 건드리지 않았다.
+- 에디터 수동 작업: 없음(전부 텍스트 편집으로 `.tscn` 작성, 좌표는 각 기존 노드의 실제 Shape 크기를 직접 계산해 배치 — 에디터 미리보기 없이 진행했으므로 시각적 균형은 사용자 수동 테스트로 최종 확인 필요).
+- **설계**:
+  - **동선**: 트럭 적재장(x=1,z=6.8~8.5, 개방된 구역) → 물리 오브젝트 낮은 장애물 구역(x=-1~-4,z=1~3, 기존 6개 오브젝트를 이 경로로 재배치) → 기존 `Ramp`(x=-7,z=4~8, Transform 무변경, 경로상에 자연스럽게 위치) → 기존 `NarrowDoorwayTestArea` 좁은 문(x=-7,z=-1, Transform 무변경) → `DeliveryBuilding`(x=-7,z=-6, 새 건물 파사드) 순서로 하나의 자연스러운 동선을 구성했다. 기존 `Stairs`(x=10~16)와 `WallTestArea`(x=6,z=-8)는 이 동선에서 지리적으로 멀리 떨어져 있어(각각 반대쪽 구석) 강제로 동선에 포함시키면 우회가 매우 길어지고(추정 25m 이상) `PLAYER_EXPERIENCE.md`의 "긴 준비 금지" 반(反)목표와 충돌할 위험이 있다고 판단해, 두 구조물은 Transform을 포함해 전혀 손대지 않고 배경/부가 탐색 요소로 남겨 두었다(권장 흐름의 "경사로 *또는* 계단" 중 경사로를 선택).
+  - **`DeliveryTruck.tscn`**: 단일 `StaticBody3D` 아래 `CollisionShape3D`+`MeshInstance3D` 쌍 5종(운전석 Cab, 적재함 바닥·좌벽·우벽·지붕)과 순수 시각 전용 바퀴 4개(`MeshInstance3D`만, Collision 없음)로 구성 — 적재함 뒤쪽(남쪽, 로컬 z=-1.9)에는 벽을 두지 않아 열려 있다. `StandardMaterial3D` 3종(Cab=흰색 계열, 적재함=주황색, 바퀴=검정)으로 "운전석·차체·적재함·바퀴가 구분되는 실루엣" 요구를 충족했다. `collision_layer`/`mask`는 명시적으로 설정하지 않아(기존 `Floor`/`Stairs`/`Ramp`/`TestWall`과 동일 관례) 엔진 기본값(World=1)을 그대로 사용한다.
+  - **Package 배치**: Package 3개 모두 적재함 내부(트럭 루트 기준 로컬 x=-0.4/0.4/0, z=-1.3/-1.3/-0.5)에 배치해 서로 0.8~0.9m 간격을 유지(시작 시 겹치거나 폭발하지 않음, 헤드리스 정착 검증 완료), 적재함 벽 안쪽 여유(약 0.03~0.1m)도 확보했다. `DeliveryZone.TARGET_PACKAGE_COUNT`(3)는 무변경.
+  - **Player Spawn**: 적재함 입구에서 남쪽으로 약 0.9m 떨어진 지점(1, 1.5, 4.0 부근 — 실제 배치는 (1,1.5,3.2), 자동 검증에서는 접근 시나리오로 (1,1.5,4.0) 사용)에 트럭을 정면으로 바라보도록 180° 회전해 배치 — 스폰 직후 트럭이 시야 정면에 들어온다. 적재함 바닥이 지면보다 0.7m 높아(트럭 바닥판 자체가 낮은 턱 역할) Player가 실제로 적재함 안으로 걸어 들어가지는 못하지만, 기존 Grab 판정(사거리 2.2m)이 바닥에 서서 조준만으로 Package 3개 모두에 닿는 것을 실제 ShapeCast 기반 판정으로 확인했다(아래 검증 결과 참고) — Player 이동이나 Grab 사거리 자체는 전혀 바꾸지 않았다.
+  - **`DeliveryBuilding`**: `BackWall`+`WestWall`+`EastWall`(`StaticBody3D`, Collision 있음) + `Canopy`(머리 위 장식, Collision 없음, Player 머리 높이보다 충분히 위) + `EntranceMat`(바닥 색상 표시, Collision 없음) + `EntranceSign`(`Label3D`, `billboard=1`로 항상 카메라를 향함)로 구성된 3면 개방형 파사드. `DeliveryZone` 자체는 이 파사드 안쪽에 배치했지만 `DeliveryZone.tscn`(Collision Shape·판정 로직)은 전혀 수정하지 않았다 — `PrototypeLevel.tscn`에서 그 인스턴스의 Transform(위치)만 옮겼다.
+  - **바닥 표시·표지판**: 트럭 아래 회색 `ParkingPad`(순수 시각, Collision 없음), 트럭 옆 "배송 출발" `Label3D`, 좁은 문 앞 "주의: 좁은 통로" `Label3D`, 건물 앞 "배송 접수처" `Label3D` — 전부 billboard 텍스트 또는 얇은 바닥 장식으로 물리 동선을 막지 않는다.
+- **자동 검증 결과**: 헤드리스 SceneTree 스크립트(`_tmp_t085_map_verify.gd`, 검증 후 삭제)로 42개 항목을 3회 연속 실행해 전부 PASS했다.
+  - `DeliveryTruck` 노드 구조(5개 Collision 자식, `StaticBody3D`) 확인.
+  - Spawn에서 트럭·Package 3개 모두 15m 이내(실측 2.3~3.7m) — "즉시 인식" 근접성 확인(단, 실제 화면에 "보이는가"는 렌더링이 없는 헤드리스로 확인 불가 — 사용자 수동 테스트 필요).
+  - **입력 우회 없이 실제 `GrabShapeCast`/LOS 판정 경로로** Package 3개를 가까운 순서대로 순차 조준·Grab 성공 확인(우회 호출이 아니라 `Player._handle_grab_input()`의 실제 입력 흐름 그대로 사용) — "트럭 적재함에서 자연스럽게 꺼낼 수 있는지"를 최대한 실측에 가깝게 검증했다.
+  - 기존 `Ramp`/`NarrowDoorwayTestArea/LeftWall`/`Stairs/Step1`의 Transform이 정확히 기존 값과 동일함(무변경) 재확인.
+  - 동선상 4개 주요 지점(트럭 앞·물리 오브젝트 구역·좁은 문·건물 앞)으로 순간이동 후 각각 10 physics frame 정착 — 위치가 유한하고 원래 지점에서 3m 이상 벗어나지 않음(물리 폭주·NaN 없음) 확인.
+  - 재배치된 `PhysicsBarrel`을 실제로 밀어(Player 이동 충돌) 위치가 유한하게 유지되며 크래시 없음 확인.
+  - 새 `DeliveryZone` 위치 기준 배송 0→1→2→3, `CompletionOverlay` 표시·Pause 정상 확인.
+  - Restart 후 `DeliveryTruck`/Package/`DeliveryZone` 위치가 전부 원래 배치로 복구됨(Scene 재로드로 자동 초기화, 별도 코드 불필요) 확인.
+  - MainMenu 로드, Pause 열기/닫기(새 맵 위에서) 경량 회귀 확인.
+- **Release Export 재확인**: 소스 변경(레벨·신규 Scene)을 반영해 기존 `export_presets.cfg`("Windows Desktop" Preset, 재작성 없음)로 Release Export를 1회 재실행 — 설정 오류 0건, `HellDelivery.exe`(109,112,320 bytes)가 저장소 밖 `D:\Program Files\GitHub\HellDeliveryBuild\`에 정상 생성됨. 실제 실행 후 5초 이상 생존(크래시 없음), 런타임 로그 오류 0건, 종료 후 프로세스 잔류 없음 확인.
+- 완료 조건: Spawn에서 트럭·Package 인식, 적재함에서 Package 3개 모두 실제 판정 경로로 회수 가능, 배송 0→1→2→3과 완료 화면 정상, Restart 후 전체 환경 복구, 기존 장애물 Transform·물리값 무변경, 회귀 없음, Release Export 오류 없음. 맵의 재미·테마 전달 여부는 사용자 수동 테스트로 완결.
+- 테스트 방법: `_tmp_t085_map_verify.gd`(42개 체크, 3회 연속 실행 전부 PASS) + 실제 `HellDelivery.exe` 재Export 후 실행 스모크 테스트.
+- 예상 위험:
+  - 에디터 미리보기 없이 좌표를 직접 계산해 배치했다 — 물리적 겹침·클리핑은 헤드리스로 확인했지만, 시각적 비례감(트럭 크기, 건물 파사드 균형, 표지판 가독성)은 실제로 본 적이 없어 사용자 수동 테스트에서 조정이 필요할 수 있다.
+  - `Stairs`(x=10~16)를 이번 핵심 동선에 포함하지 않은 것은 거리·페이싱을 고려한 의도적 범위 축소다 — 사용자가 원하면 별도 Task로 계단을 포함한 두 번째 동선(또는 재배치)을 제안할 수 있다.
+  - `WallTestArea`도 이번 동선 밖에 남아 있다 — 기존 LOS 차단 테스트 목적은 그대로 보존되지만 "배송 현장" 테마에는 아직 포함되지 않았다.
+  - Player가 적재함 바닥 턱(0.7m)을 실제로 넘어 걸어 들어갈 수 없음을 기하학적으로 확인했으나, 이것이 "부자연스럽게 낀다"가 아니라 "reach 기반으로 꺼낸다"는 의도된 상호작용임을 사용자가 자연스럽게 받아들이는지는 수동 테스트 확인 필요.
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호·Git 작업은 수행하지 않는다.
+
+### T085A 확장 — 5구역·아트 방향성·장애물 극복 포인트
+
+사용자가 T085를 T085A(Art Direction & Delivery Map Blockout)/T085B(Environment Art & Lighting Pass)/T085C(Level Polish & Playability)로 세분화하면서, 1차 구현(위 내용, 트럭+단일 동선)을 다음과 같이 확장했다.
+
+- **외부 Asset 정책 문서화**: `docs/ASSET_LICENSES.md` 신규 — "직접 제작 Blender 모델·CC0/명확한 무료 라이선스만 허용, 스타일 통일 필수, 출처·라이선스 기록 필수"라는 정책과 구역별 색 규칙을 기록했다. 이번 단계에서 실제 외부 Asset은 도입하지 않았다(전부 기본 `BoxMesh`/`CylinderMesh`+`StandardMaterial3D`로 제작) — 정책과 구조만 마련했다.
+- **아트 방향성 확정**: 스타일라이즈드 로우폴리, 도시형 물류 배송 현장. 구역별 색 규칙(트럭=따뜻한 색, 배송 경로=중립, 위험 구역=노랑 계열, 배송 목표=채도 높은 청록, 물리 오브젝트=기존 대비색 유지)을 `docs/ASSET_LICENSES.md`에 기록했다. "예뻐 보이는 것보다 즉시 이해되는 것"을 원칙으로 삼아, 재질은 색상 구분 수준으로만 적용했다(디테일 텍스처·조명 세팅은 T085B로 미룸).
+- **맵 규모 확장**: `Floor`(`BoxShape3D_1`/`BoxMesh_1`)를 20×1×20→20×1×30으로 넓혀 남쪽으로 5m를 확보하고, `DeliveryBuilding`과 `DeliveryZone`을 그 여유 공간으로 3m 남쪽(z=-6→-9) 이동해 새 구간(미니 계단)이 들어갈 공간을 만들었다.
+- **5구역 공간 구분**: A(트럭 적재장, x=1·z≈7~9) → B(초반 기본 경로, 트럭~장애물 구역 사이 개방 구간) → C(장애물 극복 구간, 물리 오브젝트 클러스터+신규 `HazardStackLeft`/`Right`+`MovableCrate`) → D(계단+좁은 문 결합 구간, 기존 `NarrowDoorwayTestArea`+신규 `MiniStairs` 4단) → E(`DeliveryBuilding`/`DeliveryZone`). 기존 `Stairs`(x=10~16)·`Ramp`·`WallTestArea`는 이번에도 Transform을 포함해 전혀 손대지 않았다(핵심 동선과 거리가 멀어 별도 확장 없이는 자연스럽게 포함하기 어렵다고 재차 판단 — T085B/C에서 재검토 가능).
+- **물리 오브젝트 기반 장애물 극복(신규)**: 기존 `PhysicsCrate.tscn`을 재사용한 `MovableCrate` 1개를 신규 정적 장애물 `HazardStackLeft`/`HazardStackRight`(폭 1.8m 틈, 노란 계열 강조색) 사이에 배치했다. 크레이트가 그대로 있으면 틈이 약 0.4m씩만 남아 Player(지름 1.0m)가 지나가기 빡빡하지만, 밀어서 옆으로 치우면 훨씬 수월해진다(안 하면 아예 불가능은 아님 — 새 시스템 없이 기존 Push/Grab Physics만 사용). 헤드리스 검증에서 실제로 Player가 밀고 지나가도 크래시·영구 끼임 없이 통과함을 확인했다.
+- **표지판 추가**: "배송 출발"(트럭), "주의: 좁은 통로"(문), "장애물: 밀어서 치우기"(크레이트 구간), "계단 주의"(미니 계단), "배송 접수처"(건물) — 전부 `Label3D`(`billboard=1`)로 구역 전환을 안내한다.
+- **패키지 난이도 차별화(범위 결정)**: Package 3개는 여전히 같은 트럭에서 출발해 같은 `DeliveryZone`으로 배송된다(사용자 지시 "목적지는 하나여도 괜찮음"에 따름). 세 번의 배송 모두 동일한 단일 동선(A→B→C→D→E)을 지나므로, 체감 난이도 차이는 누적 숙련도(반복할수록 장애물 통과에 익숙해짐, `PLAYER_EXPERIENCE.md`의 기존 "Replay Motivation" 철학과 일치)에서 나온다 — Package별로 지리적으로 완전히 다른 경로를 새로 만드는 것은 이번 블록아웃 단계의 위험·시간 대비 이득이 낮다고 판단해 범위에서 제외했고, 필요하면 T085C(Level Polish & Playability)에서 패키지별 접근 난이도를 추가로 분화하는 것을 제안할 수 있다.
+- **자동 검증(확장판)**: `_tmp_t085a_verify.gd`(34개 체크, 3회 연속 PASS) — MainMenu→PrototypeLevel 진입, Spawn 인식, 실제 판정 경로로 Package 3개 순차 회수, 장애물 구간 통과(밀기, 영구 끼임 없음), 경로 6개 지점 정착(트럭·장애물·미니계단·문·건물), 기존 Ramp/Doorway/Stairs Transform 무변경, 배송 0→1→2→3·완료, Restart 후 트럭·Package·Zone·Crate 위치 복구(Crate는 RigidBody 특성상 Y만 중력 정착 허용 범위로 확인, X/Z는 정확히 일치), Pause/Resume·AudioManager 풀 회귀.
+- **Release Export 재확인**: 동일 Preset으로 재실행, 오류 없음, 실행 후 5초 이상 생존 확인.
+
+### (구) T085A 사용자 수동 테스트 승인
+
+- **사용자 수동 테스트 결과: 승인.** 배송 맵 블록아웃, 택배 트럭, 3개 배송 동선, 물리 장애물 구간을 직접 확인해 승인함.
+- **완료 처리**: 이 승인으로 (구) T085A를 `[DONE]`으로 확정했었다. 이후 T085A 자체가 "Delivery Demo Level Design & Greybox"(섹션 37)로 재정의되면서, 이 승인은 `PrototypeLevel.tscn`(회귀 테스트 전용으로 보존)에 대한 기록으로 남는다.
+- **(구) T085B 착수 기록**: 위 승인 직후 (구) T085B(Environment Art, Lighting, Visual Target Pass)를 진행했었다 — 아래에 그 기록을 보존한다.
+
+### (구) T085B — Environment Art, Lighting, Visual Target Pass
+
+- 상태: `[REVIEW]` — 환경 아트·조명·트럭 Hero Pass·시각적 동선 구현과 자동 검증 완료. 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음.
+- 목적: T085A에서 승인된 블록아웃 구조·동선을 그대로 유지하면서, 맵을 "실제 판매되는 인디 게임의 Steam 데모 스크린샷" 수준의 인상으로 끌어올린다(환경 아트, 조명, 재질, 소품 배치, 시각적 동선, 트럭 Hero Pass).
+- 선행 작업: T085A(`[DONE]`, 사용자 승인 완료)
+- 작업 범위: 조명(`DirectionalLight3D` 각도·색·그림자, `WorldEnvironment` ambient/fog/tonemap/glow/SSAO), 트럭 Hero Pass(전면 유리·전조등·후미등·범퍼·사이드미러·로고·적재함 내부 조명), Package 시각(포장테이프·라벨·상하 표시·취급주의 표기), 장애물 구간 시각 강화(경고 스트라이프), 시각적 동선 보조(방향 화살표), 배경/경계(원거리 실루엣·펜스), `docs/ASSET_LICENSES.md` 갱신.
+- 제외 범위: Player 이동·Grab·Push·Package 물리값 변경, Delivery 판정·UI 흐름 변경, 맵 핵심 동선 재설계(Spawn·트럭 위치·주요 배송 동선·물리 장애물 해법·계단/경사/좁은 통로·DeliveryZone 위치와 판정 범위·Package 3개 배송 구조는 T085A 그대로 보존), 새 게임 시스템, 차량 운전 기능, Git·버전 변경.
+- 생성 파일: 없음(전부 기존 `PrototypeLevel.tscn`/`DeliveryTruck.tscn`/`Package.tscn` 수정 — 이번 단계에서도 신규 Scene 파일은 만들지 않았다).
+- 수정 파일: `hell-delivery/scenes/level/PrototypeLevel.tscn`(조명·환경·배경 실루엣·펜스·경고 스트라이프·방향 화살표·`DeliveryBuilding/AccentLight` 추가), `hell-delivery/scenes/environment/DeliveryTruck.tscn`(Hero Pass 10종 추가), `hell-delivery/scenes/package/Package.tscn`(시각 요소 4종 추가 — `CollisionShape3D`/`mass`/`physics_material_override`/`linear_damp`/`angular_damp`/스크립트는 전혀 건드리지 않음), `docs/ASSET_LICENSES.md`.
+- 에디터 수동 작업: 없음(전부 텍스트 편집, 에디터 미리보기 없이 진행 — 실제 화면 인상은 사용자 수동 테스트로만 최종 확인 가능).
+- **외부 Asset 사용 여부**: 이번 단계에서도 외부 Asset을 실제로 도입하지 않았다. 정책상 허용되었지만(사용자 지시), 직접 제작 Blender 모델이나 실제 CC0 Asset을 준비·검수할 파이프라인이 이번 세션에는 없어, 전부 기존과 동일하게 기본 Godot Primitive(`BoxMesh`/`SphereMesh`/`CylinderMesh`)와 `StandardMaterial3D`(색상·발광만 사용, Texture 없음)만으로 구현했다. `docs/ASSET_LICENSES.md`의 "현재 사용 중인 외부 Asset" 표는 계속 비어 있다 — 라이선스 기록 누락 위험 자체가 없다.
+- **조명·재질·시각적 동선**:
+  - `DirectionalLight3D`를 X축 -50°로 기울여 낮은 각도의 지향광을 만들고, `light_color=Color(1,0.85,0.65)`(따뜻한 늦은 오후 톤)·`shadow_enabled=true`로 그림자를 켰다.
+  - `WorldEnvironment`(`Environment_1`)에 `ambient_light_source/color/energy`(중립 웜톤 앰비언트), `fog_enabled`(옅은 원거리 안개, `fog_density=0.006`), `tonemap_mode=2`(Filmic), `glow_enabled`(`intensity=0.35`, 과도한 Bloom 방지를 위해 약하게), `ssao_enabled`(`intensity=1.2`)를 추가했다. `ProceduralSkyMaterial`도 하늘/지평선 색을 노을 톤으로 조정했다.
+  - `DeliveryZone`을 감싸는 `DeliveryBuilding`에 `AccentLight`(`OmniLight3D`, 청록색, `range=6`)을 추가해 멀리서도 최종 목적지가 식별되도록 했다(기존 `DeliveryZone.gd`의 Pulse 발광 재질은 무변경, 조명만 추가).
+  - 트럭 적재함 내부에 `CargoLight`(`OmniLight3D`, 따뜻한 색, `range=3`)를 추가해 적재함 안의 Package 가독성을 높였다.
+  - 방향 안내: 트럭 출발 직후와 좁은 문 진입 직전 두 지점에 노란색 `↓` `Label3D`(`ArrowSignA`/`B`)를 추가해 진행 방향을 보강했다(기존 4종 표지판은 유지).
+  - 배경/경계: 맵 네 모서리에 대형 실루엣 박스(`SilhouetteA`~`D`, Collision 없음)와 펜스 2개(`FenceEast1`/`FenceWest1`, Collision 없음)를 추가해 맵 바깥이 빈 테스트장처럼 보이지 않게 했다 — 전부 실제 동선 밖에 배치되어 플레이에 영향이 없다.
+- **택배 트럭 Hero Pass**: `Windshield`(반투명 유리 재질), `HeadlightLeft`/`Right`(발광 흰색 구체), `TaillightLeft`/`Right`(발광 빨간 구체, 적재함 뒤쪽 모서리), `Bumper`(짙은 회색), `MirrorLeft`/`Right`(사이드미러), `Logo`(45° 회전 다이아몬드형 강조색 도형, 특정 브랜드 모방 없음), `CargoLight`(적재함 내부 조명) — 전부 `MeshInstance3D`만 추가(신규 Collision 없음), 운전 기능·복잡한 애니메이션 없음. 적재함 Package 회수 동선(reach 기반 Grab)은 T085A와 완전히 동일하게 유지된다.
+- **Package 시각 개선**: 기본 `BoxMesh`에 카드보드색 재질을 처음으로 부여하고(이전에는 무재질 기본 회색이었음), `TapeStrip`(테이프 띠), `Label`(라벨 패널), `UpLabel`("▲ TOP" `Label3D`, 상자 회전을 그대로 따라감 — billboard 미사용), `FragileLabel`("FRAGILE" `Label3D`, 붉은색)을 추가했다. `CollisionShape3D`(0.8×0.6×0.8 그대로), `mass`(15.0 그대로), `PhysicsMaterial`, `linear_damp`/`angular_damp`, `Package.gd` 스크립트는 전혀 건드리지 않았다 — Package는 `Package.tscn` 하나만 사용하므로 이 변경은 자동으로 3개 Package 전부와 향후 인스턴스에 동일하게 적용된다.
+- **장애물 구간 시각 강화**: `HazardStackLeft`/`Right`에 검정 `WarningStripe`(경고 띠) `MeshInstance3D`를 추가해 "위험/주의 구간" 색 규칙(노랑+검정)을 완성했다. `MovableCrate`(기존 `PhysicsCrate.tscn`) 자체는 무변경.
+- **완료 조건**: 위 "13. 검증" 항목 전부, 블록아웃 요소(Spawn·트럭 위치·동선·장애물 해법·계단/경사/문·DeliveryZone 위치/판정·Package 3개 구조) 무변경 확인, 장식 요소로 인한 신규 영구 끼임 없음, Release Export 리소스 오류 없음, 외부 Asset 라이선스 기록 누락 없음(이번엔 외부 Asset 자체가 없어 해당 없음).
+- **자동 검증**: `_tmp_t085b_verify.gd`(49개 체크, 3회 연속 PASS) — MainMenu→Level 진입, 트럭 Hero 요소 10종·Package 시각 요소 4종·DeliveryZone 강조광·배경 실루엣 존재 확인, Package `CollisionShape3D`/`mass` 무변경 확인, Spawn 인식, 실제 판정 경로로 Package 3개 순차 회수, 장애물 밀고 통과(진행 확인), 경로 6지점 정착(장식 요소로 인한 새 충돌 트랩 없음), 기존 Ramp/Doorway/Stairs Transform 무변경, 배송 0→1→2→3·완료, Restart 후 트럭·Package·Zone 위치 복구, Pause/Resume·AudioManager 풀 회귀.
+- **Release Export 재확인**: 동일 Preset으로 재실행, 오류 없음, 실행 후 5초 이상 생존, 런타임 로그 오류 없음 확인.
+- 테스트 방법: `_tmp_t085b_verify.gd`(49개 체크, 3회 연속 실행 전부 PASS) + 실제 `HellDelivery.exe` 재Export 후 실행 스모크 테스트.
+- 예상 위험:
+  - 에디터 미리보기 없이 조명·재질·소품 배치를 전부 좌표·색상값 계산만으로 작성했다 — 헤드리스 환경은 렌더링을 하지 않아(더미 드라이버) 실제 명암·Bloom·안개 강도·Crosshair/Package 가독성은 전혀 검증할 수 없었다. "Steam 스크린샷 수준"이라는 목표의 실제 달성 여부는 전적으로 사용자 수동 테스트에 달려 있다.
+  - `DirectionalLight3D.shadow_enabled=true`와 `ssao_enabled=true`를 켰다 — 성능 영향은 헤드리스로 측정 불가(T084에서 확인된 것과 같은 한계), 실제 프레임 저하 여부는 사용자 수동 확인이 필요하다(정밀 최적화는 T085C 예정).
+  - 실제 외부 Asset(Blender 모델/CC0)을 전혀 사용하지 않아 "실제 판매되는 인디 게임 스크린샷" 수준에는 프리미티브 아트의 한계가 있을 수 있다 — 필요하면 후속 단계에서 실제 외부 Asset 도입을 다시 제안할 수 있다.
+- **상태(구 T085B, 참고용 보존)**: `PrototypeLevel.tscn` 기준으로는 사용자 수동 테스트 미승인 상태에서 T085A가 재정의되며 범위가 새 레벨로 넘어갔다. `PrototypeLevel.tscn` 자체의 시각 개선 결과물은 회귀 테스트 Scene에 그대로 남아 있으나, 공개 데모 레벨의 환경 아트·조명 작업은 아래 신규 T085B(섹션 37-B)에서 `DeliveryDemoLevel.tscn`을 대상으로 다시 수행한다.
+
+## 37-B. T085B — Environment Art & Lighting
+
+- 상태: `[TODO]` — T085A(신규 `DeliveryDemoLevel.tscn` Greybox) 사용자 승인 후 착수.
+- 목적: T085A에서 완성된 6구역 Greybox 구조·동선·기믹(게이트, 경사, 병목, 계단)을 그대로 유지하면서, `DeliveryDemoLevel.tscn`을 실제 공개 가능한 시각적 완성도로 끌어올린다(조명, 재질, 트럭 Hero Pass, Package 시각 차별화 강화, 구역별 색 규칙, 배경/경계 실루엣).
+- 선행 작업: T085A(`[REVIEW]`, 사용자 승인 대기 중 — 승인 후 착수)
+- 참고: (구) T085B(섹션 37-ARCHIVE)에서 `PrototypeLevel.tscn`에 적용했던 조명·트럭 Hero Pass·Package 시각 기법(웜톤 지향광, Filmic 톤맵, 옅은 안개, SSAO/Glow 약하게, 트럭 전조등/후미등/사이드미러/로고, Package 테이프·라벨·FRAGILE 표기)은 새 레벨에도 그대로 참고·재적용할 수 있다. `docs/LEVEL_DESIGN_DEMO.md`의 T085B 에셋 우선순위 표(Hero 트럭 디테일, 모듈형 골목 건물, 하역장 키트, 펜스·난간·문틀, 팔레트·쓰레기통·에어컨 실외기, 경고 표지판·바닥 표시, 통일 재질 세트)를 기준으로 상세 범위를 확정한다.
+- 상세 범위는 T085A 사용자 승인 시점에 최종 확정한다.
+
+## 37-C. T085C — Level Polish & Balance
+
+- 상태: `[TODO]` — T085B 완료 후 착수.
+- 목적: `DeliveryDemoLevel.tscn`의 체감 난이도·밸런스 다듬기(게이트 저항감·자동 닫힘 속도 튜닝, 경사 각도·병목 폭 재검토, 가독성, 자잘한 결함 수정) — `docs/LEVEL_DESIGN_DEMO.md`의 T085C 검증 항목을 기준으로 진행한다.
+- 선행 작업: T085B(`[TODO]`)
+- 상세 범위는 T085B 완료 시점에 확정한다.
+
+## 38. T086 — Final Demo Playtest
+
+- 상태: `[TODO]` — 사용자 지시로 T085를 T085A(Delivery Demo Level Design & Greybox)/T085B(Environment Art & Lighting)/T085C(Level Polish & Balance) 세 단계로 세분화하면서, 원래 T085였던 이 Task를 T086으로 옮기고 미착수로 유지했다. 레벨 구조 자체가 바뀌는 T085A~C 이후에 최종 맵(`DeliveryDemoLevel.tscn`)을 대상으로 재수행해야 의미가 있기 때문이다.
+- 목적: 현재 Windows Release 데모를 일반 사용자 관점에서 처음부터 끝까지 최종 검증한다. 새 기능·콘텐츠·튜닝은 추가하지 않고, Release 차단 결함이 확인된 경우에만 최소 수정한다.
+- 소속: `docs/ROADMAP.md` v0.4.0 EPIC-07(Steam Demo Readiness) — 마지막 Feature
+- 선행 작업: T085A/T085B/T085C 전부 완료(사용자 승인) 후 착수
+
+### 참고: 재정의 전 T085(현 T086) 자동 검증 결과 — 옛 `PrototypeLevel` 배치 기준, 새 맵에는 무효
+
+T085가 "Final Demo Playtest"였을 때 아래 검증을 이미 1회 수행했었다. 레벨 배치가 T085(Delivery-Themed Demo Map Pass)로 곧 바뀌므로 이 결과는 새 맵 기준으로는 그대로 재사용할 수 없지만, 재검증 시 참고할 항목·방법론 기록으로 남겨 둔다.
+
+- 빌드 재사용 확인: `D:\Program Files\GitHub\HellDeliveryBuild\HellDelivery.exe`(T083 Export본)가 당시 모든 소스 파일보다 새것임을 확인해 재사용, Release Export를 다시 수행하지 않았음.
+- 신규 사용자 흐름: 깨끗한 `settings.cfg` 상태에서 MainMenu→조작법/설정→데모 시작→온보딩(최초 1회·Pause·영구 저장)→Package 3개 Grab→Release→DeliveryZone 배송(진행도·Toast·효과음 갱신)→완료 화면(Pause)→다시 플레이(완전 초기화)→메인 메뉴 복귀까지 전부 정상 확인.
+- 기존 사용자 흐름: 저장된 설정·Master Volume이 재진입 시 정확히 복원, 온보딩 재강제 없음, Pause/Resume/Restart, 완료 후 메인 메뉴 복귀 정상.
+- 복구·반복 안정성: 손상 `settings.cfg` 5개 항목 전부 기본값 복구, 헤드리스 메뉴 왕복 5회·Restart 5회 누수 없음, 완료 화면 반복 3회 중복 없음, 실제 EXE 5회 시작·종료 크래시 0건.
+- 최종 판정: 당시 기준 Release 차단 결함 없음. 해상도별 UI 잘림·체감 프레임은 헤드리스 구조적 한계로 자동 판정 불가(T084 참고).
+- 테스트 방법: `_tmp_t085_verify.gd`(53개 체크, 3회 연속 PASS) + 실제 EXE 5회 시작·종료.
+- **T086 재착수 시 유의점**: 위 테스트가 사용한 NodePath(`Gameplay/Player`, `Gameplay/Package`/`PackageB`/`PackageC`, `Gameplay/DeliveryZone` 등)가 T085에서 그대로 유지되는지 먼저 확인한 뒤 스크립트를 재사용하거나 필요한 부분만 수정한다.
+- 완료 조건·테스트 방법·최종 판정 기준은 재착수 시 T085의 실제 결과물(새 맵 구조)에 맞춰 다시 정의한다.
+- **상태**: `[TODO]`. T085 완료(사용자 승인)까지 착수하지 않는다. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호·Git 작업은 수행하지 않는다.
 
 ## 작업별 작성 형식
 

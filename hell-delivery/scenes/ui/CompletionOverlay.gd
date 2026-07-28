@@ -7,11 +7,14 @@ extends CanvasLayer
 # 동안 항상 존재하되 평소 숨겨진 단일 인스턴스라 중복 생성 자체가 불가능하다.
 
 const MAIN_MENU_SCENE_PATH := "res://scenes/ui/MainMenu.tscn"
+const _ENTRANCE_DURATION: float = 0.35 # T082: 0.2~0.5초 권장 범위 내
 
 @onready var subtitle_label: Label = $Control/CenterContainer/VBoxContainer/SubtitleLabel
 @onready var time_label: Label = $Control/CenterContainer/VBoxContainer/TimeLabel
 @onready var replay_button: Button = $Control/CenterContainer/VBoxContainer/ReplayButton
 @onready var main_menu_button: Button = $Control/CenterContainer/VBoxContainer/MainMenuButton
+@onready var _root_control: Control = $Control
+@onready var _content: Control = $Control/CenterContainer/VBoxContainer
 
 
 func _ready() -> void:
@@ -28,6 +31,20 @@ func show_completion(target_count: int, elapsed_seconds: float) -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	replay_button.grab_focus()
+	_play_entrance()
+
+
+func _play_entrance() -> void:
+	# T082: Fade + 살짝 확대되며 들어오는 연출(0.35초) — CanvasLayer가 PROCESS_MODE_ALWAYS라
+	# 위에서 이미 paused=true가 된 뒤에도 Tween이 계속 진행된다. Focus는 위에서 이미 준 뒤이므로
+	# 이 연출이 버튼 입력 자체를 막지 않는다(Modulate/Scale만 바뀌고 mouse_filter는 무변경).
+	_content.pivot_offset = _content.size / 2.0
+	_root_control.modulate.a = 0.0
+	_content.scale = Vector2.ONE * 0.9
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(_root_control, "modulate:a", 1.0, _ENTRANCE_DURATION)
+	tween.tween_property(_content, "scale", Vector2.ONE, _ENTRANCE_DURATION).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _format_time(seconds: float) -> String:
@@ -36,11 +53,13 @@ func _format_time(seconds: float) -> String:
 
 
 func _on_replay_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 
 
 func _on_main_menu_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE_PATH)

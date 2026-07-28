@@ -1,0 +1,198 @@
+[gd_scene load_steps=13 format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_Cab"]
+albedo_color = Color(0.85, 0.85, 0.82, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Cargo"]
+albedo_color = Color(0.75, 0.45, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Wheel"]
+albedo_color = Color(0.08, 0.08, 0.08, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Glass"]
+albedo_color = Color(0.55, 0.75, 0.85, 0.75)
+transparency = 1
+emission_enabled = true
+emission = Color(0.4, 0.6, 0.75, 1)
+emission_energy_multiplier = 0.3
+
+[sub_resource type="StandardMaterial3D" id="Mat_Headlight"]
+albedo_color = Color(1.0, 0.97, 0.85, 1)
+emission_enabled = true
+emission = Color(1.0, 0.95, 0.75, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="StandardMaterial3D" id="Mat_Taillight"]
+albedo_color = Color(0.8, 0.1, 0.1, 1)
+emission_enabled = true
+emission = Color(0.9, 0.1, 0.1, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_Trim"]
+albedo_color = Color(0.15, 0.15, 0.17, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Logo"]
+albedo_color = Color(0.95, 0.85, 0.2, 1)
+emission_enabled = true
+emission = Color(0.9, 0.8, 0.2, 1)
+emission_energy_multiplier = 0.4
+
+[sub_resource type="BoxShape3D" id="Shape_Cab"]
+size = Vector3(1.8, 1.6, 1.6)
+
+[sub_resource type="BoxMesh" id="Mesh_Cab"]
+material = SubResource("Mat_Cab")
+size = Vector3(1.8, 1.6, 1.6)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoFloor"]
+size = Vector3(1.8, 0.3, 2.6)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoFloor"]
+material = SubResource("Mat_Cargo")
+size = Vector3(1.8, 0.3, 2.6)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoWall"]
+size = Vector3(0.15, 1.5, 2.6)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoWall"]
+material = SubResource("Mat_Cargo")
+size = Vector3(0.15, 1.5, 2.6)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoRoof"]
+size = Vector3(1.8, 0.15, 2.6)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoRoof"]
+material = SubResource("Mat_Cargo")
+size = Vector3(1.8, 0.15, 2.6)
+
+[sub_resource type="CylinderMesh" id="Mesh_Wheel"]
+material = SubResource("Mat_Wheel")
+top_radius = 0.35
+bottom_radius = 0.35
+height = 0.25
+
+[sub_resource type="BoxMesh" id="Mesh_Windshield"]
+material = SubResource("Mat_Glass")
+size = Vector3(1.6, 0.9, 0.05)
+
+[sub_resource type="SphereMesh" id="Mesh_Headlight"]
+material = SubResource("Mat_Headlight")
+radius = 0.12
+height = 0.24
+
+[sub_resource type="SphereMesh" id="Mesh_Taillight"]
+material = SubResource("Mat_Taillight")
+radius = 0.08
+height = 0.16
+
+[sub_resource type="BoxMesh" id="Mesh_Bumper"]
+material = SubResource("Mat_Trim")
+size = Vector3(1.9, 0.25, 0.15)
+
+[sub_resource type="BoxMesh" id="Mesh_Mirror"]
+material = SubResource("Mat_Trim")
+size = Vector3(0.1, 0.25, 0.3)
+
+[sub_resource type="BoxMesh" id="Mesh_Logo"]
+material = SubResource("Mat_Logo")
+size = Vector3(0.4, 0.4, 0.05)
+
+[node name="DeliveryTruck" type="StaticBody3D"]
+
+[node name="CabCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 1.5)
+shape = SubResource("Shape_Cab")
+
+[node name="CabMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 1.5)
+mesh = SubResource("Mesh_Cab")
+
+[node name="CargoFloorCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.6)
+shape = SubResource("Shape_CargoFloor")
+
+[node name="CargoFloorMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.6)
+mesh = SubResource("Mesh_CargoFloor")
+
+[node name="CargoLeftWallCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.45, -0.6)
+shape = SubResource("Shape_CargoWall")
+
+[node name="CargoLeftWallMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.9, 1.45, -0.6)
+mesh = SubResource("Mesh_CargoWall")
+
+[node name="CargoRightWallCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.45, -0.6)
+shape = SubResource("Shape_CargoWall")
+
+[node name="CargoRightWallMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 1.45, -0.6)
+mesh = SubResource("Mesh_CargoWall")
+
+[node name="CargoRoofCollision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.275, -0.6)
+shape = SubResource("Shape_CargoRoof")
+
+[node name="CargoRoofMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.275, -0.6)
+mesh = SubResource("Mesh_CargoRoof")
+
+[node name="WheelFrontLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.95, 0.35, 1.3)
+mesh = SubResource("Mesh_Wheel")
+
+[node name="WheelFrontRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.95, 0.35, 1.3)
+mesh = SubResource("Mesh_Wheel")
+
+[node name="WheelRearLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.95, 0.35, -1.3)
+mesh = SubResource("Mesh_Wheel")
+
+[node name="WheelRearRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0.95, 0.35, -1.3)
+mesh = SubResource("Mesh_Wheel")
+
+[node name="Windshield" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 2.25)
+mesh = SubResource("Mesh_Windshield")
+
+[node name="HeadlightLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.65, 0.5, 2.32)
+mesh = SubResource("Mesh_Headlight")
+
+[node name="HeadlightRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0.5, 2.32)
+mesh = SubResource("Mesh_Headlight")
+
+[node name="TaillightLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, 1.9, -1.88)
+mesh = SubResource("Mesh_Taillight")
+
+[node name="TaillightRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.85, 1.9, -1.88)
+mesh = SubResource("Mesh_Taillight")
+
+[node name="Bumper" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 2.35)
+mesh = SubResource("Mesh_Bumper")
+
+[node name="MirrorLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 1.3, 1.9)
+mesh = SubResource("Mesh_Mirror")
+
+[node name="MirrorRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 1.3, 1.9)
+mesh = SubResource("Mesh_Mirror")
+
+[node name="Logo" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.707, 0.707, 0, -0.707, 0.707, 0, 0, 0, 1, 0.98, 1.45, -0.6)
+mesh = SubResource("Mesh_Logo")
+
+[node name="CargoLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, -0.6)
+light_color = Color(1.0, 0.9, 0.75, 1)
+light_energy = 1.2
+omni_range = 3.0

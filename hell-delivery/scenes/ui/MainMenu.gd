@@ -4,7 +4,7 @@ extends Control
 # T078: 실행 시 곧바로 테스트 레벨로 들어가는 대신 먼저 보여줄 메인 메뉴. 데모 시작·게임 종료를
 # 담당하고(T078), T079에서 설정 화면 진입을 추가했다. 일시정지·온보딩은 T080 이후 범위.
 
-const DEMO_SCENE_PATH := "res://scenes/level/PrototypeLevel.tscn"
+const DEMO_SCENE_PATH := "res://scenes/level/DeliveryDemoLevel.tscn" # T085A: 데모 시작은 신규 배송 데모 레벨로 연결한다. PrototypeLevel.tscn은 물리 회귀 테스트 전용으로 보존되며 에디터 F6으로 계속 실행 가능하다(공개 메뉴에는 노출하지 않음).
 
 @onready var button_container: VBoxContainer = $CenterContainer/VBoxContainer
 @onready var start_button: Button = $CenterContainer/VBoxContainer/StartButton
@@ -42,14 +42,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_start_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().change_scene_to_file(DEMO_SCENE_PATH)
 
 
 func _on_quit_pressed() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	get_tree().quit()
 
 
 func _open_settings() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	button_container.visible = false
 	controls_panel.visible = false
 	settings_panel.visible = true
@@ -57,12 +60,14 @@ func _open_settings() -> void:
 
 
 func _close_settings() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_BACK)
 	settings_panel.visible = false
 	button_container.visible = true
 	settings_button.grab_focus()
 
 
 func _open_controls() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_SELECT)
 	button_container.visible = false
 	settings_panel.visible = false
 	controls_panel.visible = true
@@ -70,6 +75,7 @@ func _open_controls() -> void:
 
 
 func _close_controls() -> void:
+	AudioManager.play_ui(AudioManager.Sfx.UI_BACK)
 	controls_panel.visible = false
 	button_container.visible = true
 	controls_button.grab_focus()

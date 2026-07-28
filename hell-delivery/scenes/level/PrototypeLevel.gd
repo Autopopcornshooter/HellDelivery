@@ -40,4 +40,5 @@ func _on_package_delivered(_package: RigidBody3D, delivered_count: int, target_c
 
 
 func _on_all_packages_delivered() -> void:
+	AudioManager.play_2d(AudioManager.Sfx.DELIVERY_COMPLETE) # T082: paused=true 이전에 재생을 시작해야 하므로 CompletionOverlay 호출보다 먼저 둔다
 	completion_overlay.show_completion(DeliveryZone.TARGET_PACKAGE_COUNT, _play_time_elapsed)

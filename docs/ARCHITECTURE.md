@@ -140,6 +140,7 @@ T071 이전에는 잡기·놓기·던지기·추종 로직 전체가 `Package.gd
 
 - **책임**: 지형(바닥, 계단, 경사로) 배치, `Player`/`Package`/`DeliveryZone`/`DeliveryHUD` 조립, `DeliveryZone`의 성공 신호를 받아 `DeliveryHUD`에 전달, `restart` 입력을 감지해 씬을 재로드, MVP-1 한정으로 `Main`의 역할(진입점) 겸임.
 - **예상 노드 구조**: 섹션 5 참고. 실제 구현은 루트 아래 `Environment`(지형)/`Gameplay`(`Player`/`Package`/`DeliveryZone`)/`UI`(`DeliveryHUD`) 3개 그룹 노드로 나뉘어 있다(초기 씬 뼈대 단계에서 도입, 섹션 5 참고).
+- **T085A(Art Direction & Delivery Map Blockout) 추가**: `Floor`의 `BoxShape3D`/`BoxMesh`를 (20,1,20)→(20,1,30)으로 확장해 남쪽으로 5m의 여유 공간을 확보했다. `Environment` 아래에 `DeliveryTruck`(별도 씬 `scenes/environment/DeliveryTruck.tscn` 인스턴스 — 운전 불가능한 `StaticBody3D`, 적재함 뒤쪽이 열린 형태), `HazardStackLeft`/`HazardStackRight`(장애물 구역을 형성하는 정적 `StaticBody3D` 한 쌍, 그 사이 1.8m 간격에 `PhysicsObjects/MovableCrate`가 놓여 있어 밀어서 통과하는 편이 훨씬 수월함 — 기존 Grab/Push Physics만 사용, 새 시스템 없음), `MiniStairs`(4단, 기존 `Stairs`와 같은 Step Shape를 90° 회전 재사용한 소규모 계단 — `Ramp`/`Stairs` 등 기존 구조물은 Transform을 포함해 전혀 손대지 않음), `DeliveryBuilding`(`BackWall`/`WestWall`/`EastWall`/`Canopy`/`EntranceMat`/`EntranceSign`으로 구성된 순수 시각적 건물 파사드, `DeliveryZone`의 Collision·판정 로직은 무변경)이 추가되었다. `Gameplay`의 `Player`/`Package`/`PackageB`/`PackageC`/`DeliveryZone`과 `PhysicsObjects`(신규 `MovableCrate` 포함 7개)는 트럭 적재함 출발(구역 A) → 초반 기본 경로(구역 B) → 장애물 극복 구간(구역 C) → `NarrowDoorwayTestArea`+`MiniStairs`가 결합된 구간(구역 D) → `DeliveryBuilding`(구역 E) 순서의 공간적으로 구분된 단일 동선을 이루도록 Transform만 재배치되었다(각 씬의 물리값·충돌 Shape·스크립트는 무변경). 아트 방향성(구역별 색 규칙)과 외부 Asset 정책은 `docs/ASSET_LICENSES.md` 참고.
 - **연결 스크립트**: `PrototypeLevel.gd` — 신호 연결과 재시작 입력 처리만 담당하는 얇은 스크립트.
 - **직접 소유하면 안 되는 책임**: 이동/카메라/상호작용 세부 로직(각 하위 씬의 책임), 배송 판정 세부 로직(`DeliveryZone`의 책임).
 
@@ -174,6 +175,8 @@ T071 이전에는 잡기·놓기·던지기·추종 로직 전체가 `Package.gd
 **갱신(v0.4.0 Steam Demo, T080)**: 첫 실행 온보딩과 공용 조작법 화면을 추가했다. `PrototypeLevel.tscn`의 `UI` 그룹 아래 `OnboardingOverlay.tscn`(`CanvasLayer`, `GameSettings.onboarding_seen`이 `false`일 때만 스스로 표시) 인스턴스를 추가했고, `MainMenu.tscn`·`PauseMenu.tscn` 양쪽에 `ControlsButton`과 `ControlsPanel.tscn` 인스턴스를 추가했다(SettingsPanel과 동일하게 재사용 — 설정 UI를 두 번 만들지 않는 것과 같은 원칙). `DeliveryHUD.tscn`에는 `GoalLabel`/`GoalTimer`만 최소 추가했다(별도 GoalManager 없음).
 
 **갱신(v0.4.0 Steam Demo, T081)**: 단일 배송 판정을 Package 3개 반복 배송 + 완료 화면으로 확장했다. `DeliveryZone.gd`가 `TARGET_PACKAGE_COUNT`(현재 3, 목표 개수를 관리하는 유일한 지점)까지 여러 Package를 집계하도록 확장되었고, `PrototypeLevel.tscn`의 `UI` 그룹 아래 `CompletionOverlay.tscn`(`CanvasLayer`, `PauseMenu`와 동일한 구조 — 항상 존재하되 평소 숨김) 인스턴스를 추가했다. `DeliveryHUD.tscn`의 기존 단일 성공 패널(`SuccessPanel`)은 제거되고 상시 진행도 표시(`ProgressLabel`)와 배송별 짧은 토스트(`DeliveryToastLabel`)로 대체되었다.
+
+**갱신(v0.4.0 Steam Demo, T082)**: 무음이었던 데모에 최소한의 절차적 효과음과 시각 피드백을 추가했다. 이 프로젝트의 두 번째 Autoload로 `AudioManager`(`res://autoload/AudioManager.gd`)를 등록했다 — `GameSettings`와 마찬가지로 "여러 Scene이 공유해야 하는 명확한 이유가 있을 때만 예외로 허용"하는 기준에 부합한다(효과음 재생은 UI·Player·DeliveryZone·DeliveryHUD·PrototypeLevel 등 서로 다른 씬 트리 위치에서 공통으로 필요하고, 고정 크기 `AudioStreamPlayer` 풀을 씬 트리 생명주기와 무관하게 유지해야 한다). 새 Scene/노드는 만들지 않았고, 기존 노드(`Player`/`DeliveryHUD`/`DeliveryZone`/`MainMenu`/`PauseMenu`/`SettingsPanel`/`ControlsPanel`/`CompletionOverlay`)의 스크립트에 `AudioManager.play_*()` 호출과 `DeliveryZone`의 순수 시각(Pulse) 로직만 추가했다. 효과음 8개는 `res://assets/audio/generated/`에 WAV로 저장되며, 전부 외부 음원 없이 직접 합성했다(자세한 내용은 `docs/TASKS.md` T082 참고).
 
 ```text
 MainMenu         (프로젝트 실행 씬, run/main_scene, T078)
@@ -434,7 +437,7 @@ MVP-1 시절에는 "성공 전 / 성공 후" 두 상태뿐이었다(`is_delivere
 
 | 레이어 번호 | 이름 | 사용 노드 |
 |---|---|---|
-| 1 | World | `PrototypeLevel`의 정적 지형(`StaticBody3D`: 바닥, 벽, 계단, 경사로, T065 `TestWall`, T066 `NarrowDoorwayTestArea`) |
+| 1 | World | `PrototypeLevel`의 정적 지형(`StaticBody3D`: 바닥, 벽, 계단, 경사로, T065 `TestWall`, T066 `NarrowDoorwayTestArea`, T085A `DeliveryTruck`·`DeliveryBuilding`·`HazardStackLeft`/`Right`·`MiniStairs`) |
 | 2 | Player | `Player` (`CharacterBody3D`) |
 | 3 | Package | `Package` (`RigidBody3D`) |
 | 4 | DeliveryZone | `DeliveryZone` (`Area3D`) |
@@ -571,3 +574,10 @@ MVP-1은 자동 테스트 프레임워크나 외부 Addon(GUT 등)을 도입하�
 - 구현 중 발견된 제약으로 구조 변경이 필요하면 승인 전에 대규모로 변경하지 않는다.
 - 구현 완료 후 확정된 변경만 이 문서(`ARCHITECTURE.md`)에 반영한다.
 - 아직 구현하지 않은 예상 구조를 확정 사실처럼 기록하지 않는다.
+
+## 24. Windows Export 구조 (T083)
+
+- `hell-delivery/export_presets.cfg`에 Preset 1개("Windows Desktop", `platform="Windows Desktop"`, `runnable=true`, `export_filter="all_resources"`)만 정의한다 — 다른 플랫폼·서버 빌드용 Preset은 없다.
+- `binary_format/architecture="x86_64"`, `debug/export_console_wrapper=1`(Release에는 콘솔 Wrapper 미포함), `application/export_d3d12=true`(`project.godot`의 `rendering_device/driver.windows="d3d12"`와 일치), `codesign/enable=false`, `application/icon=""`(Godot 기본 아이콘 사용, `res://icon.svg` 그대로).
+- 빌드 산출물 경로(`export_path`)는 저장소 밖(`hell-delivery/` 기준 `../../HellDeliveryBuild/`)으로 고정 — 실행 파일·PCK가 저장소 안에 생성되거나 Git 추적 대상이 되지 않는다.
+- Export Template은 Godot 설치 버전(`4.7.1.stable`)과 정확히 일치해야 하며, 이 프로젝트에서 자동으로 다운로드하지 않는다 — 설치 여부·경로는 `docs/TASKS.md` 섹션 35에서 관리한다.
