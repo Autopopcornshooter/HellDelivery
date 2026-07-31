@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/character/CharacterVisual.gd" id="1_visual"]
+[ext_resource type="Script" path="res://scripts/character/CharacterAnimationController.gd" id="2_anim_controller"]
+
+[node name="CharacterVisual" type="Node3D"]
+script = ExtResource("1_visual")
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="CharacterAnimationController" type="Node" parent="."]
+script = ExtResource("2_anim_controller")

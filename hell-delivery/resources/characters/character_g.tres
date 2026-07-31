@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/character/CharacterDefinition.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/environment/kenney_blocky-characters_20/Models/GLB format/character-g.glb" id="2_model"]
+
+[resource]
+script = ExtResource("1_script")
+id = "character_g"
+display_name = "캐릭터 G"
+model_scene = ExtResource("2_model")
+preview_scale = 1.0
+preview_rotation_degrees = 20.0
+player_scale = 0.75

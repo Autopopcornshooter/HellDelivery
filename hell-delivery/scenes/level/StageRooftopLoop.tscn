@@ -1,0 +1,847 @@
+[gd_scene format=3 uid="uid://cc7fbhoceg6db"]
+
+[ext_resource type="Script" uid="uid://b3jquiepe38bb" path="res://scenes/level/PrototypeLevel.gd" id="1_level_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/package/Package.tscn" id="3_package"]
+[ext_resource type="PackedScene" path="res://scenes/delivery/DeliveryZone.tscn" id="4_delivery_zone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DeliveryHUD.tscn" id="5_delivery_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="6_pause_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OnboardingOverlay.tscn" id="7_onboarding_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CompletionOverlay.tscn" id="8_completion_overlay"]
+
+[sub_resource type="BoxShape3D" id="Shape_Z01"]
+size = Vector3(8, 1, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Ground"]
+albedo_color = Color(0.42, 0.48, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Z01"]
+material = SubResource("Mat_Ground")
+size = Vector3(8, 1, 6)
+
+[sub_resource type="BoxShape3D" id="Shape_Z02"]
+size = Vector3(6, 1, 6)
+
+[sub_resource type="BoxMesh" id="Mesh_Z02"]
+material = SubResource("Mat_Ground")
+size = Vector3(6, 1, 6)
+
+[sub_resource type="BoxShape3D" id="Shape_Z03C"]
+size = Vector3(11.6, 1, 26)
+
+[sub_resource type="BoxMesh" id="Mesh_Z03C"]
+material = SubResource("Mat_Ground")
+size = Vector3(11.6, 1, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_Z03W"]
+size = Vector3(8.4, 1, 26)
+
+[sub_resource type="BoxMesh" id="Mesh_Z03W"]
+material = SubResource("Mat_Ground")
+size = Vector3(8.4, 1, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_Z03E"]
+size = Vector3(8, 1, 26)
+
+[sub_resource type="BoxMesh" id="Mesh_Z03E"]
+material = SubResource("Mat_Ground")
+size = Vector3(8, 1, 26)
+
+[sub_resource type="BoxShape3D" id="Shape_GWallNS"]
+size = Vector3(27, 2.8, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_GroundWall"]
+albedo_color = Color(0.3, 0.3, 0.32, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_GWallNS"]
+material = SubResource("Mat_GroundWall")
+size = Vector3(27, 2.8, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_GWallEW"]
+size = Vector3(0.2, 2.8, 33)
+
+[sub_resource type="BoxMesh" id="Mesh_GWallEW"]
+material = SubResource("Mat_GroundWall")
+size = Vector3(0.2, 2.8, 33)
+
+[sub_resource type="BoxShape3D" id="Shape_RampSeg"]
+size = Vector3(2.4, 0.5, 13.1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Ramp"]
+albedo_color = Color(0.35, 0.55, 0.6, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_RampSeg"]
+material = SubResource("Mat_Ramp")
+size = Vector3(2.4, 0.5, 13.1)
+
+[sub_resource type="BoxShape3D" id="Shape_RampRail"]
+size = Vector3(0.2, 1.2, 13.1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Rail"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_RampRail"]
+material = SubResource("Mat_Rail")
+size = Vector3(0.2, 1.2, 13.1)
+
+[sub_resource type="BoxShape3D" id="Shape_RampLanding"]
+size = Vector3(5.4, 0.5, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_RampLanding"]
+material = SubResource("Mat_Ramp")
+size = Vector3(5.4, 0.5, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_RampLandingRailW"]
+size = Vector3(0.2, 1.2, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_RampLandingRailW"]
+material = SubResource("Mat_Rail")
+size = Vector3(0.2, 1.2, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_RampLandingRailN"]
+size = Vector3(5.4, 1.2, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_RampLandingRailN"]
+material = SubResource("Mat_Rail")
+size = Vector3(5.4, 1.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Step"]
+size = Vector3(1.8, 0.178, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Stair"]
+albedo_color = Color(0.6, 0.42, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Step"]
+material = SubResource("Mat_Stair")
+size = Vector3(1.8, 0.178, 0.35)
+
+[sub_resource type="BoxShape3D" id="Shape_StairLanding"]
+size = Vector3(5, 0.3, 2.4)
+
+[sub_resource type="BoxMesh" id="Mesh_StairLanding"]
+material = SubResource("Mat_Stair")
+size = Vector3(5, 0.3, 2.4)
+
+[sub_resource type="BoxShape3D" id="Shape_StairRail"]
+size = Vector3(0.2, 1.2, 3.14)
+
+[sub_resource type="BoxMesh" id="Mesh_StairRail"]
+material = SubResource("Mat_Rail")
+size = Vector3(0.2, 1.2, 3.14)
+
+[sub_resource type="BoxShape3D" id="Shape_RoofOuterWall"]
+size = Vector3(0.2, 2.8, 20)
+
+[sub_resource type="StandardMaterial3D" id="Mat_RoofWall"]
+albedo_color = Color(0.32, 0.3, 0.36, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_RoofOuterWall"]
+material = SubResource("Mat_RoofWall")
+size = Vector3(0.2, 2.8, 20)
+
+[sub_resource type="BoxShape3D" id="Shape_Z05Cap"]
+size = Vector3(3.4, 0.5, 2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_RoofFloor"]
+albedo_color = Color(0.45, 0.4, 0.55, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Z05Cap"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(3.4, 0.5, 2)
+
+[sub_resource type="BoxShape3D" id="Shape_Z05Connector"]
+size = Vector3(1, 0.5, 16)
+
+[sub_resource type="BoxMesh" id="Mesh_Z05Connector"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(1, 0.5, 16)
+
+[sub_resource type="BoxShape3D" id="Shape_Z05ConnectorRail"]
+size = Vector3(0.2, 1.2, 16)
+
+[sub_resource type="BoxMesh" id="Mesh_Z05ConnectorRail"]
+material = SubResource("Mat_Rail")
+size = Vector3(0.2, 1.2, 16)
+
+[sub_resource type="BoxShape3D" id="Shape_Z06_Floor"]
+size = Vector3(2.4, 0.5, 12.9)
+
+[sub_resource type="BoxMesh" id="Mesh_Z06_Floor"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(2.4, 0.5, 12.9)
+
+[sub_resource type="BoxShape3D" id="Shape_Z06Cap"]
+size = Vector3(5, 0.5, 0.5)
+
+[sub_resource type="BoxMesh" id="Mesh_Z06Cap"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(5, 0.5, 0.5)
+
+[sub_resource type="BoxShape3D" id="Shape_Z06Connector"]
+size = Vector3(1, 0.5, 18.5)
+
+[sub_resource type="BoxMesh" id="Mesh_Z06Connector"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(1, 0.5, 18.5)
+
+[sub_resource type="BoxShape3D" id="Shape_Z06InnerRail"]
+size = Vector3(0.2, 1.2, 12.9)
+
+[sub_resource type="BoxMesh" id="Mesh_RoofInnerRail"]
+material = SubResource("Mat_Rail")
+size = Vector3(0.2, 1.2, 18)
+
+[sub_resource type="BoxShape3D" id="Shape_Z07"]
+size = Vector3(25, 0.5, 4)
+
+[sub_resource type="BoxMesh" id="Mesh_Z07"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(25, 0.5, 4)
+
+[sub_resource type="BoxShape3D" id="Shape_Z07SouthRail"]
+size = Vector3(20.2, 1.2, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Z07SouthRail"]
+material = SubResource("Mat_Rail")
+size = Vector3(20.2, 1.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_NorthWallW"]
+size = Vector3(21, 2.8, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_NorthWallW"]
+material = SubResource("Mat_RoofWall")
+size = Vector3(21, 2.8, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_NorthWallE"]
+size = Vector3(2, 2.8, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_NorthWallE"]
+material = SubResource("Mat_RoofWall")
+size = Vector3(2, 2.8, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Lintel"]
+size = Vector3(2, 0.1, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Lintel"]
+material = SubResource("Mat_RoofWall")
+size = Vector3(2, 0.1, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_BridgeWestPatch"]
+size = Vector3(2.4, 0.5, 1.6)
+
+[sub_resource type="BoxMesh" id="Mesh_BridgeWestPatch"]
+material = SubResource("Mat_RoofFloor")
+size = Vector3(2.4, 0.5, 1.6)
+
+[sub_resource type="BoxShape3D" id="Shape_NorthDoorPanel"]
+size = Vector3(2, 2.7, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_NorthDoorPanel"]
+material = SubResource("Mat_RoofWall")
+size = Vector3(2, 2.7, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Z08"]
+size = Vector3(20.2, 0.3, 1.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Bridge"]
+albedo_color = Color(0.62, 0.45, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Z08"]
+material = SubResource("Mat_Bridge")
+size = Vector3(20.2, 0.3, 1.6)
+
+[sub_resource type="BoxShape3D" id="Shape_BridgeCurb"]
+size = Vector3(20.2, 0.15, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_BridgeCurb"]
+material = SubResource("Mat_Bridge")
+size = Vector3(20.2, 0.15, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Z09"]
+size = Vector3(6, 0.5, 4)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Delivery"]
+albedo_color = Color(0.75, 0.68, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Z09"]
+material = SubResource("Mat_Delivery")
+size = Vector3(6, 0.5, 4)
+
+[node name="StageRooftopLoop" type="Node3D" unique_id=1583765383]
+script = ExtResource("1_level_script")
+
+[node name="Environment" type="Node3D" parent="." unique_id=1466002730]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=1803212167]
+transform = Transform3D(1, 0, 0, 0, 0.7, -0.7, 0, 0.7, 0.7, 0, 0, 0)
+
+[node name="Z01_Floor" type="StaticBody3D" parent="Environment" unique_id=1947845268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -14)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z01_Floor" unique_id=2000807718]
+shape = SubResource("Shape_Z01")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z01_Floor" unique_id=2129662415]
+mesh = SubResource("Mesh_Z01")
+
+[node name="Z02_Floor" type="StaticBody3D" parent="Environment" unique_id=1724195130]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z02_Floor" unique_id=1885353441]
+shape = SubResource("Shape_Z02")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z02_Floor" unique_id=1757142805]
+mesh = SubResource("Mesh_Z02")
+
+[node name="Z03C_Floor" type="StaticBody3D" parent="Environment" unique_id=3062973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, -0.5, 2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z03C_Floor" unique_id=412159789]
+shape = SubResource("Shape_Z03C")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z03C_Floor" unique_id=702684017]
+mesh = SubResource("Mesh_Z03C")
+
+[node name="Z03W_Floor" type="StaticBody3D" parent="Environment" unique_id=904845907]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8, -0.5, 2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z03W_Floor" unique_id=1717661171]
+shape = SubResource("Shape_Z03W")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z03W_Floor" unique_id=768961491]
+mesh = SubResource("Mesh_Z03W")
+
+[node name="Z03E_Floor" type="StaticBody3D" parent="Environment" unique_id=727296494]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, -0.5, 2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z03E_Floor" unique_id=2058324675]
+shape = SubResource("Shape_Z03E")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z03E_Floor" unique_id=815085589]
+mesh = SubResource("Mesh_Z03E")
+
+[node name="GroundWall_South" type="StaticBody3D" parent="Environment" unique_id=1257398149]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.4, -17.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/GroundWall_South" unique_id=1970314082]
+shape = SubResource("Shape_GWallNS")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/GroundWall_South" unique_id=1022437623]
+mesh = SubResource("Mesh_GWallNS")
+
+[node name="GroundWall_North" type="StaticBody3D" parent="Environment" unique_id=1287881580]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.4, 15.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/GroundWall_North" unique_id=521699847]
+shape = SubResource("Shape_GWallNS")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/GroundWall_North" unique_id=1984142423]
+mesh = SubResource("Mesh_GWallNS")
+
+[node name="GroundWall_West" type="StaticBody3D" parent="Environment" unique_id=773098976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 1.4, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/GroundWall_West" unique_id=656800921]
+shape = SubResource("Shape_GWallEW")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/GroundWall_West" unique_id=422837126]
+mesh = SubResource("Mesh_GWallEW")
+
+[node name="GroundWall_East" type="StaticBody3D" parent="Environment" unique_id=1052219879]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 1.4, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/GroundWall_East" unique_id=1211341678]
+shape = SubResource("Shape_GWallEW")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/GroundWall_East" unique_id=579363303]
+mesh = SubResource("Mesh_GWallEW")
+
+[node name="Z04A_1_Floor" type="StaticBody3D" parent="Environment" unique_id=618792208]
+transform = Transform3D(1, 0, 0, 0, 0.99254, 0.12217, 0, -0.12217, 0.99254, -9.8, 0.5519, 1.4695)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_1_Floor" unique_id=1858525129]
+shape = SubResource("Shape_RampSeg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_1_Floor" unique_id=732855171]
+mesh = SubResource("Mesh_RampSeg")
+
+[node name="Z04A_1_RailW" type="StaticBody3D" parent="Environment" unique_id=1497584716]
+transform = Transform3D(1, 0, 0, 0, 0.99254, 0.12217, 0, -0.12217, 0.99254, -11, 1.3955, 1.5733)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_1_RailW" unique_id=474927137]
+shape = SubResource("Shape_RampRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_1_RailW" unique_id=1976271781]
+mesh = SubResource("Mesh_RampRail")
+
+[node name="Z04A_1_RailE" type="StaticBody3D" parent="Environment" unique_id=40667108]
+transform = Transform3D(1, 0, 0, 0, 0.99254, 0.12217, 0, -0.12217, 0.99254, -8.8, 1.3955, 1.5733)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_1_RailE" unique_id=359591356]
+shape = SubResource("Shape_RampRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_1_RailE" unique_id=967781525]
+mesh = SubResource("Mesh_RampRail")
+
+[node name="Z04A_L_Floor" type="StaticBody3D" parent="Environment" unique_id=763340257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.3, 1.35, 9.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_L_Floor" unique_id=662274475]
+shape = SubResource("Shape_RampLanding")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_L_Floor" unique_id=1410301108]
+mesh = SubResource("Mesh_RampLanding")
+
+[node name="Z04A_L_RailW" type="StaticBody3D" parent="Environment" unique_id=1697189281]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 2.2, 9.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_L_RailW" unique_id=1598417931]
+shape = SubResource("Shape_RampLandingRailW")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_L_RailW" unique_id=159148977]
+mesh = SubResource("Mesh_RampLandingRailW")
+
+[node name="Z04A_L_RailN" type="StaticBody3D" parent="Environment" unique_id=2053668127]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.3, 2.2, 11)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_L_RailN" unique_id=1239832115]
+shape = SubResource("Shape_RampLandingRailN")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_L_RailN" unique_id=1773701518]
+mesh = SubResource("Mesh_RampLandingRailN")
+
+[node name="Z04A_2_Floor" type="StaticBody3D" parent="Environment" unique_id=1012606434]
+transform = Transform3D(1, 0, 0, 0, 0.99254, -0.12217, 0, 0.12217, 0.99254, -12.8, 2.1519, 1.5305)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_2_Floor" unique_id=1251381291]
+shape = SubResource("Shape_RampSeg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_2_Floor" unique_id=1572455071]
+mesh = SubResource("Mesh_RampSeg")
+
+[node name="Z04A_2_RailW" type="StaticBody3D" parent="Environment" unique_id=820792683]
+transform = Transform3D(1, 0, 0, 0, 0.99254, -0.12217, 0, 0.12217, 0.99254, -14, 2.9955, 1.4267)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_2_RailW" unique_id=1827228103]
+shape = SubResource("Shape_RampRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_2_RailW" unique_id=1044545637]
+mesh = SubResource("Mesh_RampRail")
+
+[node name="Z04A_2_RailE" type="StaticBody3D" parent="Environment" unique_id=1629772714]
+transform = Transform3D(1, 0, 0, 0, 0.99254, -0.12217, 0, 0.12217, 0.99254, -11.6, 2.9955, 1.4267)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04A_2_RailE" unique_id=258600639]
+shape = SubResource("Shape_RampRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04A_2_RailE" unique_id=257839570]
+mesh = SubResource("Mesh_RampRail")
+
+[node name="Step01" type="StaticBody3D" parent="Environment" unique_id=700730800]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.089, -4.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step01" unique_id=155958949]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step01" unique_id=688654861]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step02" type="StaticBody3D" parent="Environment" unique_id=964237370]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.267, -4.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step02" unique_id=1916974500]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step02" unique_id=1714458002]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step03" type="StaticBody3D" parent="Environment" unique_id=2096764165]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.445, -4.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step03" unique_id=460129728]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step03" unique_id=2108600470]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step04" type="StaticBody3D" parent="Environment" unique_id=685902120]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.623, -3.95)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step04" unique_id=1863734837]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step04" unique_id=1445834302]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step05" type="StaticBody3D" parent="Environment" unique_id=1153967558]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.801, -3.65)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step05" unique_id=342678632]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step05" unique_id=1064074592]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step06" type="StaticBody3D" parent="Environment" unique_id=2143224091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.979, -3.35)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step06" unique_id=1670335303]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step06" unique_id=196416059]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step07" type="StaticBody3D" parent="Environment" unique_id=1181470653]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 1.157, -3.05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step07" unique_id=263015524]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step07" unique_id=709012498]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step08" type="StaticBody3D" parent="Environment" unique_id=14526920]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 1.335, -2.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step08" unique_id=1023782823]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step08" unique_id=1934333508]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step09" type="StaticBody3D" parent="Environment" unique_id=1679486224]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 1.513, -2.45)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step09" unique_id=45717864]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step09" unique_id=633087186]
+mesh = SubResource("Mesh_Step")
+
+[node name="Z04B_L_Floor" type="StaticBody3D" parent="Environment" unique_id=1447891396]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 1.45, -1.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04B_L_Floor" unique_id=1539142023]
+shape = SubResource("Shape_StairLanding")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04B_L_Floor" unique_id=2033252492]
+mesh = SubResource("Mesh_StairLanding")
+
+[node name="Step10" type="StaticBody3D" parent="Environment" unique_id=1627574574]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 1.689, -2.45)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step10" unique_id=1773578877]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step10" unique_id=1435871616]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step11" type="StaticBody3D" parent="Environment" unique_id=1072516973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 1.867, -2.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step11" unique_id=789390730]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step11" unique_id=1371407366]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step12" type="StaticBody3D" parent="Environment" unique_id=1426279301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.045, -3.05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step12" unique_id=719433285]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step12" unique_id=2103013921]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step13" type="StaticBody3D" parent="Environment" unique_id=2110977148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.223, -3.35)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step13" unique_id=970640763]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step13" unique_id=1368032830]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step14" type="StaticBody3D" parent="Environment" unique_id=1124784365]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.401, -3.65)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step14" unique_id=522302925]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step14" unique_id=39343288]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step15" type="StaticBody3D" parent="Environment" unique_id=223842660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.579, -3.95)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step15" unique_id=236557742]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step15" unique_id=1895403739]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step16" type="StaticBody3D" parent="Environment" unique_id=77292014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.757, -4.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step16" unique_id=605964106]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step16" unique_id=1583873664]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step17" type="StaticBody3D" parent="Environment" unique_id=1480215491]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 2.935, -4.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step17" unique_id=1568098488]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step17" unique_id=969503660]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step18" type="StaticBody3D" parent="Environment" unique_id=2104113848]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.9, 3.113, -4.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step18" unique_id=1868190041]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step18" unique_id=1608507669]
+mesh = SubResource("Mesh_Step")
+
+[node name="Z04B_1_RailW" type="StaticBody3D" parent="Environment" unique_id=61663964]
+transform = Transform3D(1, 0, 0, 0, 0.8599, 0.5104, 0, -0.5104, 0.8599, 8.6, 1.3159, -3.3438)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04B_1_RailW" unique_id=1233901977]
+shape = SubResource("Shape_StairRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04B_1_RailW" unique_id=892779448]
+mesh = SubResource("Mesh_StairRail")
+
+[node name="Z04B_1_RailE" type="StaticBody3D" parent="Environment" unique_id=1653920948]
+transform = Transform3D(1, 0, 0, 0, 0.8599, 0.5104, 0, -0.5104, 0.8599, 10.4, 1.3159, -3.3438)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04B_1_RailE" unique_id=1806275468]
+shape = SubResource("Shape_StairRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04B_1_RailE" unique_id=1297914467]
+mesh = SubResource("Mesh_StairRail")
+
+[node name="Z04B_2_RailW" type="StaticBody3D" parent="Environment" unique_id=100962869]
+transform = Transform3D(1, 0, 0, 0, 0.8599, -0.5104, 0, 0.5104, 0.8599, 7.2, 2.9159, -3.9562)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04B_2_RailW" unique_id=1626217137]
+shape = SubResource("Shape_StairRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04B_2_RailW" unique_id=1096357850]
+mesh = SubResource("Mesh_StairRail")
+
+[node name="Z04B_2_RailE" type="StaticBody3D" parent="Environment" unique_id=468727123]
+transform = Transform3D(1, 0, 0, 0, 0.8599, -0.5104, 0, 0.5104, 0.8599, 8.8, 2.9159, -3.9562)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z04B_2_RailE" unique_id=392341314]
+shape = SubResource("Shape_StairRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z04B_2_RailE" unique_id=910306732]
+mesh = SubResource("Mesh_StairRail")
+
+[node name="Z05_OuterWall" type="StaticBody3D" parent="Environment" unique_id=1146267725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 4.6, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z05_OuterWall" unique_id=2038956105]
+shape = SubResource("Shape_RoofOuterWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z05_OuterWall" unique_id=1403228111]
+mesh = SubResource("Mesh_RoofOuterWall")
+
+[node name="Z05_Connector_Cap" type="StaticBody3D" parent="Environment" unique_id=2104995719]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.3, 2.95, -4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z05_Connector_Cap" unique_id=1229758442]
+shape = SubResource("Shape_Z05Cap")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z05_Connector_Cap" unique_id=1471289545]
+mesh = SubResource("Mesh_Z05Cap")
+
+[node name="Z05_Connector" type="StaticBody3D" parent="Environment" unique_id=358049320]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.5, 2.95, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z05_Connector" unique_id=268506631]
+shape = SubResource("Shape_Z05Connector")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z05_Connector" unique_id=781480385]
+mesh = SubResource("Mesh_Z05Connector")
+
+[node name="Z05_Connector_InnerRail" type="StaticBody3D" parent="Environment" unique_id=1106831146]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3.8, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z05_Connector_InnerRail" unique_id=1876981376]
+shape = SubResource("Shape_Z05ConnectorRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z05_Connector_InnerRail" unique_id=1438696742]
+mesh = SubResource("Mesh_Z05ConnectorRail")
+
+[node name="Z06_Floor" type="StaticBody3D" parent="Environment" unique_id=456118700]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.8, 2.95, 6.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z06_Floor" unique_id=1847635523]
+shape = SubResource("Shape_Z06_Floor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z06_Floor" unique_id=1730298410]
+mesh = SubResource("Mesh_Z06_Floor")
+
+[node name="Z06_OuterWall" type="StaticBody3D" parent="Environment" unique_id=152624689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 4.6, 5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z06_OuterWall" unique_id=813656140]
+shape = SubResource("Shape_RoofOuterWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z06_OuterWall" unique_id=128599526]
+mesh = SubResource("Mesh_RoofOuterWall")
+
+[node name="Z06_Connector_Cap" type="StaticBody3D" parent="Environment" unique_id=1491651744]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 2.95, -5.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z06_Connector_Cap" unique_id=711538602]
+shape = SubResource("Shape_Z06Cap")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z06_Connector_Cap" unique_id=901741645]
+mesh = SubResource("Mesh_Z06Cap")
+
+[node name="Z06_Connector" type="StaticBody3D" parent="Environment" unique_id=613871703]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 2.95, 3.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z06_Connector" unique_id=564307348]
+shape = SubResource("Shape_Z06Connector")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z06_Connector" unique_id=1961851532]
+mesh = SubResource("Mesh_Z06Connector")
+
+[node name="Z06_InnerRail" type="StaticBody3D" parent="Environment" unique_id=298339749]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.6, 3.8, 6.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z06_InnerRail" unique_id=2027544380]
+shape = SubResource("Shape_Z06InnerRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z06_InnerRail" unique_id=1162768525]
+mesh = SubResource("Mesh_RoofInnerRail")
+
+[node name="Z07_Floor" type="StaticBody3D" parent="Environment" unique_id=1782611434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 2.95, 13)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_Floor" unique_id=416427504]
+shape = SubResource("Shape_Z07")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_Floor" unique_id=218242561]
+mesh = SubResource("Mesh_Z07")
+
+[node name="Z07_SouthRail" type="StaticBody3D" parent="Environment" unique_id=1142073170]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 3.8, 11)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_SouthRail" unique_id=141207513]
+shape = SubResource("Shape_Z07SouthRail")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_SouthRail" unique_id=1322539822]
+mesh = SubResource("Mesh_Z07SouthRail")
+
+[node name="Z07_NorthWall_West" type="StaticBody3D" parent="Environment" unique_id=796800519]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4.6, 15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_NorthWall_West" unique_id=249297003]
+shape = SubResource("Shape_NorthWallW")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_NorthWall_West" unique_id=985910204]
+mesh = SubResource("Mesh_NorthWallW")
+
+[node name="Z07_NorthWall_East" type="StaticBody3D" parent="Environment" unique_id=694584403]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 4.6, 15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_NorthWall_East" unique_id=1495620939]
+shape = SubResource("Shape_NorthWallE")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_NorthWall_East" unique_id=307924188]
+mesh = SubResource("Mesh_NorthWallE")
+
+[node name="Z07_NorthWall_Lintel" type="StaticBody3D" parent="Environment" unique_id=1257129768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 5.95, 15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_NorthWall_Lintel" unique_id=602311231]
+shape = SubResource("Shape_Lintel")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_NorthWall_Lintel" unique_id=1878167093]
+mesh = SubResource("Mesh_Lintel")
+
+[node name="Z05_BridgeWestPatch" type="StaticBody3D" parent="Environment" unique_id=168877811]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.8, 2.95, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z05_BridgeWestPatch" unique_id=1403321814]
+shape = SubResource("Shape_BridgeWestPatch")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z05_BridgeWestPatch" unique_id=1258391812]
+mesh = SubResource("Mesh_BridgeWestPatch")
+
+[node name="Z07_NorthWall_DoorPanel" type="StaticBody3D" parent="Environment" unique_id=765482800]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4.55, 15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z07_NorthWall_DoorPanel" unique_id=1194060091]
+shape = SubResource("Shape_NorthDoorPanel")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z07_NorthWall_DoorPanel" unique_id=193506281]
+mesh = SubResource("Mesh_NorthDoorPanel")
+
+[node name="Z08_Floor" type="StaticBody3D" parent="Environment" unique_id=819386333]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 3.35, 3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z08_Floor" unique_id=32999790]
+shape = SubResource("Shape_Z08")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z08_Floor" unique_id=1121077971]
+mesh = SubResource("Mesh_Z08")
+
+[node name="Z08_CurbSouth" type="StaticBody3D" parent="Environment" unique_id=811184821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 3.575, 2.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z08_CurbSouth" unique_id=1545334569]
+shape = SubResource("Shape_BridgeCurb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z08_CurbSouth" unique_id=408738006]
+mesh = SubResource("Mesh_BridgeCurb")
+
+[node name="Z08_CurbNorth" type="StaticBody3D" parent="Environment" unique_id=2140149255]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 3.575, 3.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z08_CurbNorth" unique_id=179897813]
+shape = SubResource("Shape_BridgeCurb")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z08_CurbNorth" unique_id=506684920]
+mesh = SubResource("Mesh_BridgeCurb")
+
+[node name="Z09_Floor" type="StaticBody3D" parent="Environment" unique_id=1500183926]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2.95, 13)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Z09_Floor" unique_id=103816347]
+shape = SubResource("Shape_Z09")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Z09_Floor" unique_id=566626175]
+mesh = SubResource("Mesh_Z09")
+
+[node name="Gameplay" type="Node3D" parent="." unique_id=462757018]
+
+[node name="Player" parent="Gameplay" unique_id=1010862521 instance=ExtResource("2_player")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1, -15)
+
+[node name="Package" parent="Gameplay" unique_id=1448406721 instance=ExtResource("3_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -13)
+
+[node name="DeliveryZone" parent="Gameplay" unique_id=813021322 instance=ExtResource("4_delivery_zone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 3.7, 13)
+target_package_count = 1
+
+[node name="UI" type="Node3D" parent="." unique_id=1156224709]
+
+[node name="DeliveryHUD" parent="UI" unique_id=1090714500 instance=ExtResource("5_delivery_hud")]
+
+[node name="PauseMenu" parent="UI" unique_id=1164978816 instance=ExtResource("6_pause_menu")]
+
+[node name="OnboardingOverlay" parent="UI" unique_id=191222234 instance=ExtResource("7_onboarding_overlay")]
+
+[node name="CompletionOverlay" parent="UI" unique_id=122220719 instance=ExtResource("8_completion_overlay")]

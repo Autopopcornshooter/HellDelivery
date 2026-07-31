@@ -1,0 +1,689 @@
+[gd_scene format=3 uid="uid://d3uk04kkmotgs"]
+
+[ext_resource type="Script" uid="uid://b3jquiepe38bb" path="res://scenes/level/PrototypeLevel.gd" id="1_level_script"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/package/Package.tscn" id="3_package"]
+[ext_resource type="PackedScene" path="res://scenes/delivery/DeliveryZone.tscn" id="4_delivery_zone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DeliveryHUD.tscn" id="5_delivery_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="6_pause_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OnboardingOverlay.tscn" id="7_onboarding_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CompletionOverlay.tscn" id="8_completion_overlay"]
+
+[sub_resource type="BoxShape3D" id="Shape_TruckCab"]
+size = Vector3(2.2, 2, 2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Truck"]
+albedo_color = Color(0.75, 0.45, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_TruckCab"]
+material = SubResource("Mat_Truck")
+size = Vector3(2.2, 2, 2)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoFloor"]
+size = Vector3(2.6, 0.65, 4.2)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoFloor"]
+material = SubResource("Mat_Truck")
+size = Vector3(2.6, 0.65, 4.2)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoWall"]
+size = Vector3(0.15, 1.2, 4.2)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoWall"]
+material = SubResource("Mat_Truck")
+size = Vector3(0.15, 1.2, 4.2)
+
+[sub_resource type="BoxShape3D" id="Shape_CargoRoof"]
+size = Vector3(2.6, 0.15, 4.2)
+
+[sub_resource type="BoxMesh" id="Mesh_CargoRoof"]
+material = SubResource("Mat_Truck")
+size = Vector3(2.6, 0.15, 4.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Undercarriage"]
+size = Vector3(2.6, 0.1, 6.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Undercarriage"]
+material = SubResource("Mat_Truck")
+size = Vector3(2.6, 0.1, 6.2)
+
+[sub_resource type="BoxShape3D" id="Shape_DockFloor"]
+size = Vector3(10, 1, 17)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Dock"]
+albedo_color = Color(0.55, 0.55, 0.55, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_DockFloor"]
+material = SubResource("Mat_Dock")
+size = Vector3(10, 1, 17)
+
+[sub_resource type="BoxShape3D" id="Shape_AlleyFloor"]
+size = Vector3(3.6, 1, 9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Alley"]
+albedo_color = Color(0.4, 0.45, 0.42, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_AlleyFloor"]
+material = SubResource("Mat_Alley")
+size = Vector3(3.6, 1, 9)
+
+[sub_resource type="BoxShape3D" id="Shape_LeftWall_Long"]
+size = Vector3(0.2, 3, 3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallHigh"]
+albedo_color = Color(0.3, 0.32, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_LeftWall_Long"]
+material = SubResource("Mat_WallHigh")
+size = Vector3(0.2, 3, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_LeftWall_Short"]
+size = Vector3(0.2, 3, 1.5)
+
+[sub_resource type="BoxMesh" id="Mesh_LeftWall_Short"]
+material = SubResource("Mat_WallHigh")
+size = Vector3(0.2, 3, 1.5)
+
+[sub_resource type="BoxShape3D" id="Shape_RightWall_Long"]
+size = Vector3(0.2, 1.1, 3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WallLow"]
+albedo_color = Color(0.45, 0.4, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_RightWall_Long"]
+material = SubResource("Mat_WallLow")
+size = Vector3(0.2, 1.1, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_RightWall_Short"]
+size = Vector3(0.2, 1.1, 1.5)
+
+[sub_resource type="BoxMesh" id="Mesh_RightWall_Short"]
+material = SubResource("Mat_WallLow")
+size = Vector3(0.2, 1.1, 1.5)
+
+[sub_resource type="BoxShape3D" id="Shape_ForkFloor"]
+size = Vector3(7, 1, 3)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Fork"]
+albedo_color = Color(0.5, 0.48, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_ForkFloor"]
+material = SubResource("Mat_Fork")
+size = Vector3(7, 1, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_ForkWall"]
+size = Vector3(0.2, 2.2, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_ForkWall"]
+material = SubResource("Mat_Fork")
+size = Vector3(0.2, 2.2, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_ForkWallNorth"]
+size = Vector3(5, 2.2, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_ForkWallNorth"]
+material = SubResource("Mat_Fork")
+size = Vector3(5, 2.2, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Step"]
+size = Vector3(1.8, 0.178, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Stair"]
+albedo_color = Color(0.52, 0.5, 0.48, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Step"]
+material = SubResource("Mat_Stair")
+size = Vector3(1.8, 0.178, 0.35)
+
+[sub_resource type="BoxShape3D" id="Shape_MidLanding"]
+size = Vector3(3.8, 0.3, 2.4)
+
+[sub_resource type="BoxMesh" id="Mesh_MidLanding"]
+material = SubResource("Mat_Stair")
+size = Vector3(3.8, 0.3, 2.4)
+
+[sub_resource type="BoxShape3D" id="Shape_Landing"]
+size = Vector3(2.4, 0.3, 2.4)
+
+[sub_resource type="BoxMesh" id="Mesh_Landing"]
+material = SubResource("Mat_Stair")
+size = Vector3(2.4, 0.3, 2.4)
+
+[sub_resource type="BoxShape3D" id="Shape_Corridor1"]
+size = Vector3(2.2, 0.3, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Upper"]
+albedo_color = Color(0.62, 0.55, 0.42, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_Corridor1"]
+material = SubResource("Mat_Upper")
+size = Vector3(2.2, 0.3, 6)
+
+[sub_resource type="BoxShape3D" id="Shape_Corridor2"]
+size = Vector3(7.2, 0.3, 2.2)
+
+[sub_resource type="BoxMesh" id="Mesh_Corridor2"]
+material = SubResource("Mat_Upper")
+size = Vector3(7.2, 0.3, 2.2)
+
+[sub_resource type="BoxShape3D" id="Shape_Lobby"]
+size = Vector3(3, 0.3, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_Lobby"]
+material = SubResource("Mat_Upper")
+size = Vector3(3, 0.3, 3)
+
+[sub_resource type="BoxShape3D" id="Shape_WallA"]
+size = Vector3(0.2, 2.7, 5.9)
+
+[sub_resource type="StandardMaterial3D" id="Mat_UpperWall"]
+albedo_color = Color(0.35, 0.33, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_WallA"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(0.2, 2.7, 5.9)
+
+[sub_resource type="BoxShape3D" id="Shape_WallB"]
+size = Vector3(0.2, 2.7, 3.7)
+
+[sub_resource type="BoxMesh" id="Mesh_WallB"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(0.2, 2.7, 3.7)
+
+[sub_resource type="BoxShape3D" id="Shape_WallC"]
+size = Vector3(7.2, 2.7, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_WallC"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(7.2, 2.7, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_WallD"]
+size = Vector3(5, 2.7, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_WallD"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(5, 2.7, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_WallE"]
+size = Vector3(3, 2.7, 0.2)
+
+[sub_resource type="BoxMesh" id="Mesh_WallE"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(3, 2.7, 0.2)
+
+[sub_resource type="BoxShape3D" id="Shape_WallF"]
+size = Vector3(0.2, 2.7, 3)
+
+[sub_resource type="BoxMesh" id="Mesh_WallF"]
+material = SubResource("Mat_UpperWall")
+size = Vector3(0.2, 2.7, 3)
+
+[node name="Stage01HillsideVilla" type="Node3D" unique_id=762895576]
+script = ExtResource("1_level_script")
+
+[node name="Environment" type="Node3D" parent="." unique_id=1507061907]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment" unique_id=1714282456]
+transform = Transform3D(1, 0, 0, 0, 0.7, -0.7, 0, 0.7, 0.7, 0, 0, 0)
+
+[node name="TruckCab" type="StaticBody3D" parent="Environment" unique_id=2136469557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -3.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckCab" unique_id=1149265140]
+shape = SubResource("Shape_TruckCab")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckCab" unique_id=966775534]
+mesh = SubResource("Mesh_TruckCab")
+
+[node name="TruckCargoFloor" type="StaticBody3D" parent="Environment" unique_id=1461800699]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.325, -6.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckCargoFloor" unique_id=1487142582]
+shape = SubResource("Shape_CargoFloor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckCargoFloor" unique_id=1957916458]
+mesh = SubResource("Mesh_CargoFloor")
+
+[node name="TruckCargoWallLeft" type="StaticBody3D" parent="Environment" unique_id=155480585]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.275, 1.25, -6.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckCargoWallLeft" unique_id=1770589825]
+shape = SubResource("Shape_CargoWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckCargoWallLeft" unique_id=1806717818]
+mesh = SubResource("Mesh_CargoWall")
+
+[node name="TruckCargoWallRight" type="StaticBody3D" parent="Environment" unique_id=1656879710]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.275, 1.25, -6.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckCargoWallRight" unique_id=124099695]
+shape = SubResource("Shape_CargoWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckCargoWallRight" unique_id=1032107299]
+mesh = SubResource("Mesh_CargoWall")
+
+[node name="TruckCargoRoof" type="StaticBody3D" parent="Environment" unique_id=1186627470]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.925, -6.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckCargoRoof" unique_id=559058780]
+shape = SubResource("Shape_CargoRoof")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckCargoRoof" unique_id=164715387]
+mesh = SubResource("Mesh_CargoRoof")
+
+[node name="TruckUndercarriage" type="StaticBody3D" parent="Environment" unique_id=926456174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -5.9)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/TruckUndercarriage" unique_id=1864435753]
+shape = SubResource("Shape_Undercarriage")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/TruckUndercarriage" unique_id=1670490346]
+mesh = SubResource("Mesh_Undercarriage")
+
+[node name="DockFloor" type="StaticBody3D" parent="Environment" unique_id=161542481]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -4.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/DockFloor" unique_id=703265174]
+shape = SubResource("Shape_DockFloor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/DockFloor" unique_id=684479755]
+mesh = SubResource("Mesh_DockFloor")
+
+[node name="AlleyFloor" type="StaticBody3D" parent="Environment" unique_id=1726379988]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 8.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/AlleyFloor" unique_id=762943437]
+shape = SubResource("Shape_AlleyFloor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/AlleyFloor" unique_id=269388839]
+mesh = SubResource("Mesh_AlleyFloor")
+
+[node name="Left_Entry" type="StaticBody3D" parent="Environment" unique_id=1954577866]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.5, 5.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Left_Entry" unique_id=407467676]
+shape = SubResource("Shape_LeftWall_Long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Left_Entry" unique_id=1828272340]
+mesh = SubResource("Mesh_LeftWall_Long")
+
+[node name="Left_Middle" type="StaticBody3D" parent="Environment" unique_id=1069000440]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 1.5, 8.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Left_Middle" unique_id=1524851350]
+shape = SubResource("Shape_LeftWall_Long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Left_Middle" unique_id=1986622249]
+mesh = SubResource("Mesh_LeftWall_Long")
+
+[node name="Left_Bottleneck" type="StaticBody3D" parent="Environment" unique_id=1500327390]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, 10.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Left_Bottleneck" unique_id=1369326872]
+shape = SubResource("Shape_LeftWall_Short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Left_Bottleneck" unique_id=244578413]
+mesh = SubResource("Mesh_LeftWall_Short")
+
+[node name="Left_PreFork" type="StaticBody3D" parent="Environment" unique_id=45954627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9, 1.5, 12.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Left_PreFork" unique_id=1820280867]
+shape = SubResource("Shape_LeftWall_Short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Left_PreFork" unique_id=1903957286]
+mesh = SubResource("Mesh_LeftWall_Short")
+
+[node name="Right_Entry" type="StaticBody3D" parent="Environment" unique_id=1229518408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.55, 5.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Right_Entry" unique_id=396024809]
+shape = SubResource("Shape_RightWall_Long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Right_Entry" unique_id=1210657544]
+mesh = SubResource("Mesh_RightWall_Long")
+
+[node name="Right_Middle" type="StaticBody3D" parent="Environment" unique_id=1664847522]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.55, 8.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Right_Middle" unique_id=1409341722]
+shape = SubResource("Shape_RightWall_Long")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Right_Middle" unique_id=1860734068]
+mesh = SubResource("Mesh_RightWall_Long")
+
+[node name="Right_Bottleneck" type="StaticBody3D" parent="Environment" unique_id=2117631512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.55, 10.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Right_Bottleneck" unique_id=1765547483]
+shape = SubResource("Shape_RightWall_Short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Right_Bottleneck" unique_id=853293421]
+mesh = SubResource("Mesh_RightWall_Short")
+
+[node name="Right_PreFork" type="StaticBody3D" parent="Environment" unique_id=300169696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9, 0.55, 12.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Right_PreFork" unique_id=672879780]
+shape = SubResource("Shape_RightWall_Short")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Right_PreFork" unique_id=64096130]
+mesh = SubResource("Mesh_RightWall_Short")
+
+[node name="ForkPlazaFloor" type="StaticBody3D" parent="Environment" unique_id=18699628]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, -0.5, 13.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/ForkPlazaFloor" unique_id=1062586572]
+shape = SubResource("Shape_ForkFloor")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/ForkPlazaFloor" unique_id=1264773569]
+mesh = SubResource("Mesh_ForkFloor")
+
+[node name="ForkPlazaWallWest" type="StaticBody3D" parent="Environment" unique_id=952787227]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 1.1, 13.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/ForkPlazaWallWest" unique_id=2126451775]
+shape = SubResource("Shape_ForkWall")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/ForkPlazaWallWest" unique_id=1248717929]
+mesh = SubResource("Mesh_ForkWall")
+
+[node name="ForkPlazaWallNorth" type="StaticBody3D" parent="Environment" unique_id=1759580210]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.1, 15.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/ForkPlazaWallNorth" unique_id=1140840094]
+shape = SubResource("Shape_ForkWallNorth")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/ForkPlazaWallNorth" unique_id=2129629318]
+mesh = SubResource("Mesh_ForkWallNorth")
+
+[node name="Step01" type="StaticBody3D" parent="Environment" unique_id=57140174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.089, 14.65)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step01" unique_id=653024059]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step01" unique_id=764479701]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step02" type="StaticBody3D" parent="Environment" unique_id=647336345]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.267, 14.95)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step02" unique_id=298273431]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step02" unique_id=1556989650]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step03" type="StaticBody3D" parent="Environment" unique_id=176714066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.445, 15.25)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step03" unique_id=1837446059]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step03" unique_id=863154859]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step04" type="StaticBody3D" parent="Environment" unique_id=1235207569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.623, 15.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step04" unique_id=728628352]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step04" unique_id=1737743224]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step05" type="StaticBody3D" parent="Environment" unique_id=1963284876]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.801, 15.85)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step05" unique_id=313265999]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step05" unique_id=273913055]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step06" type="StaticBody3D" parent="Environment" unique_id=391085926]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.979, 16.15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step06" unique_id=1012062413]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step06" unique_id=560880495]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step07" type="StaticBody3D" parent="Environment" unique_id=1423397064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.157, 16.45)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step07" unique_id=1504477179]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step07" unique_id=1139318501]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step08" type="StaticBody3D" parent="Environment" unique_id=1519034990]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.335, 16.75)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step08" unique_id=608767498]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step08" unique_id=1289315608]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step09" type="StaticBody3D" parent="Environment" unique_id=1913775069]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.513, 17.05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step09" unique_id=584776227]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step09" unique_id=980907829]
+mesh = SubResource("Mesh_Step")
+
+[node name="StairLanding" type="StaticBody3D" parent="Environment" unique_id=695844549]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.452, 18.425)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/StairLanding" unique_id=307996692]
+shape = SubResource("Shape_MidLanding")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/StairLanding" unique_id=1918021835]
+mesh = SubResource("Mesh_MidLanding")
+
+[node name="Step10" type="StaticBody3D" parent="Environment" unique_id=53787832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.691, 17.075)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step10" unique_id=1575147277]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step10" unique_id=962553108]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step11" type="StaticBody3D" parent="Environment" unique_id=415902453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.869, 16.775)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step11" unique_id=1417700859]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step11" unique_id=1288614486]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step12" type="StaticBody3D" parent="Environment" unique_id=916729996]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.047, 16.475)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step12" unique_id=1911579152]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step12" unique_id=715987783]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step13" type="StaticBody3D" parent="Environment" unique_id=1040308996]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.225, 16.175)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step13" unique_id=1010632641]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step13" unique_id=445437365]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step14" type="StaticBody3D" parent="Environment" unique_id=320190451]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.403, 15.875)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step14" unique_id=581404744]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step14" unique_id=772256622]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step15" type="StaticBody3D" parent="Environment" unique_id=1662413662]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.581, 15.575)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step15" unique_id=919600706]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step15" unique_id=1380622141]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step16" type="StaticBody3D" parent="Environment" unique_id=1457140008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.759, 15.275)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step16" unique_id=2119328309]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step16" unique_id=840477208]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step17" type="StaticBody3D" parent="Environment" unique_id=1746624218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2.937, 14.975)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step17" unique_id=1985351015]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step17" unique_id=580702140]
+mesh = SubResource("Mesh_Step")
+
+[node name="Step18" type="StaticBody3D" parent="Environment" unique_id=1470980481]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3.115, 14.675)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Step18" unique_id=235468086]
+shape = SubResource("Shape_Step")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Step18" unique_id=1406408344]
+mesh = SubResource("Mesh_Step")
+
+[node name="UpperMergeFloor" type="StaticBody3D" parent="Environment" unique_id=713735208]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3.054, 13.3)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/UpperMergeFloor" unique_id=1473239514]
+shape = SubResource("Shape_Landing")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/UpperMergeFloor" unique_id=1990072740]
+mesh = SubResource("Mesh_Landing")
+
+[node name="Corridor1Floor" type="StaticBody3D" parent="Environment" unique_id=1257059853]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 3.05, 9.1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor1Floor" unique_id=1750061172]
+shape = SubResource("Shape_Corridor1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor1Floor" unique_id=2014030206]
+mesh = SubResource("Mesh_Corridor1")
+
+[node name="Corridor2Floor" type="StaticBody3D" parent="Environment" unique_id=1196821846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 3.05, 7.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor2Floor" unique_id=204441937]
+shape = SubResource("Shape_Corridor2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor2Floor" unique_id=994350355]
+mesh = SubResource("Mesh_Corridor2")
+
+[node name="DeliveryLobbyFloor" type="StaticBody3D" parent="Environment" unique_id=392144684]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.1, 3.05, 7.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/DeliveryLobbyFloor" unique_id=1732403063]
+shape = SubResource("Shape_Lobby")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/DeliveryLobbyFloor" unique_id=112384719]
+mesh = SubResource("Mesh_Lobby")
+
+[node name="Corridor1_WestWall" type="StaticBody3D" parent="Environment" unique_id=1141120721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 4.55, 9.05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor1_WestWall" unique_id=1714298250]
+shape = SubResource("Shape_WallA")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor1_WestWall" unique_id=52082384]
+mesh = SubResource("Mesh_WallA")
+
+[node name="Corridor1_EastWall_NorthOfCorner" type="StaticBody3D" parent="Environment" unique_id=960222366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 4.55, 10.15)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor1_EastWall_NorthOfCorner" unique_id=592885072]
+shape = SubResource("Shape_WallB")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor1_EastWall_NorthOfCorner" unique_id=1242162302]
+mesh = SubResource("Mesh_WallB")
+
+[node name="Corridor2_NorthWall" type="StaticBody3D" parent="Environment" unique_id=485903075]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 4.55, 8.4)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor2_NorthWall" unique_id=1149586839]
+shape = SubResource("Shape_WallC")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor2_NorthWall" unique_id=1031884685]
+mesh = SubResource("Mesh_WallC")
+
+[node name="Corridor2_SouthWall_EastOfCorner" type="StaticBody3D" parent="Environment" unique_id=1884993617]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6, 4.55, 6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Corridor2_SouthWall_EastOfCorner" unique_id=163297645]
+shape = SubResource("Shape_WallD")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Corridor2_SouthWall_EastOfCorner" unique_id=2009522120]
+mesh = SubResource("Mesh_WallD")
+
+[node name="LobbyWall_North" type="StaticBody3D" parent="Environment" unique_id=2107937846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.1, 4.55, 8.8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/LobbyWall_North" unique_id=1831728470]
+shape = SubResource("Shape_WallE")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/LobbyWall_North" unique_id=30519290]
+mesh = SubResource("Mesh_WallE")
+
+[node name="LobbyWall_South" type="StaticBody3D" parent="Environment" unique_id=1037351239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.1, 4.55, 5.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/LobbyWall_South" unique_id=1940216189]
+shape = SubResource("Shape_WallE")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/LobbyWall_South" unique_id=473469191]
+mesh = SubResource("Mesh_WallE")
+
+[node name="LobbyWall_East" type="StaticBody3D" parent="Environment" unique_id=475841846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.7, 4.55, 7.2)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/LobbyWall_East" unique_id=768310623]
+shape = SubResource("Shape_WallF")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/LobbyWall_East" unique_id=1377404753]
+mesh = SubResource("Mesh_WallF")
+
+[node name="Gameplay" type="Node3D" parent="." unique_id=1688512225]
+
+[node name="Player" parent="Gameplay" unique_id=1233146791 instance=ExtResource("2_player")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1, -11.5)
+
+[node name="Package" parent="Gameplay" unique_id=136574747 instance=ExtResource("3_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, -9.3)
+
+[node name="DeliveryZone" parent="Gameplay" unique_id=85726700 instance=ExtResource("4_delivery_zone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.1, 3.7, 7.2)
+
+[node name="UI" type="Node3D" parent="." unique_id=1412173905]
+
+[node name="DeliveryHUD" parent="UI" unique_id=778235608 instance=ExtResource("5_delivery_hud")]
+
+[node name="PauseMenu" parent="UI" unique_id=1621364809 instance=ExtResource("6_pause_menu")]
+
+[node name="OnboardingOverlay" parent="UI" unique_id=1221198779 instance=ExtResource("7_onboarding_overlay")]
+
+[node name="CompletionOverlay" parent="UI" unique_id=678779548 instance=ExtResource("8_completion_overlay")]
