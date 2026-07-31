@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/player/Player.gd" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/character/CharacterVisual.tscn" id="9_character_visual"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
@@ -25,6 +26,9 @@ shape = SubResource("CapsuleShape3D_1")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 layers = 2
 mesh = SubResource("CapsuleMesh_1")
+
+[node name="CharacterVisualRoot" parent="." instance=ExtResource("9_character_visual")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.0, 0)
 
 [node name="GrabCollisionBarrier" type="AnimatableBody3D" parent="."]
 collision_layer = 32

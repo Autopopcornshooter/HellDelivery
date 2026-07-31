@@ -20,6 +20,7 @@ const _DEFAULT_GAMEPAD_LOOK_SENSITIVITY: float = 2.5
 const _DEFAULT_INVERT_GAMEPAD_Y: bool = false
 const _DEFAULT_MASTER_VOLUME: float = 1.0
 const _DEFAULT_ONBOARDING_SEEN: bool = false
+const _DEFAULT_CHARACTER_ID: String = "" # T085D: 실제 기본값은 CharacterCatalog.get_default_id()에서 가져온다(캐릭터 목록을 여기서 중복 관리하지 않기 위함).
 
 const _MOUSE_SENSITIVITY_RANGE := Vector2(0.0005, 0.02)
 const _GAMEPAD_SENSITIVITY_RANGE := Vector2(0.5, 10.0)
@@ -31,6 +32,7 @@ var gamepad_look_sensitivity: float = _DEFAULT_GAMEPAD_LOOK_SENSITIVITY
 var invert_gamepad_y: bool = _DEFAULT_INVERT_GAMEPAD_Y
 var master_volume: float = _DEFAULT_MASTER_VOLUME # 0.0~1.0
 var onboarding_seen: bool = _DEFAULT_ONBOARDING_SEEN # T080: 첫 실행 안내 Overlay를 이미 봤는지
+var selected_character_id: String = _DEFAULT_CHARACTER_ID # T085D: 싱글플레이 확정 캐릭터 ID. 로컬 협동의 Player별 선택은 CharacterSelectionManager가 별도로 소유한다(여기 저장하지 않음).
 
 
 func _ready() -> void:
@@ -50,6 +52,8 @@ func load_settings() -> void:
 	invert_gamepad_y = _safe_bool(config, "input", "invert_gamepad_y", _DEFAULT_INVERT_GAMEPAD_Y)
 	master_volume = _safe_float(config, "audio", "master_volume", _DEFAULT_MASTER_VOLUME, Vector2(0.0, 1.0))
 	onboarding_seen = _safe_bool(config, "onboarding", "seen", _DEFAULT_ONBOARDING_SEEN)
+	var loaded_character_id: String = _safe_string(config, "character", "selected_id", _DEFAULT_CHARACTER_ID)
+	selected_character_id = CharacterCatalog.resolve_id_or_default(loaded_character_id)
 
 
 func save_settings() -> void:
@@ -61,6 +65,7 @@ func save_settings() -> void:
 	config.set_value("input", "invert_gamepad_y", invert_gamepad_y)
 	config.set_value("audio", "master_volume", master_volume)
 	config.set_value("onboarding", "seen", onboarding_seen)
+	config.set_value("character", "selected_id", selected_character_id)
 	config.save(SETTINGS_PATH)
 
 
@@ -105,6 +110,12 @@ func set_master_volume(value: float) -> void:
 
 func set_onboarding_seen(value: bool) -> void:
 	onboarding_seen = value
+	save_settings()
+	settings_changed.emit()
+
+
+func set_selected_character_id(value: String) -> void:
+	selected_character_id = CharacterCatalog.resolve_id_or_default(value)
 	save_settings()
 	settings_changed.emit()
 
@@ -154,6 +165,13 @@ func _safe_float(config: ConfigFile, section: String, key: String, default: floa
 func _safe_bool(config: ConfigFile, section: String, key: String, default: bool) -> bool:
 	var value = config.get_value(section, key, default)
 	if typeof(value) != TYPE_BOOL:
+		return default
+	return value
+
+
+func _safe_string(config: ConfigFile, section: String, key: String, default: String) -> String:
+	var value = config.get_value(section, key, default)
+	if typeof(value) != TYPE_STRING:
 		return default
 	return value
 

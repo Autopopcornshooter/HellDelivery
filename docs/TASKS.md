@@ -1434,6 +1434,46 @@ Steamworks SDK 연동은 v0.4.0 Done Criteria에 포함되지 않으므로(위 "
   - `CompletionOverlay`도 T079의 PauseMenu와 마찬가지로 900×500 같은 매우 작은 해상도에서는 잘릴 가능성이 있다(이번 자동 검증에서는 재확인하지 않음).
 - **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. EPIC-07과 v0.4.0은 완료 처리하지 않는다. 버전 번호는 변경하지 않는다.
 
+## 34. T085D — Character Selection, Unique Reservation & Gameplay Animation
+
+- 상태: `[REVIEW]` (구현·자동 검증 완료, 사용자 수동 테스트 승인 전까지 `[DONE]` 처리하지 않음)
+- **⚠️ 브랜치·번호 불일치 기록**: 이 Task는 사용자가 다른 브랜치(`feature_stage01_villa`/`feature_level_design`)에서 진행 중이던 T085A(Delivery Demo Level Design & Greybox)~T085C(미착수)의 번호 체계를 그대로 이어받아 "T085D"로 명명해 `main` 브랜치에 구현하라고 명시적으로 지시한 것이다. **`main`의 `TASKS.md`(이 문서)에는 실제로 T085A/B/C 섹션이 존재하지 않는다** — `main`은 T081(섹션 33, `[REVIEW]`)까지만 진행되어 있고, 위 섹션 13의 "현재 다음 작업" 포인터도 T073에 머물러 있어(다른 브랜치 작업이 `main`에 병합되며 갱신되지 않은 것으로 보임) 이미 그 자체로 최신 상태가 아니다. 사용자는 "T085A는 REVIEW, T085B/C는 TODO 상태를 유지하고 T085D만 진행"하라고 명시적으로 지시했으며, 이는 다른 브랜치의 상태를 그대로 보존하라는 뜻으로 해석해 이 문서의 섹션 13이나 다른 브랜치의 파일은 건드리지 않았다. 번호·브랜치 정리(모든 T085 하위 작업을 한 브랜치로 합칠지, `main`의 Task 번호 체계를 별도로 정리할지)는 사용자 결정이 필요하다.
+- 목적: 캐릭터 선택 UI, 로컬 협동 중복 캐릭터 예약 방지, 선택한 외형의 실제 Player 적용, 이동(Idle/Walk/Sprint/Air) 및 Grab/Carry 애니메이션을 구현한다. Player 물리(이동·Collision·Grab Force·Joint·RayCast)는 전혀 변경하지 않는다.
+- 소속: 사용자가 `docs/ROADMAP.md`/`docs/GAME_DESIGN.md`의 기존 Epic 구조와는 별도로 명시적 지시로 진행한 Task(위 브랜치·번호 불일치 기록 참고).
+- 사전 조사: `assets/environment/kenney_blocky-characters_20/Models/GLB format/`의 18개 캐릭터(`character-a.glb`~`character-r.glb`) 전수 조사 — 공통 노드 구조(`character-X2/character-X/root/{leg-left, leg-right, torso/{arm-left, arm-right, head}}` + 형제 `AnimationPlayer`), Skeleton3D 없음(파츠별 Node3D 직접 애니메이션), 공통 Animation 27종(idle/walk/sprint/pick-up/holding-both 등), 캐릭터별 전용 Texture, CC0 1.0 라이선스, Import 오류 0건 확인. 상세는 `docs/ASSET_LICENSES.md`.
+- 작업 범위: Character Selection(MainMenu 진입, 좌우 순환, 3D Preview, 확인/뒤로), Unique Character Reservation(로컬 협동 2인, 확정 시에만 예약, 충돌 시 자동 다음 이동), Character Visual Application(Player 외형 교체, 1인칭 로컬 카메라에서 머리만 숨김), Movement Animation(Idle/Walk/Sprint/Air 상태 전환, 실제 velocity 기반), Grab/Carry Animation(팔 Pose 절차적 Override, Grab 물리 비영향).
+- 제외 범위: 온라인 Lobby·RPC·서버 예약, Full-body IK·Skeleton Retargeting, 원본 GLB 수정, 캐릭터별 능력치·Collision 차이, 새 외부 캐릭터 Asset, MainMenu 전면 재작성, 실행 중 Drop-in/Drop-out, Git·버전 변경.
+- 생성 파일:
+  - `hell-delivery/scripts/character/CharacterDefinition.gd` — 캐릭터 1종의 Resource 데이터(id/display_name/model_scene/preview_scale/preview_rotation_degrees/player_scale + 선택적 파츠 경로 override).
+  - `hell-delivery/scripts/character/CharacterCatalog.gd` — 18개 정의를 명시적 경로 목록(파일 시스템 순회 없음)으로 제공하는 정적 유틸리티(Autoload 아님). `get_all()`/`get_by_id()`/`get_default_id()`/`resolve_id_or_default()`.
+  - `hell-delivery/resources/characters/character_a.tres` ~ `character_r.tres`(18개) — 각 캐릭터의 `CharacterDefinition` 인스턴스. `player_scale=0.75`(원본 모델 높이 약 2.7m를 Player CapsuleShape3D 높이 2.0m에 맞춘 공통 보정값), `display_name`은 "캐릭터 A"~"캐릭터 R"(Kenney가 의미 있는 이름을 제공하지 않아 오분류 위험이 있는 외형 추정 이름 대신 안전한 일반 명칭을 사용 — 필요하면 후속 작업에서 교체 가능).
+  - `hell-delivery/scripts/character/CharacterAnimationController.gd` — Idle/Walk/Sprint/Air 상태별 `AnimationPlayer.play()` 및 반복 재생(원본 Clip이 `loop_mode=NONE`이라 공유 리소스를 바꾸지 않고 `animation_finished`에서 수동 반복), 실제 이동 속도에 따른 `speed_scale` 보정, Carry Pose 추출("holding-both" Clip에서 arm-left/arm-right 회전만 샘플링) 및 매 프레임 비누적 Slerp Override.
+  - `hell-delivery/scripts/character/CharacterVisual.gd` + `hell-delivery/scenes/character/CharacterVisual.tscn` — 외부 GLB를 느슨하게 감싸는 Wrapper(`ModelRoot` + `CharacterAnimationController`). 캐릭터 교체 시 이전 인스턴스를 `remove_child()` 후 `queue_free()`로 완전히 제거(같은 프레임 안에 신·구 인스턴스 공존 없음).
+  - `hell-delivery/scripts/character/CharacterSelectionManager.gd` — 로컬 협동 예약 상태 전용(Autoload 아님, 선택 화면을 소유하는 Scene이 인스턴스 생성). 플레이어별 임시/확정 선택, `confirm()`/`unconfirm()`/`get_available_ids()`/`all_confirmed()`. Restart로 Scene이 통째로 재로드돼도 직전 확정 캐릭터를 복원할 수 있도록 `static var`로 프로세스 생존 기간 동안만 세션을 기억(`remember_session()`/`get_last_session_character()`).
+  - `hell-delivery/scenes/ui/CharacterSelectPanel.tscn`/`.gd` — 표시·입력 전용 UI(이름/좌우 화살표/SubViewport 3D Preview/확인/뒤로). `selection_manager`가 `null`이면 싱글플레이 모드(전체 18종 자유 선택), 지정되면 로컬 협동 모드(예약 목록 반영, 다른 Player 확정 시 `reservation_changed` Signal로 자동 새로고침). 마우스 클릭·`ui_left`/`ui_right`/`ui_cancel`(키보드+게임패드) 모두 지원, 로컬 협동에서는 `input_profile`/`gamepad_device`로 두 Panel이 서로 다른 입력 장치에만 반응.
+  - `docs/ASSET_LICENSES.md` — 신규 문서(이 브랜치에는 없었음). Kenney Blocky Characters 2.0(CC0 1.0) 기록.
+- 수정 파일:
+  - `hell-delivery/scenes/player/Player.tscn` — `CharacterVisualRoot`(CharacterVisual 인스턴스, Y=-1.0 오프셋으로 캐릭터 발을 Capsule 바닥에 정렬) 추가.
+  - `hell-delivery/scenes/player/Player.gd` — `apply_character(id)`(Catalog Fallback 포함, 멱등적) 추가, `_ready()`에서 `GameSettings.selected_character_id`로 기본 적용, `_apply_visual_layer_for_slot()`을 기존 자리표시자 Capsule 대신 캐릭터의 `head` 파츠에 적용하도록 재대상화(T074의 Player별 시각 레이어 구조는 그대로 재사용), `_physics_process()` 끝에서 실제 `velocity`/`held_grabbable`을 읽어 `CharacterAnimationController`에 전달(Grab 물리 자체는 무변경).
+  - `hell-delivery/autoload/GameSettings.gd` — `selected_character_id`(기본값은 `CharacterCatalog.get_default_id()`), `set_selected_character_id()`, `_safe_string()` 헬퍼, `user://settings.cfg`의 `[character] selected_id` 저장/복원(잘못된 값은 `CharacterCatalog.resolve_id_or_default()`로 안전 복구) 추가.
+  - `hell-delivery/scenes/ui/MainMenu.tscn`/`.gd` — "캐릭터" 버튼(데모 시작 다음, 조작법 앞) 및 `CharacterSelectPanel` 진입 추가. 확인 시 `GameSettings.set_selected_character_id()` 저장 후 패널 닫힘, 기존 설정/조작법 패널과 동일한 상호 배타 표시 패턴 재사용.
+  - `hell-delivery/scenes/level/LocalCoopTest.tscn`/`.gd` — `CharacterSelectOverlay`(CanvasLayer, layer=10, 화면 전체를 좌우로 나눈 P1/P2 `CharacterSelectPanel`) 추가. 두 Player가 모두 확정하면(`CharacterSelectionManager.all_confirmed()`) 이미 존재하는 Player/Player2 인스턴스에 `apply_character()`를 호출하고 오버레이를 숨긴다 — 새 Player를 만들지 않는다(요청대로 게임 시작 후 Player 추가/제거 없음).
+- **설계**:
+  - Kenney 18개 캐릭터가 전부 동일한 노드 구조를 가진다는 조사 결과에 따라, `CharacterDefinition`은 파츠 경로를 반복 기록하지 않고 `CharacterVisual`이 `find_child()`로 표준 이름("root"/"AnimationPlayer"/"head"/"arm-left"/"arm-right")을 찾게 했다. 예외 캐릭터가 생기면 `CharacterDefinition`의 선택적 `*_path` 필드로만 대응한다.
+  - Carry(운반) 자세는 전용 Clip이 없어 "holding-both"에서 팔 회전만 추출해 목표 Pose로 쓰고, 다리·몸통은 Walk/Sprint Clip을 그대로 재생한 뒤 `CharacterAnimationController`가 `process_priority=100`으로 AnimationPlayer보다 나중에 실행되어 팔 회전만 매 프레임 새로 Slerp 덮어쓴다(설계 문서 "방식 B"). Grab 시작 시 "pick-up" 원샷을 짧게 재생한 뒤 이동 Clip으로 복귀하며, Release는 별도 Clip 없이 팔 Override 블렌드를 0으로 되돌리는 것만으로 자연스럽게 처리된다.
+  - `CharacterSelectionManager`는 "미리보기(임시 선택)는 예약하지 않고 확인(`confirm()`)에서만 예약"을 지키며, 실패(다른 Player가 이미 확정)를 bool로 반환해 호출부가 다음 사용 가능 캐릭터로 자동 이동하게 한다. 동시 확정 충돌은 GDScript 단일 스레드 실행 순서상 먼저 실행된 `confirm()` 호출만 성공해 자연히 해결된다.
+  - 1인칭 로컬 숨김은 기존 T074 레이어 스킴(`1 << (1+player_slot)`)을 그대로 재사용하되, 대상만 자리표시자 Capsule 전체에서 캐릭터의 `head` MeshInstance3D 하나로 좁혔다 — 몸통/팔/다리는 항상 기본 레이어(1)에 남아 모든 카메라에 보이고, 다른 Player의 cull_mask는 이 비트를 제외하지 않으므로 캐릭터 전체가 정상적으로 보인다.
+- **개발 환경에서 발견한 도구 이슈(게임 코드 결함 아님)**: 새 `class_name` 스크립트를 추가한 직후 `godot --headless --script`로 바로 실행하면 `.godot/global_script_class_cache.cfg`가 아직 갱신되지 않아 "Could not find type" 오류가 난다 — `godot --headless --editor --quit`(전체 재스캔)를 먼저 실행해야 헤드리스 검증 스크립트가 새 클래스를 인식한다. 이번 세션에서 여러 번 겪어 매 신규 클래스 추가 후 습관적으로 재스캔했다.
+- 완료 조건: 18개 캐릭터 전부 오류 없이 Catalog 등록·Preview·Player 적용 가능, 싱글플레이 좌우 순환·확정·저장/복원·잘못된 ID Fallback 정상, 이동 애니메이션 4상태 전환이 실제 velocity 기반으로 자연스럽고 반복 재시작·떨림 없음, Grab 시 팔 전환·Carry 유지·Release 복귀가 자연스럽고 Grab 물리(연결·거리·차단 판정)에 전혀 영향 없음, 로컬 협동 2 Player가 서로 다른 캐릭터를 확정하고 중복 확정이 차단되며 확정 해제 시 목록에 복귀, 기존 회귀(MainMenu/Player 이동·Collision/Grab·Push·Release/PrototypeLevel) 이상 없음.
+- 테스트 방법: 임시 헤드리스 스크립트(`_tmp_*.gd`, 검증 후 전부 삭제)로 단계별 검증 — CharacterCatalog(18개 로드·기본값·잘못된 ID Fallback), CharacterVisual/AnimationController(인스턴스 교체 시 자식 수 유지, 상태 전환, Carry Blend 0→1→0), Player 통합(자리표시자 숨김, head 레이어 타겟팅, GameSettings 연동), MainMenu 전체 흐름(버튼→Panel→순환→확인→저장), LocalCoopTest 예약 흐름(2 Panel 동시 표시→한쪽 확정→상대 목록 갱신→양쪽 확정→오버레이 숨김→실제 Player 외형 적용), 18개 캐릭터 전수(Texture·Animation 접근성), 실제 GrabbableBody를 이용한 진짜 Grab 물리(애니메이션이 Grab 판정에 영향 없음 직접 확인), PrototypeLevel 회귀(Player 이동·캐릭터 적용). 최종 통합 검증 10개 항목 전부 PASS.
+- 예상 위험:
+  - 위 "브랜치·번호 불일치" 자체가 가장 큰 위험이다 — `main`과 다른 브랜치의 `TASKS.md`가 서로 다른 T085 하위 상태를 갖게 되어, 향후 병합 시 충돌하거나 어느 쪽이 "진실"인지 혼동될 수 있다.
+  - 18개 캐릭터의 `display_name`을 "캐릭터 A"~"R"로 단순화했다 — 실제 외형(닌자/정장/오크 등)과 매칭되는 이름을 원하면 각 `.tres`의 `display_name`만 교체하면 되지만, 이번 세션에서는 18장의 개별 미리보기 이미지를 전수 확인하지 않아 오분류 위험을 피하려 보수적으로 처리했다.
+  - Grab/Carry 절차적 Pose는 시각적 근사(팔 회전만 Override)이며 실제 손-물체 접촉을 계산하지 않는다 — Package 크기가 극단적으로 다르면(이번 범위에는 없음) 팔이 파고들거나 뜰 수 있다.
+  - 3D Preview의 카메라 각도·조명은 고정값(자동 검증으로는 "보기 좋은지" 확인 불가) — 실제 체감은 사용자 수동 테스트가 필요하다.
+  - 로컬 협동 캐릭터 선택 오버레이가 떠 있는 동안 Player 이동 입력을 별도로 막지 않았다(개발용 F6 전용 Scene이라는 범위 한정 — 화면은 오버레이가 완전히 가리므로 실질적 영향은 적다고 판단했으나 확인은 못했다).
+- **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. T085A는 다른 브랜치에서 `[REVIEW]`, T085B/T085C는 `[TODO]` 상태를 그대로 둔다(이 문서에는 애초에 없음). T086·EPIC-07·v0.4.0은 미완료 유지. 버전 번호·Git 작업은 수행하지 않는다.
+
 ## 작업별 작성 형식
 
 각 작업은 아래 형식을 따른다.

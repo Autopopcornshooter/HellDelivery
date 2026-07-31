@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/level/PrototypeLevel.tscn" id="1_level"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
 [ext_resource type="Script" path="res://scenes/level/LocalCoopTest.gd" id="3_local_coop_test"]
 [ext_resource type="Script" path="res://scenes/ui/Crosshair.gd" id="4_crosshair"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CharacterSelectPanel.tscn" id="5_characterselectpanel"]
 
 [node name="LocalCoopTest" type="Node3D"]
 script = ExtResource("3_local_coop_test")
@@ -147,3 +148,31 @@ theme_override_font_sizes/font_size = 16
 text = "협동 운반
 2명 연결됨"
 horizontal_alignment = 1
+
+[node name="CharacterSelectOverlay" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="P1Panel" parent="CharacterSelectOverlay" instance=ExtResource("5_characterselectpanel")]
+anchor_right = 0.5
+
+[node name="P1Label" type="Label" parent="CharacterSelectOverlay/P1Panel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 96.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 16
+text = "Player 1"
+
+[node name="P2Panel" parent="CharacterSelectOverlay" instance=ExtResource("5_characterselectpanel")]
+anchor_left = 0.5
+anchor_right = 1.0
+
+[node name="P2Label" type="Label" parent="CharacterSelectOverlay/P2Panel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 96.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 16
+text = "Player 2"

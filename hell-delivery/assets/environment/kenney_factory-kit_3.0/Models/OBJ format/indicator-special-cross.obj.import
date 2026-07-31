@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://deacn4jgvmdmi"
+path="res://.godot/imported/indicator-special-cross.obj-c39d314aa23065ed511788b95f36d29c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/indicator-special-cross.obj-c39d314aa23065ed511788b95f36d29c.mesh"]
+
+source_file="res://assets/environment/kenney_factory-kit_3.0/Models/OBJ format/indicator-special-cross.obj"
+dest_files=["res://.godot/imported/indicator-special-cross.obj-c39d314aa23065ed511788b95f36d29c.mesh", "res://.godot/imported/indicator-special-cross.obj-c39d314aa23065ed511788b95f36d29c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

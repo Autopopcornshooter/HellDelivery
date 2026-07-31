@@ -19,9 +19,13 @@ const _FLASH_COLOR_BLOCKED: Color = Color(1.0, 0.2, 0.2) # 정적 장애물/안�
 @onready var _right_crosshair: Crosshair = $SplitScreen/Layout/RightContainer/SubViewport/Crosshair
 @onready var _left_coop_status: Label = $SplitScreen/Layout/LeftContainer/SubViewport/CoopStatus
 @onready var _right_coop_status: Label = $SplitScreen/Layout/RightContainer/SubViewport/CoopStatus
+@onready var _character_select_overlay: CanvasLayer = $CharacterSelectOverlay
+@onready var _p1_character_panel: CharacterSelectPanel = $CharacterSelectOverlay/P1Panel
+@onready var _p2_character_panel: CharacterSelectPanel = $CharacterSelectOverlay/P2Panel
 
 var _left_coop_shown: bool = false
 var _right_coop_shown: bool = false
+var _character_selection_manager: CharacterSelectionManager = null
 
 
 func _ready() -> void:
@@ -49,6 +53,45 @@ func _ready() -> void:
 	# 자기 조준점을 따로 가짐) — DeliveryHUD 자체(배송 성공 패널)는 그대로 두어 배송 시 공통으로 보이게 한다.
 	var delivery_hud: DeliveryHUD = $Level/UI/DeliveryHUD
 	delivery_hud.crosshair.visible = false
+
+	_setup_character_select()
+
+
+## T085D: 실제 게임 시작 전에 두 Player가 캐릭터를 확정할 때까지 화면 전체를 덮는 선택 UI를
+## 보여준다(입력 장치는 Player1=키보드, Player2=Player2.input_profile/gamepad_device를 그대로
+## 따라간다 — 이미 이 Scene에서 Player2가 GAMEPAD로 지정돼 있으므로 그 값을 그대로 재사용).
+func _setup_character_select() -> void:
+	var script = load("res://scripts/character/CharacterSelectionManager.gd")
+	_character_selection_manager = script.new(2)
+
+	_p1_character_panel.player_index = 0
+	_p1_character_panel.input_profile = CharacterSelectPanel.InputProfile.KEYBOARD_MOUSE
+	_p1_character_panel.selection_manager = _character_selection_manager
+
+	_p2_character_panel.player_index = 1
+	_p2_character_panel.input_profile = CharacterSelectPanel.InputProfile.GAMEPAD
+	_p2_character_panel.gamepad_device = player2.gamepad_device
+	_p2_character_panel.selection_manager = _character_selection_manager
+
+	_p1_character_panel.confirmed.connect(_on_character_confirmed)
+	_p2_character_panel.confirmed.connect(_on_character_confirmed)
+
+	var default_id: String = CharacterCatalog.get_default_id()
+	var p1_preferred: String = CharacterSelectionManager.get_last_session_character(0, default_id)
+	var p2_preferred: String = CharacterSelectionManager.get_last_session_character(1, default_id)
+	_p1_character_panel.open(p1_preferred)
+	_p2_character_panel.open(p2_preferred)
+
+
+func _on_character_confirmed(_character_id: String) -> void:
+	if not _character_selection_manager.all_confirmed():
+		return
+	player1.apply_character(_character_selection_manager.get_confirmed(0))
+	player2.apply_character(_character_selection_manager.get_confirmed(1))
+	_character_selection_manager.remember_session()
+	_p1_character_panel.close()
+	_p2_character_panel.close()
+	_character_select_overlay.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:

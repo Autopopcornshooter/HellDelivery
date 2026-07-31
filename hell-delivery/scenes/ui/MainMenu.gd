@@ -8,11 +8,13 @@ const DEMO_SCENE_PATH := "res://scenes/level/PrototypeLevel.tscn"
 
 @onready var button_container: VBoxContainer = $CenterContainer/VBoxContainer
 @onready var start_button: Button = $CenterContainer/VBoxContainer/StartButton
+@onready var character_button: Button = $CenterContainer/VBoxContainer/CharacterButton
 @onready var controls_button: Button = $CenterContainer/VBoxContainer/ControlsButton
 @onready var settings_button: Button = $CenterContainer/VBoxContainer/SettingsButton
 @onready var quit_button: Button = $CenterContainer/VBoxContainer/QuitButton
 @onready var settings_panel: SettingsPanel = $SettingsPanel
 @onready var controls_panel: ControlsPanel = $ControlsPanel
+@onready var character_select_panel: CharacterSelectPanel = $CharacterSelectPanel
 
 
 func _ready() -> void:
@@ -22,11 +24,14 @@ func _ready() -> void:
 	settings_panel.visible = false
 	controls_panel.visible = false
 	start_button.pressed.connect(_on_start_pressed)
+	character_button.pressed.connect(_open_character_select)
 	controls_button.pressed.connect(_open_controls)
 	settings_button.pressed.connect(_open_settings)
 	quit_button.pressed.connect(_on_quit_pressed)
 	settings_panel.closed.connect(_close_settings)
 	controls_panel.closed.connect(_close_controls)
+	character_select_panel.closed.connect(_close_character_select)
+	character_select_panel.confirmed.connect(_on_character_confirmed)
 	start_button.grab_focus()
 
 
@@ -38,6 +43,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif settings_panel.visible:
 		_close_settings()
+		get_viewport().set_input_as_handled()
+	elif character_select_panel.visible:
+		_close_character_select()
 		get_viewport().set_input_as_handled()
 
 
@@ -73,3 +81,23 @@ func _close_controls() -> void:
 	controls_panel.visible = false
 	button_container.visible = true
 	controls_button.grab_focus()
+
+
+func _open_character_select() -> void:
+	button_container.visible = false
+	settings_panel.visible = false
+	controls_panel.visible = false
+	# T085D: 싱글플레이 모드이므로 selection_manager는 설정하지 않는다(전체 18종에서 자유 선택).
+	# 이전에 저장된 선택이 있으면 그 위치에서 다시 시작한다.
+	character_select_panel.open(GameSettings.selected_character_id)
+
+
+func _close_character_select() -> void:
+	character_select_panel.close()
+	button_container.visible = true
+	character_button.grab_focus()
+
+
+func _on_character_confirmed(character_id: String) -> void:
+	GameSettings.set_selected_character_id(character_id)
+	_close_character_select()

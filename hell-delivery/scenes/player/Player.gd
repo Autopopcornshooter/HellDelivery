@@ -38,6 +38,8 @@ signal grab_connection_lost(reason: int) # T075: 이 Player 자신의 Grab 연�
 @onready var grab_shape_cast: ShapeCast3D = $CameraPivot/GrabShapeCast
 @onready var hold_point: Node3D = $CameraPivot/HoldPoint
 @onready var grab_collision_barrier: AnimatableBody3D = $GrabCollisionBarrier
+@onready var character_visual: CharacterVisual = $CharacterVisualRoot
+@onready var _placeholder_mesh: MeshInstance3D = $MeshInstance3D # T085D: 캐릭터 외형 적용 전까지만 보이는 자리표시자 캡슐 — apply_character() 성공 시 숨긴다.
 
 var _gravity: float = 0.0
 var _detected_grabbable: GrabbableBody = null
@@ -56,7 +58,9 @@ func _ready() -> void:
 	_gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 	if input_profile == InputProfile.KEYBOARD_MOUSE:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	_apply_visual_layer_for_slot()
+	# T085D: 기본값은 싱글플레이 저장 선택(GameSettings)이다 — 로컬 협동 등 외부에서 다른 캐릭터를
+	# 지정하려면 이 노드가 트리에 들어간 뒤 apply_character()를 다시 호출하면 된다(멱등적으로 재적용됨).
+	apply_character(GameSettings.selected_character_id)
 	_apply_settings()
 	GameSettings.settings_changed.connect(_apply_settings)
 
@@ -71,15 +75,30 @@ func _apply_settings() -> void:
 	invert_gamepad_y = GameSettings.invert_gamepad_y
 
 
+## T085D: 선택한 캐릭터를 실제로 적용한다. 기본은 GameSettings의 싱글플레이 저장값이지만,
+## 로컬 협동처럼 Player별로 다른 캐릭터가 필요하면 외부(LocalCoopTest 등)에서 이 함수를 다시
+## 호출해 덮어쓸 수 있다(멱등적 — 몇 번을 불러도 결과가 같다). 저장된 ID가 더 이상 Catalog에
+## 없으면 CharacterCatalog.resolve_id_or_default()가 첫 유효 캐릭터로 안전하게 되돌린다.
+func apply_character(character_id: String) -> void:
+	var resolved_id: String = CharacterCatalog.resolve_id_or_default(character_id)
+	if resolved_id == "":
+		return # Catalog가 비어 있는 극단적 상황 — 자리표시자 캡슐을 그대로 보여준다.
+	character_visual.set_character(resolved_id)
+	_placeholder_mesh.visible = false
+	_apply_visual_layer_for_slot()
+
+
 func _apply_visual_layer_for_slot() -> void:
 	# 로컬 협동(T074)에서 여러 Player 인스턴스가 같은 시각 레이어를 공유하면 서로의 모델이
 	# 안 보이게 되는 문제가 있다(T073 "남은 위험"에서 이미 예견됨). player_slot마다 다른 레이어를
 	# 계산해 "자기 카메라에서만 자기 모델을 숨긴다"를 인스턴스별로 성립시킨다.
-	# slot 0(기본값, 기존 싱글플레이)의 계산 결과는 T073의 기존 고정값(layers=2, cull_mask=1048573)과
-	# 완전히 동일해, 싱글플레이 동작은 그대로 유지된다.
-	var mesh: MeshInstance3D = $MeshInstance3D
+	# T085D: 이 레이어를 이제 캡슐 전체가 아니라 캐릭터의 head 파츠 하나에만 적용한다 — 로컬
+	# 화면에서는 머리만 숨기고 몸통·팔·다리는 그대로 보여(설계 문서 9번), 다른 Player의 화면에는
+	# 이 비트가 cull_mask에서 제외되지 않으므로 캐릭터 전체가 정상적으로 보인다.
 	var own_layer_bit: int = 1 << (1 + player_slot) # slot 0 -> layer 2(bit1), slot 1 -> layer 3(bit2), ...
-	mesh.layers = own_layer_bit
+	var head: Node3D = character_visual.get_head_node() if character_visual != null else null
+	if head is VisualInstance3D:
+		(head as VisualInstance3D).layers = own_layer_bit
 	var camera: Camera3D = camera_pivot.get_node("Camera3D")
 	camera.cull_mask = 0xFFFFF & ~own_layer_bit # 0xFFFFF = 20개 시각 레이어 전체(T073 cull_mask=1048573=0xFFFFD와 동일 기준)
 
@@ -180,6 +199,16 @@ func _physics_process(delta: float) -> void:
 	_handle_grab_input()
 	_report_grab_aim_state()
 	_push_away_rigid_bodies(intended_horizontal_velocity)
+	_update_character_animation(is_sprinting)
+
+
+## T085D: 실제 물리 결과(velocity, held_grabbable)만 읽어 시각 애니메이션 상태를 갱신한다 —
+## 입력값이 아니라 move_and_slide() 이후의 최종 velocity를 사용해 미끄러질 때도 자연스럽다.
+## Grab 물리 자체(held_grabbable 대입 등)는 여기서 전혀 건드리지 않는다.
+func _update_character_animation(is_sprinting: bool) -> void:
+	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
+	character_visual.animation_controller.update_locomotion(horizontal_speed, is_sprinting, is_on_floor())
+	character_visual.animation_controller.set_carrying(held_grabbable != null)
 
 
 func _apply_push_resistance(horizontal_velocity: Vector3) -> Vector3:

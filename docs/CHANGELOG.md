@@ -10,7 +10,7 @@
 
 ## [Unreleased] — Steam Demo (In Progress)
 
-v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit & Scope Lock) `[DONE]` — 조사 전용 Task로 코드 변경은 없으며, 사용자가 권장안(안 A — 싱글플레이 중심 데모)을 승인해 v0.4.0 범위를 확정했다. T078(Main Menu & Demo Entry) `[DONE]`(사용자 승인) — 실행 시 곧바로 테스트 레벨로 들어가던 것을 멈추고, 제목·데모 시작·게임 종료만 갖춘 최소 메인 메뉴를 먼저 보여주도록 했으며, v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow) `[DONE]`(사용자 승인) — Esc 일시정지, MainMenu·PauseMenu 공용 설정 화면(화면/입력/오디오), `user://settings.cfg` 저장·복원을 추가했으며, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls) `[DONE]`(사용자 승인) — 첫 실행 안내 Overlay, MainMenu·PauseMenu 공용 조작법 화면, 짧은 목표 문구를 추가했으며, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow) `[REVIEW]` — 단일 배송 판정을 Package 3개 반복 배송으로 확장하고, 진행도/토스트 HUD, 플레이 타이머, 완료 화면(다시 플레이/메인 메뉴)을 추가했다. 자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기 중이라 v0.4.0은 아직 완료 처리하지 않는다.
+v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit & Scope Lock) `[DONE]` — 조사 전용 Task로 코드 변경은 없으며, 사용자가 권장안(안 A — 싱글플레이 중심 데모)을 승인해 v0.4.0 범위를 확정했다. T078(Main Menu & Demo Entry) `[DONE]`(사용자 승인) — 실행 시 곧바로 테스트 레벨로 들어가던 것을 멈추고, 제목·데모 시작·게임 종료만 갖춘 최소 메인 메뉴를 먼저 보여주도록 했으며, v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow) `[DONE]`(사용자 승인) — Esc 일시정지, MainMenu·PauseMenu 공용 설정 화면(화면/입력/오디오), `user://settings.cfg` 저장·복원을 추가했으며, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls) `[DONE]`(사용자 승인) — 첫 실행 안내 Overlay, MainMenu·PauseMenu 공용 조작법 화면, 짧은 목표 문구를 추가했으며, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow) `[REVIEW]` — 단일 배송 판정을 Package 3개 반복 배송으로 확장하고, 진행도/토스트 HUD, 플레이 타이머, 완료 화면(다시 플레이/메인 메뉴)을 추가했다. 자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기 중이라 v0.4.0은 아직 완료 처리하지 않는다. 별도로 T085D(Character Selection, Unique Reservation & Gameplay Animation) `[REVIEW]` — 사용자가 다른 브랜치의 T085 하위 작업 번호를 이어받아 명시적으로 지시한 Task로, `main`의 T081 이후 순서와는 독립적이다(`docs/TASKS.md` 섹션 34의 브랜치·번호 불일치 기록 참고). Kenney Blocky Characters 18종을 캐릭터 선택 UI·로컬 협동 중복 예약 방지·Player 외형 적용·이동/Grab/Carry 애니메이션까지 구현했다. 자동 검증 완료, 사용자 수동 테스트 대기 중.
 
 ### Added
 
@@ -31,6 +31,12 @@ v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit
 - `GrabbableBody.gd`에 `deliver()`와 `_delivered` 플래그 추가 — DeliveryZone이 배송 판정을 내렸을 때만 호출되는(Package 전용) 안전한 은퇴 처리: 기존 `remove_grabber()`로 모든 Grab Connection을 먼저 해제하고, 이후 `add_grabber()`를 항상 거부하며, `freeze`+`collision_layer/mask=0`으로 물리를 정리한 뒤 0.6초 후 숨긴다(T081)
 - `DeliveryHUD.tscn`/`.gd`에 `ProgressLabel`("배송 완료 N / 3")과 `DeliveryToastLabel`("배송 완료!", 1초) 추가(T081)
 - `PrototypeLevel.gd`에 플레이 시간 측정(`_play_time_elapsed`, `_physics_process`에서 누적) 추가 — Pause/온보딩/완료 화면 모두 `get_tree().paused`를 쓰므로 이 함수 자체가 호출되지 않아 별도 조건 없이 실제 플레이 시간만 집계된다(T081)
+- `scripts/character/CharacterDefinition.gd`(Resource), `scripts/character/CharacterCatalog.gd`(정적 유틸리티, Autoload 아님) 신규 — Kenney Blocky Characters 18종을 `resources/characters/character_a.tres`~`character_r.tres`로 등록. 파일 시스템 순회 없이 명시적 ID 목록으로만 조회하며, 잘못된 ID는 `resolve_id_or_default()`로 안전하게 첫 유효 캐릭터로 복구한다(T085D)
+- `scripts/character/CharacterAnimationController.gd` 신규 — Idle/Walk/Sprint/Air 이동 상태를 실제 물리 velocity 기반으로 전환하고, "holding-both" Clip에서 추출한 팔 Pose를 Walk/Sprint Animation 위에 매 프레임 비누적 Slerp로 덮어써 운반(Carry) 자세를 표현한다. Grab 시작 시 "pick-up" 원샷 재생, Release는 팔 Override 블렌드를 0으로 되돌리는 것만으로 자연스럽게 처리(T085D)
+- `scripts/character/CharacterVisual.gd` + `scenes/character/CharacterVisual.tscn` 신규 — 외부 GLB 모델을 감싸는 Wrapper. 캐릭터 교체 시 이전 인스턴스를 완전히 제거해 중복 인스턴스가 남지 않는다(T085D)
+- `scripts/character/CharacterSelectionManager.gd` 신규(Autoload 아님) — 로컬 협동 캐릭터 중복 예약 방지 전용. 확정(`confirm()`) 시에만 예약되고 미리보기는 예약하지 않으며, 다른 Player가 확정하면 상대 목록에서 즉시 제외되고 자동으로 다음 사용 가능 캐릭터로 이동한다(T085D)
+- `scenes/ui/CharacterSelectPanel.tscn`/`.gd` 신규 — 이름/좌우 화살표/SubViewport 3D Preview/확인/뒤로로 구성된 캐릭터 선택 UI. 마우스·키보드·게임패드를 모두 지원하며, 로컬 협동에서는 두 Panel이 서로 다른 입력 장치에만 반응한다(T085D)
+- `docs/ASSET_LICENSES.md` 신규 — Kenney Blocky Characters 2.0(CC0 1.0) 라이선스 기록(T085D)
 
 ### Changed
 
@@ -39,6 +45,10 @@ v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit
 - `PauseMenu.gd`의 Esc(`ui_cancel`) 처리 우선순위가 ControlsPanel → SettingsPanel → Pause 재개 → Pause 열기로 확장되었고, 맨 앞에 형제 `OnboardingOverlay`가 보이는 동안에는 아무것도 하지 않고 반환하는 가드가 추가되었다(T080). T081에서 `CompletionOverlay`가 보이는 동안 아무것도 하지 않는 동일한 가드가 하나 더 추가되었다.
 - `DeliveryHUD.tscn`/`.gd`의 기존 단일 성공 패널(`SuccessPanel`/`show_success()`)을 제거 — 1개 Package만 배송하던 옛 흐름 전용이라 3개 반복 배송 흐름과 맞지 않아, 상시 진행도 표시와 배송별 짧은 토스트로 대체했다(T081)
 - `OnboardingOverlay.gd`·`ControlsPanel.gd`의 목표 문구가 `DeliveryZone.TARGET_PACKAGE_COUNT`를 동적으로 읽어와 실제 배송 목표(Package 3개)와 항상 일치하도록 변경되었다(T081)
+- `Player.tscn`에 `CharacterVisualRoot`(`CharacterVisual` 인스턴스) 추가, `Player.gd`에 `apply_character()` 추가 — `_ready()`에서 `GameSettings.selected_character_id`를 기본 적용하고, 로컬 협동 등 외부에서 다시 호출해 Player별로 다른 캐릭터를 덮어쓸 수 있다. 기존 자리표시자 Capsule Mesh는 캐릭터 적용 성공 시 숨긴다. T074의 Player별 시각 레이어 숨김 로직(`_apply_visual_layer_for_slot()`)은 자리표시자 Capsule 대신 캐릭터의 `head` 파츠에 적용하도록 재대상화했다 — 몸통·팔·다리는 로컬 화면에도 계속 보인다(T085D)
+- `GameSettings.gd`에 `selected_character_id`, `set_selected_character_id()`, `_safe_string()` 추가 — `user://settings.cfg`의 `[character] selected_id`로 저장/복원되며 잘못된 값은 안전하게 첫 유효 캐릭터로 복구된다(T085D)
+- `MainMenu.tscn`/`.gd`에 "캐릭터" 버튼과 `CharacterSelectPanel` 진입 기능 추가(데모 시작 다음, 조작법 앞) — 기존 설정/조작법 패널과 동일한 상호 배타 표시 패턴을 재사용한다(T085D)
+- `LocalCoopTest.tscn`/`.gd`에 `CharacterSelectOverlay`(화면을 좌우로 나눈 P1/P2 캐릭터 선택 UI) 추가 — 두 Player가 모두 확정해야 오버레이가 사라지고 이미 존재하는 Player/Player2 인스턴스에 선택한 외형이 적용된다(새 Player를 생성하지 않음)(T085D)
 
 ### Fixed
 

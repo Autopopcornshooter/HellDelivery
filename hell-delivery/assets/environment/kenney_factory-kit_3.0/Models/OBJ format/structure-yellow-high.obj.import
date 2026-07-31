@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ikv21vgapnqn"
+path="res://.godot/imported/structure-yellow-high.obj-119b46d7ff3fb27e7e5c03cd4fac3abf.mesh"
+
+[deps]
+
+files=["res://.godot/imported/structure-yellow-high.obj-119b46d7ff3fb27e7e5c03cd4fac3abf.mesh"]
+
+source_file="res://assets/environment/kenney_factory-kit_3.0/Models/OBJ format/structure-yellow-high.obj"
+dest_files=["res://.godot/imported/structure-yellow-high.obj-119b46d7ff3fb27e7e5c03cd4fac3abf.mesh", "res://.godot/imported/structure-yellow-high.obj-119b46d7ff3fb27e7e5c03cd4fac3abf.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
