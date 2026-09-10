@@ -9,6 +9,8 @@ extends Node
 
 const BLEND_TIME := 0.15
 const CARRY_BLEND_TIME := 0.2
+const CARRY_LOWER_ANGLE := deg_to_rad(-16.0)
+const CARRY_ARM_THICKNESS := Vector3(0.72, 1.0, 0.72)
 const MOVE_EPSILON := 0.15 # m/s 미만이면 정지로 간주(물리적 미세 떨림으로 Idle/Walk가 반복 전환되지 않도록)
 const WALK_ANIM_SPEED_REF := 4.0 # Player.gd walk_speed 기준값과 맞춤(TECH_DEBT 기준값 참고, 애니메이션 재생 속도 스케일 전용)
 const SPRINT_ANIM_SPEED_REF := 7.0 # Player.gd sprint_speed 기준값과 맞춤
@@ -39,6 +41,14 @@ var _carry_pose_left: Quaternion = Quaternion.IDENTITY
 var _carry_pose_right: Quaternion = Quaternion.IDENTITY
 var _has_carry_pose: bool = false
 var _playing_grab_start: bool = false
+var carry_pitch: float = 0.0
+var _arm_left_scale := Vector3.ONE
+var _arm_right_scale := Vector3.ONE
+var _arm_reference: Node3D
+var _left_anchor := Transform3D.IDENTITY
+var _right_anchor := Transform3D.IDENTITY
+var _left_position := Vector3.ZERO
+var _right_position := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -56,6 +66,14 @@ func setup(anim_player: AnimationPlayer, arm_left: Node3D, arm_right: Node3D) ->
 	_anim_player = anim_player
 	_arm_left = arm_left
 	_arm_right = arm_right
+	_arm_left_scale = arm_left.scale if arm_left != null else Vector3.ONE
+	_arm_right_scale = arm_right.scale if arm_right != null else Vector3.ONE
+	_arm_reference = get_parent() as Node3D
+	if arm_left != null and arm_right != null:
+		_left_position = arm_left.position
+		_right_position = arm_right.position
+		_left_anchor = _arm_reference.global_transform.affine_inverse() * arm_left.get_parent().global_transform
+		_right_anchor = _arm_reference.global_transform.affine_inverse() * arm_right.get_parent().global_transform
 	_locomotion_state = LocomotionState.IDLE
 	_is_carrying = false
 	_carry_blend = 0.0
@@ -105,6 +123,8 @@ func reset() -> void:
 	_is_carrying = false
 	_carry_blend = 0.0
 	_playing_grab_start = false
+	_apply_arm_thickness()
+	_restore_shoulder_positions()
 	_locomotion_state = LocomotionState.IDLE
 	if _anim_player != null:
 		_play_locomotion_animation(true)
@@ -114,15 +134,42 @@ func _process(delta: float) -> void:
 	if _anim_player == null or not _has_carry_pose:
 		return
 	var target := 1.0 if _is_carrying else 0.0
-	if is_equal_approx(_carry_blend, target):
-		return
+	# 이동 애니메이션이 매 프레임 팔을 다시 쓰므로, 블렌드 완료 후에도 덮어쓴다.
 	_carry_blend = move_toward(_carry_blend, target, delta / CARRY_BLEND_TIME)
+	_apply_arm_thickness()
+	_restore_shoulder_positions()
 	if _carry_blend <= 0.0:
 		return
+	_stabilize_arm(_arm_left, _left_anchor, _left_position, _carry_pose_left)
+	_stabilize_arm(_arm_right, _right_anchor, _right_position, _carry_pose_right)
+
+
+func _restore_shoulder_positions() -> void:
 	if _arm_left != null:
-		_arm_left.quaternion = _arm_left.quaternion.slerp(_carry_pose_left, _carry_blend)
+		_arm_left.position = _left_position
 	if _arm_right != null:
-		_arm_right.quaternion = _arm_right.quaternion.slerp(_carry_pose_right, _carry_blend)
+		_arm_right.position = _right_position
+
+
+func _stabilize_arm(arm: Node3D, anchor: Transform3D, shoulder: Vector3, pose: Quaternion) -> void:
+	if arm == null:
+		return
+	# Sprint animates torso/root as well as arm rotation. Counter that inherited motion
+	# in character space, leaving the body's locomotion animation and physics intact.
+	var stable := _arm_reference.global_transform * anchor
+	var target_position: Vector3 = arm.get_parent().to_local(stable * shoulder)
+	var target_basis: Basis = arm.get_parent().global_basis.inverse() * stable.basis * Basis(Quaternion(Vector3.RIGHT, carry_pitch) * pose)
+	arm.position = arm.position.lerp(target_position, _carry_blend)
+	arm.quaternion = arm.quaternion.slerp(target_basis.orthonormalized().get_rotation_quaternion(), _carry_blend)
+
+
+func _apply_arm_thickness() -> void:
+	# Blend from cached model proportions, never multiply the previous frame's scale.
+	var thickness := Vector3.ONE.lerp(CARRY_ARM_THICKNESS, _carry_blend)
+	if _arm_left != null:
+		_arm_left.scale = _arm_left_scale * thickness
+	if _arm_right != null:
+		_arm_right.scale = _arm_right_scale * thickness
 
 
 func _on_animation_finished(anim_name: String) -> void:
@@ -169,6 +216,15 @@ func _extract_carry_pose() -> void:
 	var sample_time: float = anim.length
 	_carry_pose_left = anim.rotation_track_interpolate(left_track, sample_time)
 	_carry_pose_right = anim.rotation_track_interpolate(right_track, sample_time)
+	# Kenney's holding pose points along +Z; gameplay/camera forward is -Z.
+	# Conjugate the source rotations so both arms reach toward the held package.
+	var forward_correction := Quaternion(Vector3.UP, PI)
+	_carry_pose_left = forward_correction * _carry_pose_left * forward_correction.inverse()
+	_carry_pose_right = forward_correction * _carry_pose_right * forward_correction.inverse()
+	# Lower the reach slightly beneath the view centre without moving the camera/hold point.
+	var lower := Quaternion(Vector3.RIGHT, CARRY_LOWER_ANGLE)
+	_carry_pose_left = lower * _carry_pose_left
+	_carry_pose_right = lower * _carry_pose_right
 	_has_carry_pose = true
 
 

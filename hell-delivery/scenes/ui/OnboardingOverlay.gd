@@ -13,13 +13,16 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS # paused 상태에서도 이 Overlay 자신은 입력을 받아야 함.
 	# T081: 목표 개수를 DeliveryZone.TARGET_PACKAGE_COUNT 하나에서만 읽어와 실제 배송 목표와
 	# 항상 일치시킨다(문구를 따로 하드코딩하지 않음).
-	_title_label.text = "Package %d개를 잡아 Delivery Zone까지 운반하세요" % DeliveryZone.TARGET_PACKAGE_COUNT
 	if GameSettings.onboarding_seen:
 		visible = false
 		return
 	visible = true
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func configure_goal(zone: DeliveryZone) -> void:
+	_title_label.text = "택배 %d개 → %s" % [zone.target_package_count, zone.destination_name]
 
 
 func _unhandled_input(event: InputEvent) -> void:

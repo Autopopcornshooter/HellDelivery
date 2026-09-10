@@ -51,7 +51,7 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 custom_minimum_size = Vector2(240, 56)
 theme_override_font_sizes/font_size = 20
-text = "데모 시작"
+text = "언덕 빌라 배송 시작"
 
 [node name="CharacterButton" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2

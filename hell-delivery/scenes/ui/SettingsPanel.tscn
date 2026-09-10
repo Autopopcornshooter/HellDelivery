@@ -31,7 +31,7 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 custom_minimum_size = Vector2(360, 0)
 
 [node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
@@ -72,6 +72,33 @@ popup/item_1/text = "1600 x 900"
 popup/item_1/id = 1
 popup/item_2/text = "1920 x 1080"
 popup/item_2/id = 2
+
+[node name="FovLabel" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "시야각 (FOV)"
+
+[node name="FovRow" type="HBoxContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="FovSlider" type="HSlider" parent="Panel/VBoxContainer/FovRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 70.0
+max_value = 110.0
+step = 1.0
+value = 75.0
+
+[node name="FovValueLabel" type="Label" parent="Panel/VBoxContainer/FovRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 0)
+text = "75°"
+horizontal_alignment = 1
+
+[node name="ShadowsCheck" type="CheckButton" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "그림자 (끄면 그래픽 부하 감소)"
+button_pressed = true
 
 [node name="InputSectionLabel" type="Label" parent="Panel/VBoxContainer"]
 layout_mode = 2

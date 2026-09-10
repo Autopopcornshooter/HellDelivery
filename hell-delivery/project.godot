@@ -21,10 +21,19 @@ GameSettings="*res://autoload/GameSettings.gd"
 
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/min_width=960
+window/size/min_height=540
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [input]
+
+recover={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":4194336)]
+}
 
 ui_accept={
 "deadzone": 0.5,

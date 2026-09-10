@@ -10,12 +10,15 @@ extends CanvasLayer
 
 
 func _ready() -> void:
-	goal_label.text = "Package %d개를 Delivery Zone으로 운반하세요" % DeliveryZone.TARGET_PACKAGE_COUNT
 	goal_label.visible = false
 	delivery_toast_label.visible = false
 	goal_timer.timeout.connect(_on_goal_timer_timeout)
 	delivery_toast_timer.timeout.connect(_on_delivery_toast_timer_timeout)
-	update_progress(0, DeliveryZone.TARGET_PACKAGE_COUNT)
+
+
+func configure_goal(zone: DeliveryZone) -> void:
+	goal_label.text = "택배 %d개 → %s" % [zone.target_package_count, zone.destination_name]
+	update_progress(zone.delivered_count, zone.target_package_count)
 
 
 func set_crosshair_state(state: int) -> void:

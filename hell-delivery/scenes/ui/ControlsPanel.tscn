@@ -84,7 +84,7 @@ text = "다시 시작"
 
 [node name="KeyRestart" type="Label" parent="Panel/VBoxContainer/Grid"]
 layout_mode = 2
-text = "R"
+text = "R (전체 재시작) · F5 (미배송 물건과 내 위치 복구)"
 
 [node name="ActionGoal" type="Label" parent="Panel/VBoxContainer/Grid"]
 layout_mode = 2

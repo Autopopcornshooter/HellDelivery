@@ -1,5 +1,77 @@
 # CHANGELOG.md
 
+## villa-13 — 2층 호수·기준 빌드 안정화
+
+사용자 villa-12 마감 확인. 2층은 201호·202호로 정정하고 공통 배송 목적지는 ‘언덕 빌라 2층 201호’로 통일했다. 다음 단계로 현재 맵 기준 빌드의 회귀·설정 재실행·야외/실내 성능 검증을 수행했다. 상세 WINDOWS_PLAYTEST_13.md. 현재 맵 기본 플레이와 최근 외형 마감은 사용자 확인, 이번 호수는 [REVIEW]. 다른 PC·장시간 검증은 미완료다.
+
+
+## villa-12 — 사진 피드백·건축 접합부 보완
+
+[REVIEW] 입구 프레임·간판 겹침 정리, 벽 쪽 난간 제거, 계단과 위층 바닥을 벽까지 확장(메시·충돌 일치). 천장 단면·문틀 하단·몰딩·중앙 난간 지지 위치도 보완했다. 상세 WINDOWS_PLAYTEST_12.md. 다음은 현재 빌라 맵의 남은 시각/운반 피드백 반영이다.
+
+
+## villa-11 — 트럭 한글·레퍼런스 기반 실내 재구성
+
+[REVIEW] 트럭 한글 인코딩 복원·UTF-8 검사 도입. VillaInterior가 실제 창·계단참·난간·손잡이·연속 석재·천장·현관·안내를 구성한다. Windows 회귀 122개 / 운반 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_11.md, 참고 자료 VILLA_INTERIOR_REFERENCES.md. 다음은 현재 빌라의 실내 자연스러움·운반 여유에 대한 사용자 플레이 피드백 반영이다.
+
+
+## villa-10 — 주차선·빌라 계단실 마감
+
+[REVIEW] 주차 구획 정렬, 계단실 외벽·지붕·출입구, 복도 벽 접합부, 실내 조명·층 안내 적용. Windows BuildVisual 119개 / BuildRouteVisual 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_10.md. 다음은 현재 빌라의 플레이 피드백 기반 마감이며 새 레벨은 진행하지 않는다.
+
+
+## villa-09 최신 방향 — 현재 맵 완성
+
+두 번째 스테이지 제안은 진행하지 않는다. 사용자 최신 지시는 현재 빌라 맵 완성이다. [REVIEW] 실제 배송 트럭 에셋, 연속 지면·도로·경계·건물 충돌, 빌라 하부·지붕·주변 조경과 운반 코너 보완. 상세 WINDOWS_PLAYTEST_09.md. 현재 맵 플레이 검토 후 마감을 이어간다.
+
+
+## villa-08 최신 작업
+
+사용자 villa-07 설정 유지·모델 누락 없음 확인 완료. [REVIEW] 그림자 설정 즉시 적용·저장 및 720p UI 보강, 로컬 성능 측정. 대표 레벨 완료 점검 DEMO_READINESS.md, 최신 검증 WINDOWS_PLAYTEST_08.md. 다른 PC 호환성은 미완료.
+
+
+## villa-07 최신 작업
+
+사용자 villa-06 환경 개선 확인 완료. [REVIEW] 배포 목록화로 PCK 약 76.1% 축소, 별도 프로세스 설정 저장·읽기 검증 및 검사 실패 감지 강화. 게임 내용 유지. 최신 인수인계 WINDOWS_PLAYTEST_07.md.
+
+
+## villa-06 최신 작업
+
+사용자 villa-05 달리기 팔 수정 플레이 확인 완료. [REVIEW] 빌라 외벽·바닥·트럭·주차 구획·현관 마감, 기존 City Kit 배경 확장과 그림자 적용. 장식 전용으로 물리·운반 상태 유지. 최신 인수인계 WINDOWS_PLAYTEST_06.md.
+
+
+## villa-05 최신 작업
+
+[REVIEW] 운반 중 달리기 팔 상하 흔들림 수정. 캐릭터 기준 어깨 위치·방향으로 부모 몸통 변위를 보정하고 놓으면 원복한다. 회귀 106개 / sprint 입력 포함 경로 15개 검사. 최신 인수인계 WINDOWS_PLAYTEST_05.md.
+
+
+## villa-04 최신 작업
+
+[REVIEW] 운반 팔 시야 가림 피드백 반영: 자세 16도 하향, 운반 중 두께 72%, 놓으면 원복. 계단 안내를 왼쪽으로 정정. 최신 인수인계 WINDOWS_PLAYTEST_04.md. 기존 에셋·물리·FOV 유지.
+
+
+## villa-03 최신 작업
+
+사용자 villa-02 팔 전방 자세 요청 및 그 외 사용 가능 피드백 반영. 양팔 방향·상하 시선 추종을 수정하고 기존 City/Factory Kit를 실제 택배·차양·처마·적재 소품에 확대 적용했다. [REVIEW] 새 빌드 체감 확인 대기. 최신 구현·검증·인수인계: WINDOWS_PLAYTEST_03.md.
+
+
+## 2026-09-10 — villa-02
+
+- 빌라 표지·계단 표시·창문·현관·트럭·Kenney 배경 건물 추가.
+- 점프·착지·충돌 효과음, 속도별 발걸음과 충돌음 빈도 제한 추가.
+- 기존 FOV와 통로 물리 유지. Windows 82개 회귀/14개 운반 검사 통과. 상세 WINDOWS_PLAYTEST_02.md.
+
+
+## 2026-09-10 — Windows 빌라 테스트 빌드
+
+- 기존 미커밋 캐릭터 head/torso 시야 처리·FOV 설정을 보존하고 통합.
+- 시작 메뉴를 언덕 빌라에 연결. 레벨별 DeliveryZone 목표를 판정·HUD·안내·완료 화면의 단일 출처로 사용.
+- 운반 블렌드 완료 뒤에도 팔 포즈 덮어쓰기를 매 프레임 유지.
+- F5 위치 복구와 낙하 자동 복구, 목적지·경로 안내, 갈색 택배·초록색 배송 구역, 주변광 추가.
+- 플레이어 전용 계단 보행면 보완, 위층 코너를 막던 벽 수정. 택배의 물리 계단 충돌 유지.
+- 잡기·놓기·발걸음·배송·복구의 절차적 효과음과 공식 Windows x86_64 테스트 export 추가.
+- 검증 상태·알려진 문제는 `WINDOWS_PLAYTEST.md` 참조. 사용자 실제 플레이 승인은 아직 받지 않음.
+
 이 문서는 버전별 변경 내역을 [Semantic Versioning](https://semver.org/) 스타일로 기록한다.
 
 **역할**: 무엇이 변경되었는가. "앞으로 무엇을 만들 것인가"는 `ROADMAP.md`, "지금 프로젝트 상태가 어떤가"는 `VERSION.md`를 참고한다.
@@ -10,7 +82,7 @@
 
 ## [Unreleased] — Steam Demo (In Progress)
 
-v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit & Scope Lock) `[DONE]` — 조사 전용 Task로 코드 변경은 없으며, 사용자가 권장안(안 A — 싱글플레이 중심 데모)을 승인해 v0.4.0 범위를 확정했다. T078(Main Menu & Demo Entry) `[DONE]`(사용자 승인) — 실행 시 곧바로 테스트 레벨로 들어가던 것을 멈추고, 제목·데모 시작·게임 종료만 갖춘 최소 메인 메뉴를 먼저 보여주도록 했으며, v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow) `[DONE]`(사용자 승인) — Esc 일시정지, MainMenu·PauseMenu 공용 설정 화면(화면/입력/오디오), `user://settings.cfg` 저장·복원을 추가했으며, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls) `[DONE]`(사용자 승인) — 첫 실행 안내 Overlay, MainMenu·PauseMenu 공용 조작법 화면, 짧은 목표 문구를 추가했으며, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow) `[REVIEW]` — 단일 배송 판정을 Package 3개 반복 배송으로 확장하고, 진행도/토스트 HUD, 플레이 타이머, 완료 화면(다시 플레이/메인 메뉴)을 추가했다. 자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기 중이라 v0.4.0은 아직 완료 처리하지 않는다. 별도로 T085D(Character Selection, Unique Reservation & Gameplay Animation) `[REVIEW]` — 사용자가 다른 브랜치의 T085 하위 작업 번호를 이어받아 명시적으로 지시한 Task로, `main`의 T081 이후 순서와는 독립적이다(`docs/TASKS.md` 섹션 34의 브랜치·번호 불일치 기록 참고). Kenney Blocky Characters 18종을 캐릭터 선택 UI·로컬 협동 중복 예약 방지·Player 외형 적용·이동/Grab/Carry 애니메이션까지 구현했다. 자동 검증 완료, 사용자 수동 테스트 대기 중.
+v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit & Scope Lock) `[DONE]` — 조사 전용 Task로 코드 변경은 없으며, 사용자가 권장안(안 A — 싱글플레이 중심 데모)을 승인해 v0.4.0 범위를 확정했다. T078(Main Menu & Demo Entry) `[DONE]`(사용자 승인) — 실행 시 곧바로 테스트 레벨로 들어가던 것을 멈추고, 제목·데모 시작·게임 종료만 갖춘 최소 메인 메뉴를 먼저 보여주도록 했으며, v0.4.0 데모 Baseline으로 기록되었다. T079(Pause, Settings & Exit Flow) `[DONE]`(사용자 승인) — Esc 일시정지, MainMenu·PauseMenu 공용 설정 화면(화면/입력/오디오), `user://settings.cfg` 저장·복원을 추가했으며, Pause/Settings/Exit 흐름과 현재 설정값이 v0.4.0 Baseline으로 기록되었다. T080(Player Onboarding & Controls) `[DONE]`(사용자 승인) — 첫 실행 안내 Overlay, MainMenu·PauseMenu 공용 조작법 화면, 짧은 목표 문구를 추가했으며, 온보딩·조작법 UI가 v0.4.0 Baseline으로 기록되었다. 이어서 T081(Demo Gameplay Loop & Completion Flow) `[REVIEW]` — 단일 배송 판정을 Package 3개 반복 배송으로 확장하고, 진행도/토스트 HUD, 플레이 타이머, 완료 화면(다시 플레이/메인 메뉴)을 추가했다. 자동 검증(80개 항목 전부 PASS) 완료, 사용자 수동 테스트 대기 중이라 v0.4.0은 아직 완료 처리하지 않는다. 별도로 T085D(Character Selection, Unique Reservation & Gameplay Animation) `[REVIEW]` — 사용자가 다른 브랜치의 T085 하위 작업 번호를 이어받아 명시적으로 지시한 Task로, `main`의 T081 이후 순서와는 독립적이다(`docs/TASKS.md` 섹션 34의 브랜치·번호 불일치 기록 참고). Kenney Blocky Characters 18종을 캐릭터 선택 UI·로컬 협동 중복 예약 방지·Player 외형 적용·이동/Grab/Carry 애니메이션까지 구현했다. 이어서 사용자가 같은 T085D 범위에 1인칭 카메라 가림 수정과 FOV 설정을 추가로 지시해, 캐릭터 상체(가슴)가 시야를 가리던 문제를 head와 함께 torso도 자기 카메라에서 숨기는 방식으로 해결하고(카메라 위치는 이동하지 않음), Settings에 FOV 슬라이더(70~110)를 추가했다. 자동 검증 완료(50개 항목 전부 PASS), 사용자 수동 테스트 대기 중.
 
 ### Added
 
@@ -37,6 +109,9 @@ v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit
 - `scripts/character/CharacterSelectionManager.gd` 신규(Autoload 아님) — 로컬 협동 캐릭터 중복 예약 방지 전용. 확정(`confirm()`) 시에만 예약되고 미리보기는 예약하지 않으며, 다른 Player가 확정하면 상대 목록에서 즉시 제외되고 자동으로 다음 사용 가능 캐릭터로 이동한다(T085D)
 - `scenes/ui/CharacterSelectPanel.tscn`/`.gd` 신규 — 이름/좌우 화살표/SubViewport 3D Preview/확인/뒤로로 구성된 캐릭터 선택 UI. 마우스·키보드·게임패드를 모두 지원하며, 로컬 협동에서는 두 Panel이 서로 다른 입력 장치에만 반응한다(T085D)
 - `docs/ASSET_LICENSES.md` 신규 — Kenney Blocky Characters 2.0(CC0 1.0) 라이선스 기록(T085D)
+- `CharacterDefinition.gd`에 선택적 `torso_node_path` 오버라이드 필드, `CharacterVisual.gd`에 `get_torso_node()` 추가 — 기존 head/arm 경로 탐색과 동일한 공용 `_find_node()`를 재사용한다(T085D 범위 추가: First-Person Camera Visibility)
+- `GameSettings.gd`에 `fov`(기본값 75.0, 기존 Camera3D의 Godot 기본 FOV 그대로), `_FOV_RANGE`(70~110), `set_fov()`, 전용 `_safe_fov()`(범위를 벗어난 숫자는 기본값이 아니라 가장 가까운 경계로 Clamp — 다른 `_safe_*` 값들과 다른 규칙, 사용자 지시) 추가, `[display] fov`로 저장/복원(T085D 범위 추가: Adjustable FOV, FOV Persistence)
+- `SettingsPanel.tscn`/`.gd`의 "화면" 섹션에 FOV 슬라이더(70~110, 1단위)와 숫자 표시(`"75°"`) 추가 — MainMenu·PauseMenu 양쪽에서 동일한 값을 공유한다(T085D 범위 추가)
 
 ### Changed
 
@@ -49,10 +124,13 @@ v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit
 - `GameSettings.gd`에 `selected_character_id`, `set_selected_character_id()`, `_safe_string()` 추가 — `user://settings.cfg`의 `[character] selected_id`로 저장/복원되며 잘못된 값은 안전하게 첫 유효 캐릭터로 복구된다(T085D)
 - `MainMenu.tscn`/`.gd`에 "캐릭터" 버튼과 `CharacterSelectPanel` 진입 기능 추가(데모 시작 다음, 조작법 앞) — 기존 설정/조작법 패널과 동일한 상호 배타 표시 패턴을 재사용한다(T085D)
 - `LocalCoopTest.tscn`/`.gd`에 `CharacterSelectOverlay`(화면을 좌우로 나눈 P1/P2 캐릭터 선택 UI) 추가 — 두 Player가 모두 확정해야 오버레이가 사라지고 이미 존재하는 Player/Player2 인스턴스에 선택한 외형이 적용된다(새 Player를 생성하지 않음)(T085D)
+- `Player.gd`의 `_apply_visual_layer_for_slot()`이 head뿐 아니라 torso도 자기 카메라 시각 레이어로 격리하도록 확장 — 팔(arm-left/arm-right)은 torso의 자식이지만 `layers`는 인스턴스별 속성이라 계층 상속되지 않아 계속 보인다(T085D 범위 추가: First-Person Camera Visibility)
+- `LocalCoopTest.gd`의 `_process()`가 기존에 매 프레임 복사하던 `global_transform`에 더해 `fov`도 함께 복사하도록 확장 — 로컬 협동에서 실제 렌더링을 담당하는 SubViewport의 ViewCamera에 FOV를 동기화한다(T085D 범위 추가)
 
 ### Fixed
 
 - `OnboardingOverlay`의 루트 `Control`이 Godot 기본값(`mouse_filter=STOP`)을 그대로 쓰면 화면 전체를 덮은 채 마우스 클릭을 전부 흡수해 `_unhandled_input`에 전달되지 않아, "마우스 클릭으로 닫기"가 전혀 동작하지 않던 결함을 발견해 루트부터 모든 하위 Container/Label까지 `mouse_filter = MOUSE_FILTER_IGNORE`로 수정했다(T080, 자동 검증 중 발견)
+- 1인칭 카메라가 선택한 캐릭터의 가슴·상체 Mesh에 가려지던 문제 — 원인은 로컬 자기 카메라에서 숨기는 대상이 head 하나뿐이었던 것으로 확인되어(카메라 위치 자체는 이미 CapsuleShape3D 기준으로 설계되어 있었음), torso까지 같은 방식으로 숨기도록 수정했다(T085D 범위 추가, 실측 조사 후 발견)
 
 ### Known Notes
 
@@ -60,6 +138,8 @@ v0.4.0 범위의 구현 작업 착수. `docs/TASKS.md` T077(Demo Readiness Audit
 - PauseMenu·SettingsPanel은 900×500처럼 매우 작은 창 크기에서는 버튼이 뷰포트 밖으로 잘릴 수 있다(1280×720 이상에서는 문제 없음, 실측 확인) — 우선순위 낮은 것으로 판단, 필요 시 별도 Task로 제안. ControlsPanel·OnboardingOverlay·CompletionOverlay도 같은 성격의 위험이 있으나 T080·T081 자동 검증에서는 재확인하지 않았다.
 - `LocalCoopTest.tscn`은 `PrototypeLevel.tscn`을 통째로 인스턴스하므로 새 `PauseMenu`·`OnboardingOverlay`·`CompletionOverlay`도 구조상 함께 존재하게 되지만, `CanvasLayer`가 SubViewport가 아닌 루트 Viewport에 그려져 분할 화면 한쪽이 아니라 창 전체에 걸쳐 뜰 가능성이 있다 — 로컬 협동에서의 Pause·온보딩·완료 화면 UX는 각각 T079·T080·T081 범위 밖이라 설계되지 않았다
 - "완료 화면 20회 반복" 자동 검증은 매 반복이 전체 Scene reload를 동반해 비용이 커 3회로 축소해 검증했다(T081)
+- 18개 캐릭터 전부 정적 구조(head/torso 레이어 분리)는 실측했지만, walk/sprint 애니메이션의 bob이나 특정 캐릭터의 극단적 체형에서 미세한 시각적 이질감까지는 자동 검증으로 확인할 수 없다(T085D 범위 추가) — 사용자 수동 테스트 필요
+- FOV 슬라이더의 범위(70~110)·기본값(75)은 사용자 지시를 그대로 따른 값으로 실측 후보 비교를 거치지 않았다(T085D 범위 추가, TD-014/TD-015와 같은 성격의 비차단 튜닝 항목)
 - 오디오 Asset·Windows Export는 아직 없음(각각 T082·T083 계획)
 
 ---

@@ -1,5 +1,79 @@
 # ARCHITECTURE.md
 
+## villa-13 — 2층 호수·기준 빌드 안정화
+
+사용자 villa-12 마감 확인. 2층은 201호·202호로 정정하고 공통 배송 목적지는 ‘언덕 빌라 2층 201호’로 통일했다. 다음 단계로 현재 맵 기준 빌드의 회귀·설정 재실행·야외/실내 성능 검증을 수행했다. 상세 WINDOWS_PLAYTEST_13.md. 현재 맵 기본 플레이와 최근 외형 마감은 사용자 확인, 이번 호수는 [REVIEW]. 다른 PC·장시간 검증은 미완료다.
+
+
+## villa-12 — 사진 피드백·건축 접합부 보완
+
+[REVIEW] 입구 프레임·간판 겹침 정리, 벽 쪽 난간 제거, 계단과 위층 바닥을 벽까지 확장(메시·충돌 일치). 천장 단면·문틀 하단·몰딩·중앙 난간 지지 위치도 보완했다. 상세 WINDOWS_PLAYTEST_12.md. 다음은 현재 빌라 맵의 남은 시각/운반 피드백 반영이다.
+
+
+## villa-11 — 트럭 한글·레퍼런스 기반 실내 재구성
+
+[REVIEW] 트럭 한글 인코딩 복원·UTF-8 검사 도입. VillaInterior가 실제 창·계단참·난간·손잡이·연속 석재·천장·현관·안내를 구성한다. Windows 회귀 122개 / 운반 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_11.md, 참고 자료 VILLA_INTERIOR_REFERENCES.md. 다음은 현재 빌라의 실내 자연스러움·운반 여유에 대한 사용자 플레이 피드백 반영이다.
+
+
+## villa-10 — 주차선·빌라 계단실 마감
+
+[REVIEW] 주차 구획 정렬, 계단실 외벽·지붕·출입구, 복도 벽 접합부, 실내 조명·층 안내 적용. Windows BuildVisual 119개 / BuildRouteVisual 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_10.md. 다음은 현재 빌라의 플레이 피드백 기반 마감이며 새 레벨은 진행하지 않는다.
+
+
+## villa-09 최신 방향 — 현재 맵 완성
+
+두 번째 스테이지 제안은 진행하지 않는다. 사용자 최신 지시는 현재 빌라 맵 완성이다. [REVIEW] 실제 배송 트럭 에셋, 연속 지면·도로·경계·건물 충돌, 빌라 하부·지붕·주변 조경과 운반 코너 보완. 상세 WINDOWS_PLAYTEST_09.md. 현재 맵 플레이 검토 후 마감을 이어간다.
+
+
+## villa-08 최신 작업
+
+사용자 villa-07 설정 유지·모델 누락 없음 확인 완료. [REVIEW] 그림자 설정 즉시 적용·저장 및 720p UI 보강, 로컬 성능 측정. 대표 레벨 완료 점검 DEMO_READINESS.md, 최신 검증 WINDOWS_PLAYTEST_08.md. 다른 PC 호환성은 미완료.
+
+
+## villa-07 최신 작업
+
+사용자 villa-06 환경 개선 확인 완료. [REVIEW] 배포 목록화로 PCK 약 76.1% 축소, 별도 프로세스 설정 저장·읽기 검증 및 검사 실패 감지 강화. 게임 내용 유지. 최신 인수인계 WINDOWS_PLAYTEST_07.md.
+
+
+## villa-06 최신 작업
+
+사용자 villa-05 달리기 팔 수정 플레이 확인 완료. [REVIEW] 빌라 외벽·바닥·트럭·주차 구획·현관 마감, 기존 City Kit 배경 확장과 그림자 적용. 장식 전용으로 물리·운반 상태 유지. 최신 인수인계 WINDOWS_PLAYTEST_06.md.
+
+
+## villa-05 최신 작업
+
+[REVIEW] 운반 중 달리기 팔 상하 흔들림 수정. 캐릭터 기준 어깨 위치·방향으로 부모 몸통 변위를 보정하고 놓으면 원복한다. 회귀 106개 / sprint 입력 포함 경로 15개 검사. 최신 인수인계 WINDOWS_PLAYTEST_05.md.
+
+
+## villa-04 최신 작업
+
+[REVIEW] 운반 팔 시야 가림 피드백 반영: 자세 16도 하향, 운반 중 두께 72%, 놓으면 원복. 계단 안내를 왼쪽으로 정정. 최신 인수인계 WINDOWS_PLAYTEST_04.md. 기존 에셋·물리·FOV 유지.
+
+
+## villa-03 최신 작업
+
+사용자 villa-02 팔 전방 자세 요청 및 그 외 사용 가능 피드백 반영. 양팔 방향·상하 시선 추종을 수정하고 기존 City/Factory Kit를 실제 택배·차양·처마·적재 소품에 확대 적용했다. [REVIEW] 새 빌드 체감 확인 대기. 최신 구현·검증·인수인계: WINDOWS_PLAYTEST_03.md.
+
+
+## villa-02 구조 추가
+
+- VillaPresentation은 빌라의 장식 전용 Node3D이며 충돌·입력·배송 상태가 없다. 기존 City Kit GLB를 배경으로 인스턴스화한다.
+- PrototypeLevel이 접지 전환·이전 수직 속도·물체 접촉 속도로 LevelAudio를 호출한다. LevelAudio는 절차적 PCM과 120ms 충돌음 제한을 사용한다.
+
+
+## 2026-09-10 테스트 빌드 구조 갱신
+
+아래 MVP 설계·Phase 0 환경표는 이력이며, 이번 빌드의 실제 구조는 다음과 같다.
+
+- `MainMenu` → `Stage01HillsideVilla`. 캐릭터·FOV·입력 설정은 기존 GameSettings를 유지한다.
+- `DeliveryZone.target_package_count` / `destination_name`을 씬 인스턴스에서 설정한다. 빌라·옥상은 1, 프로토타입은 3이다. PrototypeLevel이 HUD·OnboardingOverlay·Pause ControlsPanel·CompletionOverlay에 해당 인스턴스의 목표를 전달한다. 공통 상수 3개는 제거했다.
+- `PrototypeLevel`은 레벨 시작 transform을 보관한다. 낙하 시 자동 복구, `recover`(F5) 입력은 플레이어와 미배송 Grabbable을 출발 위치로 복구하며 완료 개수는 보존한다. R은 전체 재시작이다.
+- Grabbable 복구는 `_integrate_forces`에서 위치와 속도를 초기화한다. 배송 처리는 Area3D의 물리 flush 중 충돌 속성을 바꾸지 않도록 deferred 갱신한다.
+- 빌라의 전용 계단 보행면은 충돌 layer 7(64), Player mask=87이다. Player는 Step 노드와 collision exception으로 분리하며, 택배는 원래 계단 충돌을 계속 사용한다. 다른 레벨 Player 물리는 변경하지 않는다.
+- `LevelAudio`는 레벨 소유의 PCM 효과음 노드이며 새 Autoload나 외부 음원을 추가하지 않는다. Master 볼륨에 연결된다.
+- Windows 테스트 빌드는 4.7.1 공식 x86_64 debug template과 `export_presets.cfg`를 사용한다. 개발용 자체 테스트는 명시적 CLI `-- self-test`로만 실행하며 일반 실행은 메뉴로 진입한다.
+- 검증과 배포 절차는 `docs/WINDOWS_PLAYTEST.md`, `tools/Run-Godot.ps1` 참조.
+
 이 문서는 정식 게임 전체를 설계하는 문서가 아니다. **싱글플레이 MVP-1을 안정적으로 구현하기 위한 최소 기술 구조**만 확정한다.
 
 게임 기획 기준은 `docs/GAME_DESIGN.md`, 작업 규칙 기준은 `CLAUDE.md`다. 이 문서와 두 문서가 충돌하면 `docs/GAME_DESIGN.md` → `CLAUDE.md` 순으로 우선한다 (`CLAUDE.md` 섹션 9).
@@ -251,6 +325,9 @@ MVP-1에서는 이 4가지 책임을 모두 `Player.gd` 하나가 담당한다. 
 - **로컬 Player Mesh 은닉**: `MeshInstance3D.layers=2`, `Camera3D.cull_mask`에서 레이어 2만 제외(`1048573`)해 로컬 카메라가 자신의 몸을 렌더링하지 않는다. 전역 `visible=false`는 사용하지 않아, 씬 트리에는 여전히 존재하고 이론상 다른 카메라(향후 멀티플레이)에는 보인다 — 다만 현재는 싱글플레이라 여러 Player 인스턴스가 동일 레이어를 공유하는 구조까지는 만들지 않았다(과도한 설계 금지, `docs/TASKS.md` T073 "예상 위험" 참고).
 - **마우스 캡처**: 게임 시작 시 `Input.MOUSE_MODE_CAPTURED`로 설정. `release_mouse` 액션 입력 시 `Input.MOUSE_MODE_VISIBLE`로 전환.
 - **마우스 캡처 복귀**: 마우스가 해제된 상태(`MOUSE_MODE_VISIBLE`)에서 게임 화면을 클릭하면 다시 `Input.MOUSE_MODE_CAPTURED`로 전환한다. 이 클릭 입력은 `grab_object` 등 게임 조작 액션으로 동시에 처리되지 않는다 — 마우스가 해제된 상태에서는 클릭을 먼저 재캡처 용도로 소비하고, 게임 조작으로는 넘기지 않는다.
+
+**갱신(T085D, Kenney 캐릭터 모델 적용 + 1인칭 카메라 가림 수정)**: T085D에서 `CharacterVisual`(외부 GLB Wrapper)이 도입되며 Player 몸 표현이 자리표시자 Capsule에서 실제 캐릭터 모델로 바뀌었다. 로컬 Player Mesh 은닉 대상도 위 문단의 Capsule 전체가 아니라 캐릭터의 `head`+`torso` 파츠 둘로 좁혀졌다(`player_slot`별 레이어 비트는 그대로 재사용, `1 << (1+player_slot)`). 실측 조사 결과 `walk`/`sprint` Animation이 캐릭터 `root`를 최대 +0.2(원본 모델 단위) 위로 들썩이게 해 정지 상태보다 상체가 카메라에 더 가까워지는 것을 확인했고, head만 숨기던 기존 범위로는 이 상체(가슴) Mesh가 1인칭 시야를 가리는 문제가 있어 torso까지 같은 방식으로 숨기도록 확장했다 — 카메라 위치(`CameraPivot` y=0.7)나 `CapsuleShape3D`는 건드리지 않았다(임의로 카메라를 앞으로 미는 임시 해결 금지, 사용자 지시). arm-left/arm-right는 torso의 자식이지만 `VisualInstance3D.layers`는 계층 상속되지 않는 인스턴스별 속성이라 팔은 계속 기본 레이어에 남아 1인칭에서도 보인다.
+- **FOV(시야각)**: `Camera3D.fov`는 `GameSettings.fov`(기본값 75.0 = 이 프로젝트가 원래 쓰던 Godot 기본 FOV, 범위 70~110)를 유일한 출처로 삼는다. `Player.gd._apply_fov()`가 `_ready()`와 `settings_changed` Signal 수신 시 적용하며, `LocalCoopTest.gd`는 실제 렌더링을 담당하는 SubViewport ViewCamera에 매 프레임 `fov`를 함께 복사한다(기존에 `global_transform`만 복사하던 로직 확장). `CharacterSelectPanel`의 3D Preview `Camera3D`는 `GameSettings`를 구독하지 않아 자동으로 영향 밖에 있다.
 
 카메라 로직은 `Player.gd` 안에 둔다. 별도의 전역 카메라 Manager(Autoload 등)는 만들지 않는다 (`CLAUDE.md` 섹션 4).
 

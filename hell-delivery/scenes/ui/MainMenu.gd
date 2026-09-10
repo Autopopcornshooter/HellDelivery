@@ -4,7 +4,7 @@ extends Control
 # T078: 실행 시 곧바로 테스트 레벨로 들어가는 대신 먼저 보여줄 메인 메뉴. 데모 시작·게임 종료를
 # 담당하고(T078), T079에서 설정 화면 진입을 추가했다. 일시정지·온보딩은 T080 이후 범위.
 
-const DEMO_SCENE_PATH := "res://scenes/level/PrototypeLevel.tscn"
+const DEMO_SCENE_PATH := "res://scenes/level/Stage01HillsideVilla.tscn"
 
 @onready var button_container: VBoxContainer = $CenterContainer/VBoxContainer
 @onready var start_button: Button = $CenterContainer/VBoxContainer/StartButton
@@ -18,6 +18,11 @@ const DEMO_SCENE_PATH := "res://scenes/level/PrototypeLevel.tscn"
 
 
 func _ready() -> void:
+	# Test build only: exercise the actual packed resources through an explicit CLI entry.
+	if OS.is_debug_build() and "self-test" in OS.get_cmdline_user_args() and not get_tree().has_meta("self_test_started"):
+		get_tree().set_meta("self_test_started", true)
+		get_tree().change_scene_to_file.call_deferred("res://tests/Playtest.tscn")
+		return
 	# 메뉴에서는 항상 마우스 커서가 보이고 자유롭게 움직여야 한다 — 캡처 해제는 여기서만 하고,
 	# 데모 진입 후 재캡처는 기존 Player.gd._ready()가 그대로 담당한다(중복 처리 없음).
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -33,6 +38,11 @@ func _ready() -> void:
 	character_select_panel.closed.connect(_close_character_select)
 	character_select_panel.confirmed.connect(_on_character_confirmed)
 	start_button.grab_focus()
+	# 메뉴 안내도 실제 시작 레벨의 배송 설정을 읽는다.
+	var demo: Node = load(DEMO_SCENE_PATH).instantiate()
+	var zone: DeliveryZone = demo.get_node("Gameplay/DeliveryZone")
+	controls_panel.configure_goal(zone)
+	demo.free()
 
 
 func _unhandled_input(event: InputEvent) -> void:

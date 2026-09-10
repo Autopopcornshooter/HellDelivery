@@ -1,11 +1,16 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/package/Package.gd" id="1_package"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(0.8, 0.6, 0.8)
 
+[sub_resource type="StandardMaterial3D" id="Material_Cardboard"]
+albedo_color = Color(0.68, 0.44, 0.21, 1)
+roughness = 0.9
+
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
+material = SubResource("Material_Cardboard")
 size = Vector3(0.8, 0.6, 0.8)
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_1"]

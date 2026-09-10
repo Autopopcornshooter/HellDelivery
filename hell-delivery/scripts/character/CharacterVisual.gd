@@ -15,6 +15,7 @@ var current_character_id: String = ""
 
 var _current_instance: Node3D = null
 var _head_node: Node3D = null
+var _torso_node: Node3D = null
 
 
 ## use_preview_transform=true면 player_scale 대신 preview_scale/preview_rotation_degrees를
@@ -31,12 +32,18 @@ func get_head_node() -> Node3D:
 	return _head_node
 
 
+## T085D: 1인칭 로컬 카메라에서 head와 함께 숨겨 가슴·상체가 시야를 가리지 않게 하는 데 쓴다.
+func get_torso_node() -> Node3D:
+	return _torso_node
+
+
 func _apply_definition(def: CharacterDefinition, use_preview_transform: bool) -> void:
 	if _current_instance != null and is_instance_valid(_current_instance):
 		model_root.remove_child(_current_instance)
 		_current_instance.queue_free()
 	_current_instance = null
 	_head_node = null
+	_torso_node = null
 
 	var instance: Node3D = def.model_scene.instantiate()
 	model_root.add_child(instance)
@@ -48,11 +55,13 @@ func _apply_definition(def: CharacterDefinition, use_preview_transform: bool) ->
 
 	var anim_player := _find_node(instance, def.animation_player_path, "AnimationPlayer") as AnimationPlayer
 	var head := _find_node(instance, def.head_node_path, "head") as Node3D
+	var torso := _find_node(instance, def.torso_node_path, "torso") as Node3D
 	var arm_left := _find_node(instance, def.left_arm_path, "arm-left") as Node3D
 	var arm_right := _find_node(instance, def.right_arm_path, "arm-right") as Node3D
 
 	_current_instance = instance
 	_head_node = head
+	_torso_node = torso
 	current_character_id = def.id
 
 	animation_controller.setup(anim_player, arm_left, arm_right)

@@ -14,8 +14,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS # PauseMenu 아래에서 paused 상태에도 조작 가능해야 함.
 	# T081: 목표 개수를 DeliveryZone.TARGET_PACKAGE_COUNT 하나에서만 읽어와 실제 배송 목표와
 	# 항상 일치시킨다(문구를 따로 하드코딩하지 않음).
-	_key_goal_label.text = "Package %d개를 Delivery Zone으로 운반" % DeliveryZone.TARGET_PACKAGE_COUNT
+	_key_goal_label.text = "HUD에 표시된 택배를 초록색 배송 구역으로 운반"
 	back_button.pressed.connect(_on_back_pressed)
+
+
+func configure_goal(zone: DeliveryZone) -> void:
+	_key_goal_label.text = "택배 %d개 → %s" % [zone.target_package_count, zone.destination_name]
 
 
 func _unhandled_input(event: InputEvent) -> void:

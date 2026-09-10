@@ -18,5 +18,6 @@ extends Resource
 @export var model_root_path: NodePath = NodePath("")
 @export var animation_player_path: NodePath = NodePath("")
 @export var head_node_path: NodePath = NodePath("")
+@export var torso_node_path: NodePath = NodePath("") # T085D: 1인칭 자기 카메라에서 상체(가슴) Mesh를 숨기는 데 사용.
 @export var left_arm_path: NodePath = NodePath("")
 @export var right_arm_path: NodePath = NodePath("")

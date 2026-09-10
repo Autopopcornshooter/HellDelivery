@@ -8,11 +8,14 @@ signal closed
 
 @onready var window_mode_option: OptionButton = $Panel/VBoxContainer/WindowModeOption
 @onready var resolution_option: OptionButton = $Panel/VBoxContainer/ResolutionOption
+@onready var fov_slider: HSlider = $Panel/VBoxContainer/FovRow/FovSlider
+@onready var fov_value_label: Label = $Panel/VBoxContainer/FovRow/FovValueLabel
 @onready var mouse_sensitivity_slider: HSlider = $Panel/VBoxContainer/MouseSensitivitySlider
 @onready var gamepad_sensitivity_slider: HSlider = $Panel/VBoxContainer/GamepadSensitivitySlider
 @onready var invert_y_check: CheckButton = $Panel/VBoxContainer/InvertYCheck
 @onready var master_volume_slider: HSlider = $Panel/VBoxContainer/MasterVolumeSlider
 @onready var reset_button: Button = $Panel/VBoxContainer/ResetButton
+@onready var shadows_check: CheckButton = $Panel/VBoxContainer/ShadowsCheck
 @onready var back_button: Button = $Panel/VBoxContainer/BackButton
 
 var _updating_ui := false # GameSettings -> UI 반영 중에는 UI -> GameSettings 되먹임을 막는다.
@@ -22,10 +25,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS # PauseMenu 아래에서 paused 상태에도 조작 가능해야 함.
 	window_mode_option.item_selected.connect(_on_window_mode_selected)
 	resolution_option.item_selected.connect(_on_resolution_selected)
+	fov_slider.value_changed.connect(_on_fov_changed)
 	mouse_sensitivity_slider.value_changed.connect(_on_mouse_sensitivity_changed)
 	gamepad_sensitivity_slider.value_changed.connect(_on_gamepad_sensitivity_changed)
 	invert_y_check.toggled.connect(_on_invert_y_toggled)
 	master_volume_slider.value_changed.connect(_on_master_volume_changed)
+	shadows_check.toggled.connect(_on_shadows_toggled)
 	reset_button.pressed.connect(_on_reset_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 	GameSettings.settings_changed.connect(_refresh_from_settings)
@@ -50,10 +55,13 @@ func _refresh_from_settings() -> void:
 	var res_index: int = GameSettings.RESOLUTIONS.find(GameSettings.window_resolution)
 	resolution_option.selected = maxi(res_index, 0)
 	resolution_option.disabled = GameSettings.window_mode == GameSettings.WindowMode.FULLSCREEN
+	fov_slider.value = GameSettings.fov
+	fov_value_label.text = "%d°" % roundi(GameSettings.fov)
 	mouse_sensitivity_slider.value = GameSettings.mouse_sensitivity
 	gamepad_sensitivity_slider.value = GameSettings.gamepad_look_sensitivity
 	invert_y_check.button_pressed = GameSettings.invert_gamepad_y
 	master_volume_slider.value = GameSettings.master_volume * 100.0
+	shadows_check.button_pressed = GameSettings.shadows_enabled
 	_updating_ui = false
 
 
@@ -67,6 +75,12 @@ func _on_resolution_selected(index: int) -> void:
 	if _updating_ui:
 		return
 	GameSettings.set_window_resolution(GameSettings.RESOLUTIONS[index])
+
+
+func _on_fov_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	GameSettings.set_fov(value)
 
 
 func _on_mouse_sensitivity_changed(value: float) -> void:
@@ -95,6 +109,11 @@ func _on_master_volume_changed(value: float) -> void:
 
 func _on_reset_pressed() -> void:
 	GameSettings.reset_to_defaults()
+
+
+func _on_shadows_toggled(enabled: bool) -> void:
+	if not _updating_ui:
+		GameSettings.set_shadows_enabled(enabled)
 
 
 func _on_back_pressed() -> void:

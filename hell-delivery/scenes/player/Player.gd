@@ -73,6 +73,13 @@ func _apply_settings() -> void:
 	mouse_sensitivity = GameSettings.mouse_sensitivity
 	gamepad_look_sensitivity = GameSettings.gamepad_look_sensitivity
 	invert_gamepad_y = GameSettings.invert_gamepad_y
+	_apply_fov()
+
+
+func _apply_fov() -> void:
+	# T085D: FOV는 실제 Gameplay Camera3D.fov 하나만 바꾼다 — Grab Ray/Force/거리, Crosshair,
+	# 이동 속도, Collision, 캐릭터 스케일에는 전혀 영향이 없다(전부 카메라 렌즈와 무관한 값).
+	camera_pivot.get_node("Camera3D").fov = GameSettings.fov
 
 
 ## T085D: 선택한 캐릭터를 실제로 적용한다. 기본은 GameSettings의 싱글플레이 저장값이지만,
@@ -92,13 +99,18 @@ func _apply_visual_layer_for_slot() -> void:
 	# 로컬 협동(T074)에서 여러 Player 인스턴스가 같은 시각 레이어를 공유하면 서로의 모델이
 	# 안 보이게 되는 문제가 있다(T073 "남은 위험"에서 이미 예견됨). player_slot마다 다른 레이어를
 	# 계산해 "자기 카메라에서만 자기 모델을 숨긴다"를 인스턴스별로 성립시킨다.
-	# T085D: 이 레이어를 이제 캡슐 전체가 아니라 캐릭터의 head 파츠 하나에만 적용한다 — 로컬
-	# 화면에서는 머리만 숨기고 몸통·팔·다리는 그대로 보여(설계 문서 9번), 다른 Player의 화면에는
-	# 이 비트가 cull_mask에서 제외되지 않으므로 캐릭터 전체가 정상적으로 보인다.
+	# T085D: 이 레이어를 캡슐 전체가 아니라 캐릭터의 head와 torso 파츠에만 적용한다 — 로컬
+	# 화면에서는 머리·상체(가슴)만 숨기고 팔·다리는 그대로 보여(설계 문서 9번, 1인칭 시야를 가리던
+	# 상체 Mesh를 감춤), 다른 Player의 화면에는 이 비트가 cull_mask에서 제외되지 않으므로 캐릭터
+	# 전체가 정상적으로 보인다. arm-left/arm-right는 torso의 자식이지만 layers는 인스턴스별 속성이라
+	# torso를 숨겨도 팔은 계속 기본 레이어에 남아 보인다(계층 상속 아님).
 	var own_layer_bit: int = 1 << (1 + player_slot) # slot 0 -> layer 2(bit1), slot 1 -> layer 3(bit2), ...
 	var head: Node3D = character_visual.get_head_node() if character_visual != null else null
 	if head is VisualInstance3D:
 		(head as VisualInstance3D).layers = own_layer_bit
+	var torso: Node3D = character_visual.get_torso_node() if character_visual != null else null
+	if torso is VisualInstance3D:
+		(torso as VisualInstance3D).layers = own_layer_bit
 	var camera: Camera3D = camera_pivot.get_node("Camera3D")
 	camera.cull_mask = 0xFFFFF & ~own_layer_bit # 0xFFFFF = 20개 시각 레이어 전체(T073 cull_mask=1048573=0xFFFFD와 동일 기준)
 
@@ -209,6 +221,7 @@ func _update_character_animation(is_sprinting: bool) -> void:
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
 	character_visual.animation_controller.update_locomotion(horizontal_speed, is_sprinting, is_on_floor())
 	character_visual.animation_controller.set_carrying(held_grabbable != null)
+	character_visual.animation_controller.carry_pitch = camera_pivot.rotation.x
 
 
 func _apply_push_resistance(horizontal_velocity: Vector3) -> Vector3:

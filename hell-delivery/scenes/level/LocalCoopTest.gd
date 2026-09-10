@@ -129,5 +129,13 @@ func _physics_process(_delta: float) -> void:
 func _process(_delta: float) -> void:
 	# 실제 렌더 카메라는 각 Player의 CameraPivot/Camera3D 위치를 그대로 따라간다 — Player의 이동/
 	# 회전 로직은 전혀 건드리지 않고, 뷰 카메라만 매 프레임 그 위치를 복사하는 방식(레벨 중복 없음).
-	_left_camera.global_transform = player1.camera_pivot.get_node("Camera3D").global_transform
-	_right_camera.global_transform = player2.camera_pivot.get_node("Camera3D").global_transform
+	# T085D: fov도 함께 복사한다 — 실제로 화면에 렌더링되는 쪽은 이 ViewCamera들이고, Player 자신의
+	# Camera3D(Player.gd._apply_fov()가 GameSettings.fov를 반영하는 대상)는 로컬 협동에서는 직접
+	# 렌더링에 쓰이지 않기 때문이다. GameSettings를 직접 다시 읽지 않고 이미 갱신된 값만 그대로
+	# 옮기므로 별도의 설정 파일 Polling이 아니다.
+	var left_source_camera: Camera3D = player1.camera_pivot.get_node("Camera3D")
+	var right_source_camera: Camera3D = player2.camera_pivot.get_node("Camera3D")
+	_left_camera.global_transform = left_source_camera.global_transform
+	_left_camera.fov = left_source_camera.fov
+	_right_camera.global_transform = right_source_camera.global_transform
+	_right_camera.fov = right_source_camera.fov

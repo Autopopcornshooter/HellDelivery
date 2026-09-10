@@ -47,6 +47,8 @@ class _PendingRestore:
 
 var grab_connections: Dictionary = {} # Node3D(grabber) -> _GrabConnection. 단일 holder 대신 다중 연결 구조를 사용해, 여러 Grabber가 같은 물체를 동시에 잡을 수 있게 한다(로컬 싱글플레이에서는 항상 1개, 향후 멀티플레이 협동 운반의 물리적 기반).
 var _delivered: bool = false # T081: DeliveryZone.deliver()로만 true가 되며, 그 뒤로는 add_grabber()가 항상 거부한다(Package 전용 흐름 — 다른 Grabbable은 절대 호출되지 않아 기본값 false 그대로 무영향).
+var _recovery_pending: bool = false
+var _recovery_transform: Transform3D
 var _pending_restores: Dictionary = {} # Node3D(grabber) -> _PendingRestore. Release 직후에도 실제 Grabber 몸과 안전하게 분리될 때까지 collision exception/Barrier mask를 유지한다.
 var _barrier_hold_count: int = 0 # 현재 Barrier mask가 필요한 Grabber 수(활성 연결 + 안전 분리 대기 중인 release 포함). 0이 되어야 mask를 원래대로 되돌린다.
 var _grab_markers: Dictionary = {} # T075: Node3D(grabber) -> MeshInstance3D. 연결이 살아있는 동안 그 local_grab_point를 표시하는 순수 시각 마커(CollisionShape 없음, 물리에 관여하지 않음).
@@ -123,9 +125,9 @@ func deliver() -> void:
 	_delivered = true
 	for grabber in grab_connections.keys():
 		remove_grabber(grabber)
-	freeze = true
-	collision_layer = 0
-	collision_mask = 0
+	set_deferred("freeze", true)
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
 	await get_tree().create_timer(0.6).timeout
 	visible = false
 
@@ -185,10 +187,30 @@ func get_grabber_count() -> int:
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	if _recovery_pending:
+		state.transform = _recovery_transform
+		state.linear_velocity = Vector3.ZERO
+		state.angular_velocity = Vector3.ZERO
+		_recovery_pending = false
+		reset_physics_interpolation()
 	if not grab_connections.is_empty():
 		_apply_grab_forces(state)
 	if not _pending_restores.is_empty():
 		_process_pending_restores(state)
+
+
+func is_delivered() -> bool:
+	return _delivered
+
+
+func recover_to(spawn_transform: Transform3D) -> void:
+	if _delivered or _recovery_pending:
+		return
+	for grabber in grab_connections.keys():
+		remove_grabber(grabber)
+	_recovery_transform = spawn_transform
+	_recovery_pending = true
+	sleeping = false
 
 
 func _apply_grab_forces(state: PhysicsDirectBodyState3D) -> void:

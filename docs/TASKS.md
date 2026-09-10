@@ -1,5 +1,77 @@
 # TASKS.md
 
+## villa-13 — 2층 호수·기준 빌드 안정화
+
+사용자 villa-12 마감 확인. 2층은 201호·202호로 정정하고 공통 배송 목적지는 ‘언덕 빌라 2층 201호’로 통일했다. 다음 단계로 현재 맵 기준 빌드의 회귀·설정 재실행·야외/실내 성능 검증을 수행했다. 상세 WINDOWS_PLAYTEST_13.md. 현재 맵 기본 플레이와 최근 외형 마감은 사용자 확인, 이번 호수는 [REVIEW]. 다른 PC·장시간 검증은 미완료다.
+
+
+## villa-12 — 사진 피드백·건축 접합부 보완
+
+[REVIEW] 입구 프레임·간판 겹침 정리, 벽 쪽 난간 제거, 계단과 위층 바닥을 벽까지 확장(메시·충돌 일치). 천장 단면·문틀 하단·몰딩·중앙 난간 지지 위치도 보완했다. 상세 WINDOWS_PLAYTEST_12.md. 다음은 현재 빌라 맵의 남은 시각/운반 피드백 반영이다.
+
+
+## villa-11 — 트럭 한글·레퍼런스 기반 실내 재구성
+
+[REVIEW] 트럭 한글 인코딩 복원·UTF-8 검사 도입. VillaInterior가 실제 창·계단참·난간·손잡이·연속 석재·천장·현관·안내를 구성한다. Windows 회귀 122개 / 운반 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_11.md, 참고 자료 VILLA_INTERIOR_REFERENCES.md. 다음은 현재 빌라의 실내 자연스러움·운반 여유에 대한 사용자 플레이 피드백 반영이다.
+
+
+## villa-10 — 주차선·빌라 계단실 마감
+
+[REVIEW] 주차 구획 정렬, 계단실 외벽·지붕·출입구, 복도 벽 접합부, 실내 조명·층 안내 적용. Windows BuildVisual 119개 / BuildRouteVisual 15개 통과, 재잡기 없이 배송 완료. 상세 WINDOWS_PLAYTEST_10.md. 다음은 현재 빌라의 플레이 피드백 기반 마감이며 새 레벨은 진행하지 않는다.
+
+
+## villa-09 최신 방향 — 현재 맵 완성
+
+두 번째 스테이지 제안은 진행하지 않는다. 사용자 최신 지시는 현재 빌라 맵 완성이다. [REVIEW] 실제 배송 트럭 에셋, 연속 지면·도로·경계·건물 충돌, 빌라 하부·지붕·주변 조경과 운반 코너 보완. 상세 WINDOWS_PLAYTEST_09.md. 현재 맵 플레이 검토 후 마감을 이어간다.
+
+
+## villa-08 최신 작업
+
+사용자 villa-07 설정 유지·모델 누락 없음 확인 완료. [REVIEW] 그림자 설정 즉시 적용·저장 및 720p UI 보강, 로컬 성능 측정. 대표 레벨 완료 점검 DEMO_READINESS.md, 최신 검증 WINDOWS_PLAYTEST_08.md. 다른 PC 호환성은 미완료.
+
+
+## villa-07 최신 작업
+
+사용자 villa-06 환경 개선 확인 완료. [REVIEW] 배포 목록화로 PCK 약 76.1% 축소, 별도 프로세스 설정 저장·읽기 검증 및 검사 실패 감지 강화. 게임 내용 유지. 최신 인수인계 WINDOWS_PLAYTEST_07.md.
+
+
+## villa-06 최신 작업
+
+사용자 villa-05 달리기 팔 수정 플레이 확인 완료. [REVIEW] 빌라 외벽·바닥·트럭·주차 구획·현관 마감, 기존 City Kit 배경 확장과 그림자 적용. 장식 전용으로 물리·운반 상태 유지. 최신 인수인계 WINDOWS_PLAYTEST_06.md.
+
+
+## villa-05 최신 작업
+
+[REVIEW] 운반 중 달리기 팔 상하 흔들림 수정. 캐릭터 기준 어깨 위치·방향으로 부모 몸통 변위를 보정하고 놓으면 원복한다. 회귀 106개 / sprint 입력 포함 경로 15개 검사. 최신 인수인계 WINDOWS_PLAYTEST_05.md.
+
+
+## villa-04 최신 작업
+
+[REVIEW] 운반 팔 시야 가림 피드백 반영: 자세 16도 하향, 운반 중 두께 72%, 놓으면 원복. 계단 안내를 왼쪽으로 정정. 최신 인수인계 WINDOWS_PLAYTEST_04.md. 기존 에셋·물리·FOV 유지.
+
+
+## villa-03 최신 작업
+
+사용자 villa-02 팔 전방 자세 요청 및 그 외 사용 가능 피드백 반영. 양팔 방향·상하 시선 추종을 수정하고 기존 City/Factory Kit를 실제 택배·차양·처마·적재 소품에 확대 적용했다. [REVIEW] 새 빌드 체감 확인 대기. 최신 구현·검증·인수인계: WINDOWS_PLAYTEST_03.md.
+
+
+## 2026-09-10 빌라 테스트 02 (최신)
+
+- [REVIEW] 경로 표지·환경 디테일·점프/착지/충돌 소리 보강. 최종 Windows 빌드 82개 회귀 / 14개 운반 경로 검사 통과. 새 체감 피드백 대기.
+- 사용자 villa-01 클리어 정상·현 시야 사용 가능 확인. FOV 미세 조정은 후속.
+- 최신 인수인계: WINDOWS_PLAYTEST_02.md. 이전 빌드는 보존한다.
+
+
+## 2026-09-10 Windows 대표 레벨 테스트 빌드 (최신 작업)
+
+- 상태: `[REVIEW]` — 기존 캐릭터·언덕 빌라 레벨·배송 흐름·효과음·Windows export 통합. 사용자 플레이 피드백 대기 예정.
+- 최신 작업 기준과 실행 방법·검증 결과는 `docs/WINDOWS_PLAYTEST.md` 참조. 아래 Phase 0 표와 이전 Task 결과는 당시 이력이다.
+- 이번 목표 안에서는 사용자 최신 지시에 따라 기능별 승인 대기와 1회 1기능 제한 없이 구현·검증·빌드까지 연속 진행한다.
+- T081 관련 레벨별 목표 불일치와 옥상 설정 무시, T085D 운반 팔 포즈 갱신 중단을 수정했다. 미커밋 FOV/시야 개선 작업을 보존했다.
+- 빌라 메뉴 연결, F5 복구, 낙하 복구, 플레이어 계단 보행면, 위층 복도 통로 배치 수정, 목적지 안내·효과음을 통합했다.
+- T082/T083에 해당하는 최소 효과음과 Windows 빌드를 구현했다. 기존 T085D·T086·EPIC-07·v0.4.0 전체를 사용자 승인 완료로 바꾸지 않는다.
+- 후속: 이번 빌드의 실제 플레이 피드백 → 좁은 통로 운반/시각·청각 품질 보완 → 추가 하드웨어 검증. 온라인 협동·차량은 별도 후속 목표.
+
 ## 1. 문서 목적
 
 - 이 문서는 싱글플레이 MVP-1을 구현하기 위한 실행 체크리스트다.
@@ -1473,6 +1545,31 @@ Steamworks SDK 연동은 v0.4.0 Done Criteria에 포함되지 않으므로(위 "
   - 3D Preview의 카메라 각도·조명은 고정값(자동 검증으로는 "보기 좋은지" 확인 불가) — 실제 체감은 사용자 수동 테스트가 필요하다.
   - 로컬 협동 캐릭터 선택 오버레이가 떠 있는 동안 Player 이동 입력을 별도로 막지 않았다(개발용 F6 전용 Scene이라는 범위 한정 — 화면은 오버레이가 완전히 가리므로 실질적 영향은 적다고 판단했으나 확인은 못했다).
 - **상태**: 사용자 수동 테스트 전까지 `[REVIEW]` 유지. T085A는 다른 브랜치에서 `[REVIEW]`, T085B/T085C는 `[TODO]` 상태를 그대로 둔다(이 문서에는 애초에 없음). T086·EPIC-07·v0.4.0은 미완료 유지. 버전 번호·Git 작업은 수행하지 않는다.
+
+### T085D 범위 추가 — First-Person Camera Visibility & FOV Settings
+
+사용자가 T085D 구현을 승인하며, 1인칭 카메라가 캐릭터 가슴·상체에 가려지는 문제 수정과 FOV 설정을 같은 Task 범위에 추가로 지시했다. T085D는 여전히 사용자 수동 테스트 전까지 `[REVIEW]`이며, T085A/B/C, T086, EPIC-07, v0.4.0 상태는 변경하지 않았다.
+
+- 원인 조사(구현 전 실측): 헤드리스 스크립트로 `character-a.glb`의 실제 노드 구조·Mesh AABB를 측정했다. `torso`(MeshInstance3D, 로컬 Y 0.7 위치, AABB 로컬 Y 0.3~1.2)가 `head`/`arm-left`/`arm-right`의 부모이며, `idle` Animation은 `torso` 자체에 회전만 주지만 **`walk`/`sprint` Animation은 `root`에 POSITION_3D 트랙이 있어 걷기·질주 중 캐릭터 전체가 최대 +0.2(질주 피크, 원본 모델 단위) 위로 들썩인다**는 사실을 확인했다 — 이 bob이 Idle 정지 상태보다 상체를 카메라에 더 가깝게 만드는 주된 변동 요인이다. `CapsuleShape3D`는 명시적 값이 없어 Godot 기본값(반지름 0.5, 높이 2.0)을 쓰고 있었고, `CameraPivot`은 Player 로컬 Y=0.7(Capsule 기준 85% 높이)에 고정되어 있어 **카메라 위치 자체는 이미 Capsule 기준으로 설계되어 있었다**(캐릭터 모델 기준이 아님) — 즉 근본 원인은 "카메라 위치"가 아니라 "1인칭 로컬 카메라가 자기 상체 Mesh를 가리지 않게 숨기는 범위가 head 하나뿐이었던 것"으로 특정했다.
+- 작업 범위 추가: 기존 T085D의 head 전용 로컬 숨김 레이어를 torso까지 확장(카메라 위치는 이동하지 않음 — 임시 해결 금지 지시 준수), `GameSettings`에 FOV 저장 항목과 공용 SettingsPanel UI 추가, LocalCoopTest의 분할 화면 ViewCamera에 FOV 동기화 추가.
+- 수정 파일:
+  - `hell-delivery/scripts/character/CharacterDefinition.gd` — 선택적 `torso_node_path` 오버라이드 필드 추가(기존 head/arm 경로 오버라이드와 동일한 패턴, 예외 모델 대비).
+  - `hell-delivery/scripts/character/CharacterVisual.gd` — `_torso_node`/`get_torso_node()` 추가, `_apply_definition()`에서 기존 `_find_node()`(하드코딩 없는 공용 탐색 함수)를 그대로 재사용해 torso도 함께 찾음.
+  - `hell-delivery/scenes/player/Player.gd` — `_apply_visual_layer_for_slot()`이 이제 head와 torso 둘 다 자기 시각 레이어로 격리(팔은 torso의 자식이지만 `layers`는 인스턴스별 속성이라 계층 상속되지 않음 — 팔은 계속 기본 레이어에 남아 로컬 화면에도 보임, 요구사항대로 유지). `_apply_settings()`에서 `_apply_fov()` 호출 추가.
+  - `hell-delivery/autoload/GameSettings.gd` — `fov`(기본값 75.0 = 기존 Camera3D의 Godot 기본 FOV를 그대로 사용, 임의로 새 값을 만들지 않음), `_FOV_RANGE`(70~110), `set_fov()`, 전용 `_safe_fov()`(다른 `_safe_*`와 달리 범위를 벗어난 숫자는 기본값이 아니라 가장 가까운 경계로 Clamp — 사용자 지시에 따름, 숫자가 아니거나 NaN일 때만 기본값), `[display] fov` 저장/복원, `reset_to_defaults()`에 fov 포함.
+  - `hell-delivery/scenes/ui/SettingsPanel.tscn`/`.gd` — "화면" 섹션에 FOV 슬라이더(70~110, 1단위) + 숫자 표시(`"75°"` 형식) 추가. 기존 슬라이더와 동일한 `_updating_ui` 되먹임 방지 패턴 재사용.
+  - `hell-delivery/scenes/level/LocalCoopTest.gd` — 기존에 매 프레임 `global_transform`만 복사하던 `_process()`에 `fov` 복사를 추가(같은 프레임에서 이미 갱신된 값을 옮기는 것뿐이라 설정 파일 재폴링이 아니다) — 로컬 협동에서 실제로 렌더링되는 쪽은 Player 자신의 Camera3D가 아니라 이 ViewCamera들이기 때문에 필요했다.
+- **설계**:
+  - "카메라를 앞으로 밀어 가림을 숨기는 임시 해결 금지" 지시에 따라 카메라 위치·CapsuleShape3D·CameraPivot 오프셋은 전혀 건드리지 않았다. 대신 이미 존재하던 T074/T085D의 "player_slot마다 다른 시각 레이어 비트, 자기 카메라의 cull_mask에서 그 비트만 제외" 구조를 head 외에 torso까지로 넓혔을 뿐이다 — 새 메커니즘을 추가한 게 아니라 기존에 검증된 메커니즘의 적용 범위만 확장했다.
+  - FOV는 `Player.gd._apply_fov()` 한 곳에서만 실제 Gameplay `Camera3D.fov`에 적용한다. `GrabShapeCast.target_position`/`HoldPoint.position`은 각각 별도 로컬 Transform으로 고정되어 있어 카메라 렌즈의 투영 행렬(fov)과 물리적으로 무관하다 — 자동 검증으로 FOV 70/90/110 각각에서 두 값이 완전히 불변임을 직접 실측 확인했다(추론이 아님).
+  - `CharacterSelectPanel`의 3D Preview `Camera3D`(`PreviewCamera`)는 `GameSettings`를 전혀 구독하지 않으므로, FOV 변경 코드가 Player.gd/LocalCoopTest.gd 두 곳에만 있는 한 자동으로 영향받지 않는다 — 별도의 제외 처리 코드가 필요 없다(자동 검증으로 FOV 110 설정 후에도 Preview Camera의 fov가 그대로임을 확인).
+- 완료 조건(추가분): 18개 캐릭터 전부 자기 카메라에서 head+torso가 cull_mask로 제외되고 팔은 유지됨, 카메라 위치·CapsuleShape3D 무변경, FOV 슬라이더가 70~110에서 즉시 적용·저장·복원되고 범위를 벗어난 숫자는 Clamp(기본값 아님)·숫자가 아니면 기본값, MainMenu/Pause Settings가 같은 값을 공유, FOV 변경이 Grab Ray·HoldPoint·Crosshair·Collision·캐릭터 스케일에 전혀 영향을 주지 않음, 로컬 협동 두 ViewCamera 모두 FOV가 동기화되고 P1/P2 가시성이 서로 독립적, Preview Camera는 FOV 설정과 무관, 기존 회귀(MainMenu/Grab/Push/Delivery/Pause/Settings/Completion/LocalCoop) 이상 없음.
+- 테스트 방법(추가분): 기존과 동일한 임시 헤드리스 테스트 드라이버 방식(검증 후 전부 원복·삭제)으로 50개 항목 검증 — 18개 캐릭터 head/torso 가시성 구조(3개), FOV 기본값·범위·Clamp·손상값 복구(8개), FOV 설정 UI(MainMenu/Pause 동기화·즉시 적용·저장/복원, 9개), FOV 변경 중 게임플레이 안정성(Grab Ray/HoldPoint 불변·Grab 유지, 12개), 로컬 협동 가시성 독립성과 FOV 동기화(9개), 회귀(MainMenu/Preview Camera 제외/Grab/Push/Delivery/Completion/LocalCoop, 9개). 별도로 두 프로세스(godot 두 번 순차 실행)로 FOV 실제 파일 영속성을 확인했다.
+- 완료 근거(검증): 50개 항목 전부 PASS(1회차에서 Preview Camera 노드 이름을 잘못 가정해 검증을 건너뛴 결함을 발견해 실제 노드명(`PreviewCamera`)으로 수정 후 재검증, 이는 테스트 스크립트 자체의 결함이며 게임 코드 결함 아님). 별도 2-프로세스 FOV 영속성 테스트 PASS. `--headless --import`, `--headless --quit-after 90` 오류·경고 0건.
+- 예상 위험(추가분):
+  - 18개 캐릭터 전부에서 정적 구조(head/torso 레이어 분리)는 실측했지만, 실제 walk/sprint bob이나 특정 캐릭터의 극단적 체형에서 "그래도 살짝 보이는" 미세한 시각적 이질감까지는 자동 검증으로 판단할 수 없다 — 사용자 수동 테스트가 필요하다.
+  - FOV 슬라이더의 권장 범위(70~110)와 기본값(75)은 사용자 지시를 그대로 따른 값으로, 실측 후보 비교를 거친 것은 아니다(T014/T015와 같은 성격의 비차단 튜닝 항목).
+  - `CompletionOverlay`/`ControlsPanel` 등 다른 T079~T081 UI 요소와 마찬가지로 이번 FOV 슬라이더도 900×500 같은 매우 작은 해상도에서의 잘림 여부는 재확인하지 않았다.
 
 ## 작업별 작성 형식
 
