@@ -25,7 +25,7 @@ func _finish_delivery_marker() -> void:
 	visual.scale.y = 0.035
 	visual.position.y = -0.4775
 	for label in zone.get_children():
-		if label is Label3D:
+		if label is Label3D and label.billboard == BaseMaterial3D.BILLBOARD_ENABLED:
 			label.position.y = 1.5
 			label.font_size = 32
 

@@ -6,6 +6,8 @@ extends CanvasLayer
 # Settings -> Pause -> 게임플레이 세 단계를 순서대로 닫는 우선순위를 이 스크립트가 전담한다.
 
 const MAIN_MENU_SCENE_PATH := "res://scenes/ui/MainMenu.tscn"
+var _paused_hud: DeliveryHUD
+var _hud_was_visible: bool = true
 
 @onready var resume_button: Button = $Control/CenterContainer/VBoxContainer/ResumeButton
 @onready var restart_button: Button = $Control/CenterContainer/VBoxContainer/RestartButton
@@ -27,6 +29,7 @@ func _ready() -> void:
 	settings_panel.visible = false
 	controls_panel.visible = false
 	resume_button.pressed.connect(_resume)
+	$Control/CenterContainer/VBoxContainer/RecoverButton.pressed.connect(_on_recover_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	controls_button.pressed.connect(_open_controls)
 	settings_button.pressed.connect(_open_settings)
@@ -57,13 +60,36 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _open_pause() -> void:
+	var level := get_parent().get_parent()
+	var summary: Label = $Control/CenterContainer/VBoxContainer/DeliverySummary
+	var hud := level.get_node_or_null("UI/DeliveryHUD") as DeliveryHUD
+	summary.text = hud.progress_label.text if hud != null else ""
+	if hud != null:
+		summary.text += "\n" + hud.get_node("RouteLabel").text
+		_paused_hud = hud
+		_hud_was_visible = hud.visible
+		hud.visible = false
+	$Control/CenterContainer/VBoxContainer/RecoverButton.visible = level.has_method("recover_all")
 	visible = true
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	resume_button.grab_focus()
 
 
+func _on_recover_pressed() -> void:
+	var level := get_parent().get_parent()
+	if not level.has_method("recover_all"):
+		return
+	# Recover while paused, then resume without forwarding the menu click to grab.
+	Input.action_release("grab_object")
+	level.recover_all()
+	_resume()
+	level.get_node("UI/DeliveryHUD").show_delivery_toast("출발 위치로 복구했습니다 · 완료한 배송은 유지됩니다")
+
+
 func _resume() -> void:
+	if is_instance_valid(_paused_hud):
+		_paused_hud.visible = _hud_was_visible
 	visible = false
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

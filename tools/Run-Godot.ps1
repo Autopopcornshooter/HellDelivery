@@ -1,12 +1,12 @@
 param(
-    [ValidateSet('Import','Test','Visual','Inspect','Route','Export','Smoke','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','SettingsWrite','SettingsRead')][string]$Mode = 'Test',
-    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$BuildName = 'HellDelivery-Windows-Test-13'
+    [ValidateSet('Import','Test','Visual','Inspect','Route','Export','Smoke','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','SettingsWrite','SettingsRead','BuildMultiTest','BuildRepeat','BuildCoopVisual')][string]$Mode = 'Test',
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$BuildName = 'HellDelivery-Windows-Test-30'
 )
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
 $engine = Join-Path $workspace 'Godot_v4.7.1-stable_win64.exe/Godot_v4.7.1-stable_win64_console.exe'
 $project = Join-Path $workspace 'hell-delivery'
-$logs = Join-Path $workspace 'validation/villa-13'
+$logs = Join-Path $workspace 'validation/villa-30'
 $build = Join-Path (Join-Path $workspace 'builds') $BuildName
 New-Item -ItemType Directory -Force $logs | Out-Null
 New-Item -ItemType Directory -Force $build | Out-Null
@@ -39,30 +39,35 @@ switch ($Mode) {
     'Route' { $arguments += @('--headless','res://tests/Playtest.tscn','--','route') }
     'Export' { $arguments += @('--headless','--editor','--export-debug','Windows Desktop',(Join-Path $build 'HellDelivery.exe')) }
     'Smoke' { $engine = Join-Path $build 'HellDelivery.exe'; $arguments = @('--headless','--quit-after','180','--log-file',(Join-Path $logs 'Smoke.log')) }
-    { $_ -in @('BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','SettingsWrite','SettingsRead') } {
+    { $_ -in @('BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','SettingsWrite','SettingsRead','BuildMultiTest','BuildRepeat','BuildCoopVisual') } {
         $engine = Join-Path $build 'HellDelivery.exe'
         $arguments = @('--log-file',(Join-Path $logs "$Mode.log"))
-        if ($Mode -notin @('BuildVisual','BuildRouteVisual','Performance')) { $arguments += '--headless' }
+        if ($Mode -notin @('BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','BuildCoopVisual')) { $arguments += '--headless' }
         $arguments += @('--','self-test')
         if ($Mode -in @('BuildRoute','BuildRouteVisual')) { $arguments += 'route' }
-        if ($Mode -in @('BuildVisual','BuildRouteVisual','Performance')) { $arguments += 'visual' }
-        if ($Mode -eq 'Performance') { $arguments += 'performance' }
+        if ($Mode -in @('BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','BuildCoopVisual')) { $arguments += 'visual' }
+        if ($Mode -in @('BuildMultiTest','BuildMultiVisual')) { $arguments += 'multi-test' }
+        if ($Mode -eq 'BuildMultiRouteVisual') { $arguments += 'multi-route' }
+        if ($Mode -eq 'BuildRepeat') { $arguments += 'repeat' }
+        if ($Mode -eq 'BuildCoopPerformance') { $arguments += 'coop-performance' }
+        if ($Mode -eq 'BuildCoopVisual') { $arguments += 'coop' }
+        if ($Mode -in @('Performance','BuildCoopPerformance')) { $arguments += 'performance' }
         if ($Mode -eq 'SettingsWrite') { $arguments += 'settings-write' }
         if ($Mode -eq 'SettingsRead') { $arguments += 'settings-read' }
     }
 }
-if ($Mode -in @('Test','Visual','Inspect','Route','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','SettingsWrite','SettingsRead')) {
+if ($Mode -in @('Test','Visual','Inspect','Route','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','SettingsWrite','SettingsRead','BuildMultiTest','BuildRepeat','BuildCoopVisual')) {
     if ($arguments -notcontains '--') { $arguments += '--' }
     $arguments += ('report-path=' + (Join-Path $logs "$Mode.report.txt"))
 }
-if ($Mode -in @('Smoke','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','SettingsWrite','SettingsRead')) {
+if ($Mode -in @('Smoke','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','SettingsWrite','SettingsRead','BuildMultiTest','BuildRepeat','BuildCoopVisual')) {
     $quotedArguments = $arguments | ForEach-Object { '"' + $_ + '"' }
-    if ($Mode -in @('BuildVisual','BuildRouteVisual','Performance')) {
-        $run = Start-Process -FilePath $engine -ArgumentList $quotedArguments -PassThru
+    if ($Mode -in @('BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','BuildCoopVisual')) {
+        $run = Start-Process -FilePath $engine -ArgumentList $quotedArguments -WindowStyle Hidden -PassThru
     } else {
         $run = Start-Process -FilePath $engine -ArgumentList $quotedArguments -WindowStyle Hidden -PassThru
     }
-    if (-not $run.WaitForExit(180000)) {
+    if (-not $run.WaitForExit(360000)) {
         Stop-Process -Id $run.Id
         throw "Godot validation timed out: $Mode"
     }

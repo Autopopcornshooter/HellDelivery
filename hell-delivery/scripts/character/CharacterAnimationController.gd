@@ -49,6 +49,10 @@ var _left_anchor := Transform3D.IDENTITY
 var _right_anchor := Transform3D.IDENTITY
 var _left_position := Vector3.ZERO
 var _right_position := Vector3.ZERO
+var _look_head: Node3D
+var _head_rest := Quaternion.IDENTITY
+var _head_pitch: float = 0.0
+const HEAD_PITCH_LIMIT := deg_to_rad(55.0)
 
 
 func _ready() -> void:
@@ -59,7 +63,10 @@ func _ready() -> void:
 
 ## 캐릭터 교체 시 CharacterVisual이 호출한다. 이전 캐릭터의 연결은 자동으로 해제된다(teardown 불필요
 ## — set_character()가 매번 새 CharacterAnimationController 상태로 완전히 다시 설정하기 때문).
-func setup(anim_player: AnimationPlayer, arm_left: Node3D, arm_right: Node3D) -> void:
+func setup(anim_player: AnimationPlayer, arm_left: Node3D, arm_right: Node3D, look_head: Node3D = null) -> void:
+	_look_head = look_head
+	_head_rest = look_head.quaternion if look_head != null else Quaternion.IDENTITY
+	_head_pitch = 0.0
 	if _anim_player != null and _anim_player.animation_finished.is_connected(_on_animation_finished):
 		_anim_player.animation_finished.disconnect(_on_animation_finished)
 
@@ -118,6 +125,10 @@ func set_carrying(carrying: bool) -> void:
 
 
 func reset() -> void:
+	carry_pitch = 0.0
+	_head_pitch = 0.0
+	if is_instance_valid(_look_head):
+		_look_head.quaternion = _head_rest
 	# Restart 등으로 Player 상태가 초기화될 때 함께 호출한다 — Carry Pose 잔류, 재생 중이던
 	# pick-up 원샷 상태 등이 새 Scene에 이어지지 않게 한다.
 	_is_carrying = false
@@ -131,6 +142,11 @@ func reset() -> void:
 
 
 func _process(delta: float) -> void:
+	if is_instance_valid(_look_head):
+		_head_pitch = lerp_angle(_head_pitch, clampf(carry_pitch, -HEAD_PITCH_LIMIT, HEAD_PITCH_LIMIT), 1.0 - exp(-12.0 * delta))
+		# Apply from the bind orientation, never accumulate on last frame's pose.
+		# Source model +Z has the opposite pitch sign to gameplay -Z.
+		_look_head.quaternion = _head_rest * Quaternion(Vector3.RIGHT, -_head_pitch)
 	if _anim_player == null or not _has_carry_pose:
 		return
 	var target := 1.0 if _is_carrying else 0.0
@@ -158,7 +174,7 @@ func _stabilize_arm(arm: Node3D, anchor: Transform3D, shoulder: Vector3, pose: Q
 	# in character space, leaving the body's locomotion animation and physics intact.
 	var stable := _arm_reference.global_transform * anchor
 	var target_position: Vector3 = arm.get_parent().to_local(stable * shoulder)
-	var target_basis: Basis = arm.get_parent().global_basis.inverse() * stable.basis * Basis(Quaternion(Vector3.RIGHT, carry_pitch) * pose)
+	var target_basis: Basis = arm.get_parent().global_basis.inverse() * stable.basis * Basis(Quaternion(Vector3.RIGHT, -carry_pitch) * pose)
 	arm.position = arm.position.lerp(target_position, _carry_blend)
 	arm.quaternion = arm.quaternion.slerp(target_basis.orthonormalized().get_rotation_quaternion(), _carry_blend)
 
@@ -216,13 +232,9 @@ func _extract_carry_pose() -> void:
 	var sample_time: float = anim.length
 	_carry_pose_left = anim.rotation_track_interpolate(left_track, sample_time)
 	_carry_pose_right = anim.rotation_track_interpolate(right_track, sample_time)
-	# Kenney's holding pose points along +Z; gameplay/camera forward is -Z.
-	# Conjugate the source rotations so both arms reach toward the held package.
-	var forward_correction := Quaternion(Vector3.UP, PI)
-	_carry_pose_left = forward_correction * _carry_pose_left * forward_correction.inverse()
-	_carry_pose_right = forward_correction * _carry_pose_right * forward_correction.inverse()
-	# Lower the reach slightly beneath the view centre without moving the camera/hold point.
-	var lower := Quaternion(Vector3.RIGHT, CARRY_LOWER_ANGLE)
+	# Whole-model yaw now maps source +Z to gameplay -Z. Keep source arm rotations;
+	# pitch has the opposite sign in this model space, including the lowered reach.
+	var lower := Quaternion(Vector3.RIGHT, -CARRY_LOWER_ANGLE)
 	_carry_pose_left = lower * _carry_pose_left
 	_carry_pose_right = lower * _carry_pose_right
 	_has_carry_pose = true

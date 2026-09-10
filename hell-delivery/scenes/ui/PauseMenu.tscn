@@ -23,7 +23,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.0, 0.0, 0.0, 0.6)
+color = Color(0.025, 0.04, 0.05, 0.9)
 
 [node name="CenterContainer" type="CenterContainer" parent="Control"]
 layout_mode = 1
@@ -35,7 +35,8 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Control/CenterContainer"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
+custom_minimum_size = Vector2(600, 0)
 
 [node name="TitleLabel" type="Label" parent="Control/CenterContainer/VBoxContainer"]
 layout_mode = 2
@@ -43,15 +44,27 @@ theme_override_font_sizes/font_size = 32
 text = "일시정지"
 horizontal_alignment = 1
 
+[node name="DeliverySummary" type="Label" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(600, 0)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+autowrap_mode = 2
+
 [node name="ResumeButton" type="Button" parent="Control/CenterContainer/VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(240, 48)
 text = "계속하기"
 
+[node name="RecoverButton" type="Button" parent="Control/CenterContainer/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(240, 48)
+text = "출발 위치로 복구 · 배송 진행 유지"
+
 [node name="RestartButton" type="Button" parent="Control/CenterContainer/VBoxContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(240, 48)
-text = "다시 시작"
+text = "처음부터 다시 시작 · 배송 초기화"
 
 [node name="ControlsButton" type="Button" parent="Control/CenterContainer/VBoxContainer"]
 layout_mode = 2

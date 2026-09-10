@@ -6,6 +6,12 @@ var _cues: Dictionary = {}
 var _voices: Array[AudioStreamPlayer] = []
 var _voice_index: int = 0
 var _last_played: Dictionary = {}
+var player_pan: float = 0.0
+var _stereo_cues: Dictionary = {}
+var _previous_held: GrabbableBody
+var _step_time: float = 0.0
+var _was_grounded: bool = false
+var _last_vertical_velocity: float = 0.0
 
 
 func _ready() -> void:
@@ -33,9 +39,31 @@ func play_cue(cue: String, intensity: float = 1.0) -> void:
 	_last_played[cue] = now
 	var voice := _voices[_voice_index]
 	_voice_index = (_voice_index + 1) % _voices.size()
-	voice.stream = _cues[cue]
+	voice.stream = _player_stream(cue)
 	voice.volume_db = linear_to_db(clampf(intensity, 0.2, 1.0))
 	voice.play()
+
+
+func _player_stream(cue: String) -> AudioStreamWAV:
+	if is_zero_approx(player_pan) or cue not in ["step", "jump", "land", "grab", "release"]:
+		return _cues[cue]
+	var key := cue + str(player_pan)
+	if not _stereo_cues.has(key):
+		var source: AudioStreamWAV = _cues[cue]
+		var data := PackedByteArray()
+		data.resize(source.data.size() * 2)
+		var angle := (clampf(player_pan, -1.0, 1.0) + 1.0) * PI / 4.0
+		for i in source.data.size() / 2:
+			var sample := source.data.decode_s16(i * 2)
+			data.encode_s16(i * 4, int(sample * cos(angle)))
+			data.encode_s16(i * 4 + 2, int(sample * sin(angle)))
+		var stereo := AudioStreamWAV.new()
+		stereo.format = source.format
+		stereo.mix_rate = source.mix_rate
+		stereo.stereo = true
+		stereo.data = data
+		_stereo_cues[key] = stereo
+	return _stereo_cues[key]
 
 
 func _impact(duration: float, amplitude: float, frequency: float) -> AudioStreamWAV:
@@ -78,3 +106,26 @@ func _tone(notes: Array, duration: float, amplitude: float) -> AudioStreamWAV:
 	stream.mix_rate = rate
 	stream.data = data
 	return stream
+
+
+func update_player(player: Player, delta: float) -> void:
+	update_motion(player.held_grabbable, player.is_on_floor(), player.velocity, delta)
+
+func update_motion(held: GrabbableBody, grounded: bool, motion: Vector3, delta: float) -> void:
+	if held != _previous_held:
+		play_cue("grab" if held != null else "release")
+		_previous_held = held
+	if _was_grounded and not grounded and motion.y > 1.0:
+		play_cue("jump")
+	elif not _was_grounded and grounded and _last_vertical_velocity < -2.0:
+		play_cue("land", absf(_last_vertical_velocity) / 7.0)
+	_was_grounded = grounded
+	_last_vertical_velocity = motion.y
+	var speed := Vector2(motion.x, motion.z).length()
+	if grounded and speed > 0.5:
+		_step_time += delta
+		if _step_time >= clampf(1.8 / speed, 0.26, 0.6):
+			_step_time = 0.0
+			play_cue("step")
+	else:
+		_step_time = 0.0

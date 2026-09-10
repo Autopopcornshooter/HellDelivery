@@ -1,7 +1,12 @@
 class_name Player
 extends CharacterBody3D
 
-enum InputProfile { KEYBOARD_MOUSE, GAMEPAD } # T074: 로컬 협동에서 Player마다 다른 입력 장치를 쓰기 위한 슬롯 설정.
+enum InputProfile { KEYBOARD_MOUSE, GAMEPAD, NETWORK } # NETWORK is simulated by the host from validated input.
+
+var network_move := Vector2.ZERO
+var network_grab := false
+var network_jump := false
+var network_sprint := false
 
 @export var player_slot: int = 0 # T074: 0=P1, 1=P2... 로컬 협동에서 자기 Mesh를 숨기는 시각 레이어를 슬롯별로 다르게 계산하는 데만 사용(그 외 게임플레이 로직에는 영향 없음).
 @export var input_profile: InputProfile = InputProfile.KEYBOARD_MOUSE # T074: 기본값은 기존 싱글플레이와 완전히 동일(키보드+마우스).
@@ -133,6 +138,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _get_movement_input_2d() -> Vector2:
+	if input_profile == InputProfile.NETWORK:
+		return network_move
 	if input_profile == InputProfile.GAMEPAD:
 		var raw := Vector2(Input.get_joy_axis(gamepad_device, JOY_AXIS_LEFT_X), Input.get_joy_axis(gamepad_device, JOY_AXIS_LEFT_Y))
 		if raw.length() < move_deadzone:
@@ -156,6 +163,11 @@ func _apply_gamepad_look(delta: float) -> void:
 
 
 func _update_gamepad_grab_edge() -> void:
+	if input_profile == InputProfile.NETWORK:
+		_gamepad_grab_just_pressed = network_grab and not _gamepad_grab_was_pressed
+		_gamepad_grab_just_released = not network_grab and _gamepad_grab_was_pressed
+		_gamepad_grab_was_pressed = network_grab
+		return
 	if input_profile != InputProfile.GAMEPAD:
 		_gamepad_grab_just_pressed = false
 		_gamepad_grab_just_released = false
@@ -171,7 +183,14 @@ func _update_gamepad_grab_edge() -> void:
 	_gamepad_grab_was_pressed = pressed
 
 
+var _pad_jump_was_pressed: bool = false
+
 func _physics_process(delta: float) -> void:
+	var pad_jump := input_profile == InputProfile.GAMEPAD and Input.is_joy_button_pressed(gamepad_device, JOY_BUTTON_X)
+	if input_profile == InputProfile.NETWORK:
+		pad_jump = network_jump
+	var jump_pressed := Input.is_action_just_pressed("jump") if input_profile == InputProfile.KEYBOARD_MOUSE else pad_jump and not _pad_jump_was_pressed
+	_pad_jump_was_pressed = pad_jump
 	_update_gamepad_grab_edge()
 	_apply_gamepad_look(delta)
 
@@ -182,15 +201,19 @@ func _physics_process(delta: float) -> void:
 			velocity.y = 0.0
 		# T074: `jump`/`sprint`는 키보드 전용 액션이라 전역 Input 상태다 — 게이트하지 않으면
 		# 다른 Player가 Space/Shift를 누르는 것만으로 이 인스턴스도 점프·질주해버린다(입력 독립성 위반).
-		if input_profile == InputProfile.KEYBOARD_MOUSE and Input.is_action_just_pressed("jump"):
+		if jump_pressed:
 			velocity.y = jump_velocity
 
 	var input_dir := _get_movement_input_2d()
 	var direction := transform.basis * Vector3(input_dir.x, 0.0, input_dir.y) # T073: yaw가 Player 자신에 있으므로 자신의 basis를 사용
 	direction.y = 0.0
 	direction = direction.normalized()
+	if input_profile == InputProfile.NETWORK:
+		direction *= minf(input_dir.length(), 1.0)
 
-	var is_sprinting := input_profile == InputProfile.KEYBOARD_MOUSE and Input.is_action_pressed("sprint")
+	var is_sprinting := Input.is_action_pressed("sprint") if input_profile == InputProfile.KEYBOARD_MOUSE else Input.is_joy_button_pressed(gamepad_device, JOY_BUTTON_LEFT_STICK)
+	if input_profile == InputProfile.NETWORK:
+		is_sprinting = network_sprint
 	var current_speed := sprint_speed if is_sprinting else walk_speed
 	var target_horizontal_velocity := direction * current_speed
 	var horizontal_velocity := Vector3(velocity.x, 0.0, velocity.z)
@@ -294,6 +317,9 @@ func _has_line_of_sight_to(target: Node3D) -> bool:
 
 
 func _update_grab_detection() -> void:
+	if input_profile == InputProfile.NETWORK:
+		# A packet may change aim and press grab in the same physics tick.
+		grab_shape_cast.force_shapecast_update()
 	_detected_grabbable = null
 	_detected_grab_point = Vector3.ZERO
 	if not grab_shape_cast.is_colliding():

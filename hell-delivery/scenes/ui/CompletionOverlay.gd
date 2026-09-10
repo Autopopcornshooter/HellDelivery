@@ -21,8 +21,13 @@ func _ready() -> void:
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 
 
-func show_completion(target_count: int, elapsed_seconds: float) -> void:
-	subtitle_label.text = "Package %d개를 모두 배송했습니다" % target_count
+func show_completion(target_count: int, elapsed_seconds: float, delivery_details: String = "") -> void:
+	var hud := get_node_or_null("../DeliveryHUD") as CanvasLayer
+	if hud != null:
+		hud.visible = false
+	subtitle_label.text = "택배 %d개를 모두 배송했습니다" % target_count
+	$Control/CenterContainer/VBoxContainer/DetailsLabel.text = delivery_details
+	$Control/CenterContainer/VBoxContainer/DetailsLabel.visible = not delivery_details.is_empty()
 	time_label.text = "완료 시간 %s" % _format_time(elapsed_seconds)
 	visible = true
 	get_tree().paused = true

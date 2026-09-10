@@ -161,6 +161,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel"):
 		_on_back_pressed()
 		get_viewport().set_input_as_handled()
+	elif selection_manager != null and event.is_action_pressed("ui_accept"):
+		_on_confirm_pressed()
+		get_viewport().set_input_as_handled()
 
 
 ## 로컬 협동에서 두 Panel이 동시에 열려 있을 때, 서로 다른 입력 장치(키보드 vs 특정 게임패드

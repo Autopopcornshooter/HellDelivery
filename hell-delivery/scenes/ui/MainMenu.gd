@@ -5,6 +5,7 @@ extends Control
 # 담당하고(T078), T079에서 설정 화면 진입을 추가했다. 일시정지·온보딩은 T080 이후 범위.
 
 const DEMO_SCENE_PATH := "res://scenes/level/Stage01HillsideVilla.tscn"
+const DELIVERY_RUN_PATH := "res://scenes/level/VillaDeliveryRun.tscn"
 
 @onready var button_container: VBoxContainer = $CenterContainer/VBoxContainer
 @onready var start_button: Button = $CenterContainer/VBoxContainer/StartButton
@@ -26,9 +27,22 @@ func _ready() -> void:
 	# 메뉴에서는 항상 마우스 커서가 보이고 자유롭게 움직여야 한다 — 캡처 해제는 여기서만 하고,
 	# 데모 진입 후 재캡처는 기존 Player.gd._ready()가 그대로 담당한다(중복 처리 없음).
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if "network-test-host" in OS.get_cmdline_user_args() or "network-test-client" in OS.get_cmdline_user_args():
+		get_tree().change_scene_to_file.call_deferred("res://scenes/network/OnlineSession.tscn")
+		return
+	var online_button := Button.new()
+	online_button.name = "OnlineButton"
+	online_button.text = "온라인 협동 · 방 만들기 / IP 참가"
+	online_button.custom_minimum_size.y = 44
+	online_button.add_theme_font_size_override("font_size", 20)
+	button_container.add_child(online_button)
+	button_container.move_child(online_button, $CenterContainer/VBoxContainer/CoopButton.get_index() + 1)
+	online_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/network/OnlineSession.tscn"))
 	settings_panel.visible = false
 	controls_panel.visible = false
 	start_button.pressed.connect(_on_start_pressed)
+	$CenterContainer/VBoxContainer/CoopButton.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/level/VillaCoop.tscn"))
+	$CenterContainer/VBoxContainer/DeliveryRunButton.pressed.connect(func(): get_tree().change_scene_to_file(DELIVERY_RUN_PATH))
 	character_button.pressed.connect(_open_character_select)
 	controls_button.pressed.connect(_open_controls)
 	settings_button.pressed.connect(_open_settings)

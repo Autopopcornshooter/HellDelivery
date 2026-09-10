@@ -35,6 +35,9 @@ func _ready() -> void:
 	_box(Vector3(0, 0.008, -8.9), Vector3(3.8, 0.012, 0.09), _yellow)
 	# Use the supplied parcel mesh, fitted to the existing 0.8 x 0.6 x 0.8 collider.
 	var package: Node3D = get_parent().get_node("Gameplay/Package")
+	dress_package(package)
+
+func dress_package(package: Node3D) -> void:
 	package.get_node("MeshInstance3D").hide()
 	var parcel: Node3D = load(FACTORY + "box-small.glb").instantiate()
 	parcel.name = "FactoryParcelVisual"

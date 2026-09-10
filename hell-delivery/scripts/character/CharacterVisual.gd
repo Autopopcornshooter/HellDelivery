@@ -52,6 +52,8 @@ func _apply_definition(def: CharacterDefinition, use_preview_transform: bool) ->
 		instance.rotation_degrees.y = def.preview_rotation_degrees
 	else:
 		instance.scale = Vector3.ONE * def.player_scale
+		# Kenney's face points +Z; Player and Camera3D face -Z. Keep preview independent.
+		instance.rotation.y = PI
 
 	var anim_player := _find_node(instance, def.animation_player_path, "AnimationPlayer") as AnimationPlayer
 	var head := _find_node(instance, def.head_node_path, "head") as Node3D
@@ -64,7 +66,7 @@ func _apply_definition(def: CharacterDefinition, use_preview_transform: bool) ->
 	_torso_node = torso
 	current_character_id = def.id
 
-	animation_controller.setup(anim_player, arm_left, arm_right)
+	animation_controller.setup(anim_player, arm_left, arm_right, null if use_preview_transform else head)
 	character_changed.emit(def.id)
 
 

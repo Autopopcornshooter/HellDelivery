@@ -1,0 +1,175 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/level/VillaDeliveryRun.tscn" id="1_level"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scenes/level/VillaCoop.gd" id="3_local_coop_test"]
+[ext_resource type="Script" path="res://scenes/ui/Crosshair.gd" id="4_crosshair"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CharacterSelectPanel.tscn" id="5_characterselectpanel"]
+
+[ext_resource type="Script" path="res://scenes/level/VillaCoopLevel.gd" id="6_cooplevel"]
+
+[node name="VillaCoop" type="Node3D"]
+script = ExtResource("3_local_coop_test")
+
+[node name="Level" parent="." instance=ExtResource("1_level")]
+script = ExtResource("6_cooplevel")
+
+[node name="SplitScreen" type="CanvasLayer" parent="."]
+
+[node name="Layout" type="HBoxContainer" parent="SplitScreen"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="LeftContainer" type="SubViewportContainer" parent="SplitScreen/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SplitScreen/Layout/LeftContainer"]
+own_world_3d = false
+handle_input_locally = false
+size = Vector2i(640, 720)
+
+[node name="ViewCamera" type="Camera3D" parent="SplitScreen/Layout/LeftContainer/SubViewport"]
+current = true
+
+[node name="Crosshair" type="Control" parent="SplitScreen/Layout/LeftContainer/SubViewport"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_crosshair")
+
+[node name="PlayerTag" type="Label" parent="SplitScreen/Layout/LeftContainer/SubViewport"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 60.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "P1"
+
+[node name="CoopStatus" type="Label" parent="SplitScreen/Layout/LeftContainer/SubViewport"]
+visible = false
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -48.0
+offset_right = 120.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "협동 운반
+2명 연결됨"
+horizontal_alignment = 1
+
+[node name="RightContainer" type="SubViewportContainer" parent="SplitScreen/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SplitScreen/Layout/RightContainer"]
+own_world_3d = false
+handle_input_locally = false
+size = Vector2i(640, 720)
+
+[node name="ViewCamera" type="Camera3D" parent="SplitScreen/Layout/RightContainer/SubViewport"]
+current = true
+
+[node name="Crosshair" type="Control" parent="SplitScreen/Layout/RightContainer/SubViewport"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_crosshair")
+
+[node name="PlayerTag" type="Label" parent="SplitScreen/Layout/RightContainer/SubViewport"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 60.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "P2"
+
+[node name="CoopStatus" type="Label" parent="SplitScreen/Layout/RightContainer/SubViewport"]
+visible = false
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -48.0
+offset_right = 120.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "협동 운반
+2명 연결됨"
+horizontal_alignment = 1
+
+[node name="CharacterSelectOverlay" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="P1Panel" parent="CharacterSelectOverlay" instance=ExtResource("5_characterselectpanel")]
+anchor_right = 0.5
+
+[node name="P1Label" type="Label" parent="CharacterSelectOverlay/P1Panel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 96.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 16
+text = "Player 1"
+
+[node name="P2Panel" parent="CharacterSelectOverlay" instance=ExtResource("5_characterselectpanel")]
+anchor_left = 0.5
+anchor_right = 1.0
+
+[node name="P2Label" type="Label" parent="CharacterSelectOverlay/P2Panel"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 96.0
+offset_bottom = 40.0
+theme_override_font_sizes/font_size = 16
+text = "Player 2"

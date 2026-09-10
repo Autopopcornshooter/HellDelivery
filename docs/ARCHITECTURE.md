@@ -1,5 +1,26 @@
 # ARCHITECTURE.md
 
+## villa-30 — 배송 완료 후 연결 유지·대기실 복귀
+
+완료 화면의 호스트 버튼으로 두 사람을 함께 대기실로 이동한다. ENet 연결과 캐릭터를 유지하고 준비 상태는 초기화한다. 캐릭터 변경 → 다시 준비 → 새 배송까지 재접속 없이 이어진다. 지난 라운드 패킷은 세대 증가로 무효화한다. 상세 WINDOWS_PLAYTEST_30.md. 일반 플레이 버그는 사용자 요청대로 후속 수집/일괄 수정 대상으로 유지한다. 다음은 반복 플레이와 실제 네트워크 환경의 사용자 피드백 반영이다.
+
+
+## villa-29 — 온라인 로비
+
+OnlineSession은 접속 → in_lobby → 월드 로드/상호 준비 응답 → active 상태로 진행한다. 로비의 readiness[2]와 캐릭터 ID는 호스트 권위이며 참가자 요청은 송신자를 검사해 1번 슬롯만 변경한다. 캐릭터 교체는 해당 슬롯 준비를 해제한다. host start는 두 슬롯 준비를 검사한 뒤 기존 _start_world RPC를 호출한다. OnlineLobby는 두 독립 SubViewport/CharacterVisual과 선택·준비·시작 버튼을 표시한다. 새 연결은 준비를 초기화하고 배송 중 재시작은 기존 경로를 유지한다. 프로토콜 29, 새 Autoload/Input Map 없음.
+
+## villa-15 — 배송 피드백
+
+VillaDeliveryRun은 배송 성공 신호마다 주소·플레이 경과 시간을 순서대로 저장해 CompletionOverlay.show_completion의 선택적 details 인수로 전달한다. 기록은 레벨 인스턴스 내에만 있으며 재시작으로 초기화된다. F5는 기록을 초기화하지 않는다. 완료 표시는 충돌 없는 바닥 Label3D와 구역별 독립 material_override로 구성한다. 안내는 남은 택배의 실제 위치로 트럭 복귀/재잡기를 구분한다. DeliveryHUD는 공통 배경 스타일과 2.5초 알림을 제공한다. 점수·제한 시간·영구 기록·Input Map·Autoload 변경은 없다.
+
+## villa-14 구현 — 주소별 배송 집계
+
+- VillaDeliveryRun.tscn은 Stage01HillsideVilla.tscn을 상속하고 VillaDeliveryRun.gd가 두 번째 택배·202호 DeliveryZone을 구성한다. 맵/충돌/캐릭터는 기존 씬을 재사용한다.
+- Package.delivery_address와 DeliveryZone.delivery_address가 일치해야 접수한다. 빈 zone 주소는 기존 테스트/레벨처럼 주소 제한 없이 접수한다. package_rejected 신호는 물건을 소모하지 않고 안내만 표시한다.
+- 각 구역은 1개 목표를 유지하고 VillaDeliveryRun이 목표/완료 수를 합산한다. HUD·온보딩·조작 안내·완료 화면은 이 합산 값을 사용한다. 단일 구역 레벨은 PrototypeLevel._configure_goal의 기존 설정을 유지한다.
+- 두 택배 모두 기본 복구 위치 목록에 등록한다. 완료한 물건의 delivered 상태를 기본 복구 로직이 보존한다. 재시작은 상속 씬 전체를 다시 로드한다.
+- 주소 스티커는 충돌 없는 5면 Label3D/종이 메시이며 기존 Factory Kit 택배 외형을 함께 사용한다. 새 Autoload/Input Map 변경은 없다.
+
 ## villa-13 — 2층 호수·기준 빌드 안정화
 
 사용자 villa-12 마감 확인. 2층은 201호·202호로 정정하고 공통 배송 목적지는 ‘언덕 빌라 2층 201호’로 통일했다. 다음 단계로 현재 맵 기준 빌드의 회귀·설정 재실행·야외/실내 성능 검증을 수행했다. 상세 WINDOWS_PLAYTEST_13.md. 현재 맵 기본 플레이와 최근 외형 마감은 사용자 확인, 이번 호수는 [REVIEW]. 다른 PC·장시간 검증은 미완료다.
@@ -648,3 +669,35 @@ MVP-1은 자동 테스트 프레임워크나 외부 Addon(GUT 등)을 도입하�
 - 구현 중 발견된 제약으로 구조 변경이 필요하면 승인 전에 대규모로 변경하지 않는다.
 - 구현 완료 후 확정된 변경만 이 문서(`ARCHITECTURE.md`)에 반영한다.
 - 아직 구현하지 않은 예상 구조를 확정 사실처럼 기록하지 않는다.
+
+빌라 배송 표지 마감은 billboard가 켜진 공중 Label3D에만 적용해 바닥 완료 글자의 위치를 유지한다.
+
+## villa-17 일시정지 복구
+PauseMenu는 열릴 때 HUD 현황을 읽어 별도 요약에 표시하고 HUD의 기존 visible 값을 저장/복원한다. 복구는 paused 상태에서 기존 레벨 recover_all을 호출한 뒤 마우스 잡기 입력을 해제하고 재개한다. CompletionOverlay는 완료 시 형제 DeliveryHUD를 숨기며 다시 플레이는 새 씬의 HUD를 사용한다. 배송/복구 판정과 Input Map은 변경하지 않았다.
+
+## villa-19 로컬 협동
+VillaCoop는 기존 LocalCoopTest의 분할 뷰/캐릭터 예약 구조를 상속한다. Level은 VillaDeliveryRun 씬을 사용하고 VillaCoopLevel이 P2 생성·계단 충돌 마스크/예외·낙하/공통 복구·공유 HUD를 맡는다. 두 뷰는 동일 World3D를 공유하고 캐릭터 미리보기는 별도 World3D를 사용한다. 선택 중 SceneTree를 멈추며 확인 후 재개한다. PauseMenu는 현재 루트 대신 자기 상위 레벨에서 복구/HUD를 찾는다. 게임패드 X 점프/L3 달리기는 장치별 상태로 읽어 P1 입력과 분리한다. 온라인·새 Autoload 없음.
+
+## villa-20 모델 축 정렬
+CharacterVisual은 실제 Player 모델에만 Y축 180도 회전을 적용해 Kenney +Z 전방을 게임 -Z 전방으로 맞춘다. 미리보기의 별도 회전은 유지한다. CharacterAnimationController는 원본 운반 회전을 사용하며 모델 좌표계에서 시선 pitch와 16도 하향 보정의 부호를 반대로 적용한다. 카메라·충돌·운반 물리는 바꾸지 않는다.
+
+## villa-21 머리 시선
+CharacterVisual은 실제 플레이 모델의 head만 AnimationController.setup에 전달한다. 컨트롤러는 애니메이션 이후 바인드 회전 기준으로 카메라 pitch를 지수 보간(응답 12/s), ±55도 clamp해 head quaternion에 적용한다. 원본 +Z 모델 축 때문에 pitch 부호를 반대로 사용한다. carry 상태와 독립적으로 적용하고 reset은 정면으로 돌린다. 미리보기에는 head를 전달하지 않아 기존 애니메이션을 유지한다. 몸통·카메라·물리 불변.
+
+## villa-22 패드 연결 복구
+VillaCoop가 joy_connection_changed와 지정 P2의 Start 입력을 처리한다. root ALWAYS/Level PAUSABLE로 정지 중 장치 재할당·메뉴 입력만 유지한다. 선택 패널과 Player에 동일 장치 번호를 적용하며 재연결은 자동 재개하지 않는다. 선택/완료 화면에서는 PauseMenu를 중복 열지 않는다.
+
+## villa-23 협동 동작 오디오
+LevelAudio.update_player가 캐릭터별 운반/접지/발걸음 상태를 관리한다. PrototypeLevel은 P1, VillaCoopLevel은 P2의 별도 LevelAudio 인스턴스를 갱신한다. 동작 cue만 캐시한 equal-power stereo PCM으로 좌우 구분하며 공통 알림은 모노를 유지한다. BuildCoopPerformance는 공유 월드 두 렌더 뷰의 야외/실내·그림자 표본을 기록한다.
+
+## villa-25 모드별 조작법
+ControlsPanel은 공통 점프/달리기 행을 생성하고 VillaCoopLevel에서 configure_coop를 호출해 입력/복구 안내만 덮어쓴다. configure_delivery_goal의 실제 레벨 목표는 유지한다. 최소 창 검사는 stretch 논리 viewport 좌표에서 경계를 비교한다.
+
+## villa-26 온라인 빌라
+OnlineSession이 ENet/RPC/세션 UI를 소유한다. OnlineLevel은 VillaCoopLevel의 물리·콘텐츠를 호스트에서만 실행하며 참가자는 frozen replica다. Player.NETWORK 입력은 물리 tick에서 처리하고 현재 시점 ShapeCast를 갱신한다. reliable 생명주기/완료와 unreliable_ordered 입력·20Hz 상태를 분리하고 세대 번호로 재시작 전 패킷을 거부한다. 상세 WINDOWS_PLAYTEST_26.md.
+
+## villa-27 연결 상태
+OnlineSession은 채널 3의 unreliable ping/pong으로 참가자 RTT를 측정한다. 세대 및 pending token 검증, 5초 token 만료를 적용한다. 수신 시각 기반 HUD와 기존 중립 입력 처리, 접속 취소를 통합한다. 물리 권위/상태 복제 방식은 유지한다.
+
+## villa-28 개인 복구
+OnlineSession이 슬롯별 pending 복구를 물리 tick에 실행한다. any_peer 요청은 접속 참가자/세대 검사를 거쳐 슬롯 1만 예약하고 호스트 UI는 슬롯 0을 예약한다. Player 복구 함수만 재사용해 상대/물건/배송을 유지한다. authority 결과 RPC는 대상 슬롯만 시점 초기화/메뉴 재개를 적용한다.

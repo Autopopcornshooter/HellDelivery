@@ -13,10 +13,6 @@ var _play_time_elapsed: float = 0.0
 var _spawn_transforms: Dictionary = {}
 var _player_spawn: Transform3D
 var _feedback: LevelAudio
-var _previous_held: GrabbableBody
-var _step_time: float = 0.0
-var _was_grounded: bool = false
-var _last_vertical_velocity: float = 0.0
 var _object_speeds: Dictionary = {}
 const FALL_LIMIT := -12.0
 
@@ -25,10 +21,8 @@ func _ready() -> void:
 	delivery_zone.package_delivered.connect(_on_package_delivered)
 	delivery_zone.all_packages_delivered.connect(_on_all_packages_delivered)
 	player.grab_aim_state_changed.connect(delivery_hud.set_crosshair_state)
-	delivery_hud.configure_goal(delivery_zone)
 	delivery_hud.get_node("RouteLabel").text = route_hint
-	onboarding_overlay.configure_goal(delivery_zone)
-	$UI/PauseMenu.controls_panel.configure_goal(delivery_zone)
+	_configure_goal()
 	_player_spawn = player.global_transform
 	if smooth_stair_walking:
 		# Villa의 두 보행 경사면은 Player만 담당한다. 택배·시선 검사는 원래 계단을 유지한다.
@@ -57,6 +51,11 @@ func _ready() -> void:
 		delivery_hud.show_goal()
 
 
+func _configure_goal() -> void:
+	delivery_hud.configure_goal(delivery_zone)
+	onboarding_overlay.configure_goal(delivery_zone)
+	$UI/PauseMenu.controls_panel.configure_goal(delivery_zone)
+
 func _physics_process(delta: float) -> void:
 	# T081: 온보딩/Pause/완료 화면 전부 get_tree().paused를 사용하고, 이 노드는 기본
 	# process_mode(Pausable)라 paused 동안에는 이 함수 자체가 호출되지 않는다 — 별도 조건 없이
@@ -68,24 +67,7 @@ func _physics_process(delta: float) -> void:
 		_object_speeds[body] = body.linear_velocity.length()
 		if not body.is_delivered() and body.global_position.y < FALL_LIMIT:
 			body.recover_to(_spawn_transforms[body])
-	if player.held_grabbable != _previous_held:
-		_feedback.play_cue("grab" if player.held_grabbable != null else "release")
-		_previous_held = player.held_grabbable
-	var grounded := player.is_on_floor()
-	if _was_grounded and not grounded and player.velocity.y > 1.0:
-		_feedback.play_cue("jump")
-	elif not _was_grounded and grounded and _last_vertical_velocity < -2.0:
-		_feedback.play_cue("land", absf(_last_vertical_velocity) / 7.0)
-	_was_grounded = grounded
-	_last_vertical_velocity = player.velocity.y
-	var speed := Vector2(player.velocity.x, player.velocity.z).length()
-	if grounded and speed > 0.5:
-		_step_time += delta
-		if _step_time >= clampf(1.8 / speed, 0.26, 0.6):
-			_step_time = 0.0
-			_feedback.play_cue("step")
-	else:
-		_step_time = 0.0
+	_feedback.update_player(player, delta)
 
 
 func _on_object_contact(_other: Node, body: GrabbableBody) -> void:

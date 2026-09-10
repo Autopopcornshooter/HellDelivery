@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/level/Stage01HillsideVilla.tscn" id="1_villa"]
+[ext_resource type="Script" path="res://scenes/level/VillaDeliveryRun.gd" id="2_run"]
+
+[node name="VillaDeliveryRun" instance=ExtResource("1_villa")]
+script = ExtResource("2_run")
+route_hint = "상자 주소 확인 → 왼쪽 계단 → 2층 201호·202호에 각각 배송"

@@ -22,7 +22,10 @@ func _ready() -> void:
 
 
 func configure_goal(zone: DeliveryZone) -> void:
-	_title_label.text = "택배 %d개 → %s" % [zone.target_package_count, zone.destination_name]
+	configure_delivery_goal(zone.target_package_count, zone.destination_name)
+
+func configure_delivery_goal(count: int, destination: String) -> void:
+	_title_label.text = "택배 %d개 → %s" % [count, destination]
 
 
 func _unhandled_input(event: InputEvent) -> void:
