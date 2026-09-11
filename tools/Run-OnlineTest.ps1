@@ -1,9 +1,9 @@
-param([switch]$Source, [switch]$Visual, [string]$RunTag = 'NetworkFinal')
+param([switch]$Source, [switch]$Visual, [string]$RunTag = 'NetworkFinal', [ValidateRange(0,20)][int]$RepeatRounds = 0, [switch]$RepeatRoutes, [switch]$OrdersOnly, [switch]$CourseOnly)
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $workspace ('validation/villa-30/' + $RunTag)
+$out = Join-Path $workspace ('validation/villa-48/' + $RunTag)
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-$engine = Join-Path $workspace 'builds/HellDelivery-Windows-Test-30/HellDelivery.exe'
+$engine = Join-Path $workspace 'builds/HellDelivery-Windows-Test-48/HellDelivery.exe'
 if ($Source) { $engine = Join-Path $workspace 'Godot_v4.7.1-stable_win64.exe/Godot_v4.7.1-stable_win64_console.exe' }
 $processes = @()
 try {
@@ -12,12 +12,16 @@ try {
         if ($Source) { $arguments += @('--path',(Join-Path $workspace 'hell-delivery')) }
         if (-not $Visual) { $arguments += '--headless' }
         $arguments += @('--',('network-test-' + $role),('network-output=' + $out))
+        $arguments += ('network-repeat=' + $RepeatRounds)
+        if ($OrdersOnly) { $arguments += 'network-orders-only' }
+        if ($CourseOnly) { $arguments += 'network-course-only' }
+        if ($RepeatRoutes) { $arguments += @('network-repeat-routes', 'grab-diagnostics') }
         if ($Visual) { $arguments += 'network-visual' }
         $quoted = $arguments | ForEach-Object { '"' + $_ + '"' }
         $processes += Start-Process -FilePath $engine -ArgumentList $quoted -WindowStyle Hidden -PassThru
         Start-Sleep -Milliseconds 800
     }
-    $deadline = (Get-Date).AddSeconds(250)
+    $deadline = (Get-Date).AddSeconds(370 + $(if ($RepeatRoutes) { 120 } else { 30 }) * $RepeatRounds)
     while (@($processes | Where-Object { -not $_.HasExited }).Count -gt 0) {
         if ((Get-Date) -gt $deadline) { throw 'Online test timed out' }
         foreach ($role in @('host','client')) {

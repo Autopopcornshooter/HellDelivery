@@ -5,6 +5,8 @@ extends Node
 # Player.gd/UI가 설정값을 직접 저장하지 않고 이 Autoload를 유일한 출처로 참조한다.
 
 signal settings_changed
+var last_server_ip := "127.0.0.1"
+var network_port := 27926
 
 enum WindowMode { WINDOWED, FULLSCREEN }
 
@@ -41,11 +43,22 @@ var fov: float = _DEFAULT_FOV # T085D: 실제 Gameplay Camera3D.fov에만 적용
 
 func _ready() -> void:
 	load_settings()
+	selected_character_id = CharacterCatalog.resolve_id_or_default(selected_character_id)
 	_apply_display_settings()
 	_apply_audio_settings()
 
 
+func _freight_test_path(path: String) -> String:
+	if path != SETTINGS_PATH or "freight-test" not in OS.get_cmdline_user_args(): return path
+	var folder := "user://"
+	var seat := "0"
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("network-output="): folder = arg.trim_prefix("network-output=")
+		if arg.begins_with("freight-seat="): seat = arg.trim_prefix("freight-seat=")
+	return folder.path_join("settings-" + seat + ".cfg")
+
 func load_settings(path: String = SETTINGS_PATH) -> void:
+	path = _freight_test_path(path)
 	var config := ConfigFile.new()
 	if config.load(path) != OK:
 		return # 파일이 없거나 읽을 수 없으면 위에서 선언한 기본값을 그대로 사용한다.
@@ -60,9 +73,14 @@ func load_settings(path: String = SETTINGS_PATH) -> void:
 	selected_character_id = CharacterCatalog.resolve_id_or_default(loaded_character_id)
 	fov = _safe_fov(config, "display", "fov", _DEFAULT_FOV, _FOV_RANGE)
 	shadows_enabled = _safe_bool(config, "display", "shadows_enabled", true)
+	last_server_ip = _safe_string(config, "network", "last_server_ip", "127.0.0.1")
+	if not last_server_ip.is_valid_ip_address(): last_server_ip = "127.0.0.1"
+	var loaded_port: Variant = config.get_value("network", "port", 27926)
+	network_port = loaded_port if loaded_port is int and loaded_port >= 1024 and loaded_port <= 65535 else 27926
 
 
 func save_settings(path: String = SETTINGS_PATH) -> void:
+	path = _freight_test_path(path)
 	var config := ConfigFile.new()
 	config.set_value("display", "window_mode", window_mode)
 	config.set_value("display", "window_resolution", window_resolution)
@@ -74,7 +92,15 @@ func save_settings(path: String = SETTINGS_PATH) -> void:
 	config.set_value("character", "selected_id", selected_character_id)
 	config.set_value("display", "fov", fov)
 	config.set_value("display", "shadows_enabled", shadows_enabled)
+	config.set_value("network", "last_server_ip", last_server_ip)
+	config.set_value("network", "port", network_port)
 	config.save(path)
+
+func remember_server(ip: String, port: int) -> void:
+	if not ip.is_valid_ip_address() or port < 1024 or port > 65535: return
+	last_server_ip = ip
+	network_port = port
+	save_settings()
 
 
 func set_window_mode(mode: WindowMode) -> void:

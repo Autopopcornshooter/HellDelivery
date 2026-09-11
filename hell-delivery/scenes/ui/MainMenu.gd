@@ -30,9 +30,17 @@ func _ready() -> void:
 	if "network-test-host" in OS.get_cmdline_user_args() or "network-test-client" in OS.get_cmdline_user_args():
 		get_tree().change_scene_to_file.call_deferred("res://scenes/network/OnlineSession.tscn")
 		return
+	var freight_button := Button.new()
+	freight_button.name = "FullDeliveryButton"
+	freight_button.text = "전체 배송 · 적재 / 운전 / 빌라 · 1~4인"
+	freight_button.custom_minimum_size.y = 44
+	freight_button.add_theme_font_size_override("font_size", 20)
+	button_container.add_child(freight_button)
+	button_container.move_child(freight_button, start_button.get_index())
+	freight_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/network/FullDeliverySession.tscn"))
 	var online_button := Button.new()
 	online_button.name = "OnlineButton"
-	online_button.text = "온라인 협동 · 방 만들기 / IP 참가"
+	online_button.text = "빌라 연습 · 온라인 협동"
 	online_button.custom_minimum_size.y = 44
 	online_button.add_theme_font_size_override("font_size", 20)
 	button_container.add_child(online_button)
@@ -51,7 +59,7 @@ func _ready() -> void:
 	controls_panel.closed.connect(_close_controls)
 	character_select_panel.closed.connect(_close_character_select)
 	character_select_panel.confirmed.connect(_on_character_confirmed)
-	start_button.grab_focus()
+	freight_button.grab_focus()
 	# 메뉴 안내도 실제 시작 레벨의 배송 설정을 읽는다.
 	var demo: Node = load(DEMO_SCENE_PATH).instantiate()
 	var zone: DeliveryZone = demo.get_node("Gameplay/DeliveryZone")

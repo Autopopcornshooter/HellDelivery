@@ -118,6 +118,13 @@ func _on_wrong_address(package: RigidBody3D, zone: DeliveryZone) -> void:
 	if Time.get_ticks_msec() - _last_rejection_ms < 1500:
 		return
 	_last_rejection_ms = Time.get_ticks_msec()
+	if package is Package and package.damage_enabled:
+		if package.shipment_failed:
+			delivery_hud.show_delivery_toast(package.failure_reason + " 택배는 배송할 수 없습니다. 남은 택배를 배달하세요.")
+			return
+		if not package.loaded_once:
+			delivery_hud.show_delivery_toast("차량 적재가 확인되지 않았습니다. 먼저 트럭 화물칸에 실어 주세요.")
+			return
 	var address: String = package.delivery_address if package is Package else "주소 없음"
 	delivery_hud.show_delivery_toast("여기는 %s호입니다. 이 상자는 %s호로 배달하세요." % [zone.delivery_address, address])
 

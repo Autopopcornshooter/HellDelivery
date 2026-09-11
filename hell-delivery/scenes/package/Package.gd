@@ -2,6 +2,104 @@ class_name Package
 extends GrabbableBody
 
 @export var delivery_address: String = ""
+var condition := 100.0
+var shipment_failed := false
+var failure_reason := ""
+var damage_enabled := false
+var damage_authority := false
+var loaded_once := false
+var teamwork := false
+var _damage_cooldown := 1.0
+var _condition_label: Label3D
+var _teleport_frames := 0
+var _restore_mask := 0
+var _restore_layer := 0
+
+func recover_to(at: Transform3D) -> void:
+	if not damage_enabled:
+		super.recover_to(at)
+		return
+	if is_delivered() or _recovery_pending or _teleport_frames > 0: return
+	super.recover_to(at)
+	# A CCD parcel moved across the map must not sweep through its old van.
+	# Disable contact for the teleport, then restore it at the new location.
+	_restore_mask = collision_mask
+	_restore_layer = collision_layer
+	collision_mask = 0
+	collision_layer = 0
+	_teleport_frames = 3
+
+func enable_shipment(authority: bool) -> void:
+	damage_enabled = true
+	damage_authority = authority
+	if authority: collision_mask |= 8
+	_condition_label = Label3D.new()
+	_condition_label.position.y = 0.8
+	_condition_label.font_size = 24
+	_condition_label.pixel_size = 0.0025
+	_condition_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(_condition_label)
+	_update_condition_label()
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	var recovering := _recovery_pending
+	super._integrate_forces(state)
+	if _teleport_frames > 0:
+		_teleport_frames -= 1
+		if _teleport_frames == 0:
+			collision_mask = _restore_mask
+			collision_layer = _restore_layer
+	if recovering: _damage_cooldown = 0.8
+	if not damage_enabled or not damage_authority or is_delivered() or shipment_failed: return
+	teamwork = teamwork or get_grabber_count() >= 2
+	_damage_cooldown = maxf(0, _damage_cooldown - state.step)
+	if _damage_cooldown > 0: return
+	var impulse := Vector3.ZERO
+	for index in state.get_contact_count():
+		impulse += state.get_contact_impulse(index)
+	var impact := impulse.length() / mass
+	if impact > 3.5:
+		if "freight-test" in OS.get_cmdline_user_args(): print("PARCEL_IMPACT ", name, " ", impact, " speed=", state.linear_velocity, " contacts=", get_colliding_bodies())
+		apply_damage((impact - 3.5) * 8)
+		_damage_cooldown = 0.4
+
+func apply_damage(amount: float) -> void:
+	if not damage_enabled or not damage_authority or is_delivered() or shipment_failed: return
+	condition = clampf(condition - maxf(0, amount), 0, 100)
+	if condition <= 0:
+		shipment_failed = true
+		failure_reason = "파손"
+	_update_condition_label()
+
+func mark_lost() -> void:
+	if is_delivered() or shipment_failed: return
+	shipment_failed = true
+	failure_reason = "분실"
+	for holder in grab_connections.keys(): remove_grabber(holder)
+	freeze = true
+	visible = false
+	_update_condition_label()
+
+func shipment_state() -> Array:
+	return [condition, shipment_failed, failure_reason, loaded_once, teamwork]
+
+func deliver() -> void:
+	super.deliver()
+	_update_condition_label()
+
+func apply_shipment_state(data: Array) -> void:
+	condition = data[0]
+	shipment_failed = data[1]
+	failure_reason = data[2]
+	loaded_once = data[3]
+	teamwork = data[4]
+	_update_condition_label()
+
+func _update_condition_label() -> void:
+	if _condition_label == null: return
+	_condition_label.text = "%s호 · %s" % [delivery_address, failure_reason if shipment_failed else "%d%%" % roundi(condition)]
+	_condition_label.modulate = Color("fa655b") if condition < 40 or shipment_failed else Color("fff0ba")
+	_condition_label.visible = not is_delivered()
 
 func _ready() -> void:
 	super._ready()

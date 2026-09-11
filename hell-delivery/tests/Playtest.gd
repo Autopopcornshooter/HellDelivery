@@ -83,6 +83,10 @@ func _run() -> void:
 	# Tests change in-memory settings only; never replace the user's settings file.
 	settings.onboarding_seen = true
 	visual = "visual" in OS.get_cmdline_user_args()
+	if "grab-contact" in OS.get_cmdline_user_args():
+		await grab_contact_test()
+		quit(1 if failures else 0)
+		return
 	if "coop-performance" in OS.get_cmdline_user_args():
 		await coop_performance_test()
 		quit(1 if failures else 0)
@@ -119,17 +123,64 @@ func _run() -> void:
 		await route()
 		quit(failures)
 		return
+	await grab_contact_test()
 	var menu: Node = await enter("res://scenes/ui/MainMenu.tscn")
-	check(menu.start_button.has_focus(), "menu keyboard focus")
+	check(menu.get_node("CenterContainer/VBoxContainer/FullDeliveryButton").has_focus(), "menu focuses full delivery entry")
 	await capture("01-menu")
+	menu.get_node("CenterContainer/VBoxContainer/FullDeliveryButton").pressed.emit()
+	await frames(6)
+	check(current_scene.full_route and "1~4인" in current_scene._panel_title.text, "main menu opens full delivery connection flow")
+	await capture("52-full-delivery-connection")
+	current_scene.leave()
+	await frames(6)
+	menu = current_scene
 	menu.get_node("CenterContainer/VBoxContainer/OnlineButton").pressed.emit()
 	await frames(6)
 	check(current_scene.scene_file_path.ends_with("OnlineSession.tscn") and current_scene.panel.visible, "menu opens online connection screen")
 	await capture("49-online-connection")
+	for sample in [[" 127.0.0.1:34567 ", ["127.0.0.1", 34567]], ["[::1]:34567", ["::1", 34567]], ["::1", ["::1", 27926]], ["127.0.0.1:99999", []], ["127.0.0.1:abc", []], ["no-host", []]]:
+		check(preload("res://scenes/network/OnlineSession.gd").parse_endpoint(sample[0], 27926) == sample[1], "endpoint parser handles " + sample[0])
+	var original_ip: String = GameSettings.last_server_ip
+	var original_port: int = GameSettings.network_port
+	GameSettings.remember_server("192.0.2.45", 34567)
+	var network_settings_path := report_path.get_base_dir().path_join("network-settings.cfg")
+	GameSettings.save_settings(network_settings_path)
+	var restored_settings: Node = GameSettings.get_script().new()
+	restored_settings.load_settings(network_settings_path)
+	check(restored_settings.last_server_ip == "192.0.2.45" and restored_settings.network_port == 34567, "saved endpoint reloads from configuration")
+	var invalid_network := ConfigFile.new()
+	invalid_network.set_value("network", "last_server_ip", "not-an-ip")
+	invalid_network.set_value("network", "port", "bad")
+	invalid_network.save(network_settings_path)
+	restored_settings.load_settings(network_settings_path)
+	check(restored_settings.last_server_ip == "127.0.0.1" and restored_settings.network_port == 27926, "invalid saved endpoint falls back safely")
+	restored_settings.free()
+	GameSettings.remember_server(original_ip, original_port)
 	current_scene.host_game()
 	check(current_scene.peer != null and current_scene.cancel_button.visible, "online host waiting offers cancellation")
+	if visual:
+		var previous_clipboard := DisplayServer.clipboard_get()
+		current_scene.copy_addresses.select(current_scene.copy_addresses.item_count - 1)
+		current_scene.copy_button.pressed.emit()
+		check(DisplayServer.clipboard_get() == "127.0.0.1:%d" % int(current_scene.port_input.value), "host copies selected endpoint to clipboard")
+		await capture("51-online-copy-address")
+		DisplayServer.clipboard_set(previous_clipboard)
 	current_scene.cancel_button.pressed.emit()
 	check(current_scene.peer == null and not current_scene.host_button.disabled and not current_scene.cancel_button.visible, "cancel releases room and restores connection controls")
+	current_scene.host_game()
+	current_scene._start_world(current_scene._characters, current_scene.generation + 1)
+	check(current_scene.loading and current_scene.panel.visible, "loading panel appears before deferred world creation")
+	current_scene.cancel_button.pressed.emit()
+	await frames(6)
+	check(not current_scene.loading and current_scene.level == null and current_scene.peer == null, "cancel prevents deferred world from reappearing")
+	current_scene.host_game()
+	current_scene._start_world(current_scene._characters, current_scene.generation + 1)
+	await frames(6)
+	check(current_scene.loading and current_scene._local_world_ready and not current_scene.active, "host waits for remote readiness with world paused")
+	await capture("50-online-loading")
+	current_scene._loading_started = Time.get_ticks_msec() - current_scene.LOAD_TIMEOUT_MS - 1
+	await frames(3)
+	check(current_scene.peer == null and current_scene.level == null and "시간 초과" in current_scene.status.text, "loading timeout frees world and restores connection screen")
 	current_scene.leave()
 	await frames(6)
 	menu = current_scene
@@ -1089,3 +1140,85 @@ func coop_performance_test() -> void:
 			await capture("coop-performance-" + str(interior) + "-" + str(shadows))
 	coop._back_to_menu()
 	await frames(5)
+
+func grab_contact_test() -> void:
+	var fixture := Node3D.new()
+	root.add_child(fixture)
+	fixture.position = Vector3(100, 20, 100)
+	var wall := StaticBody3D.new()
+	wall.position = Vector3(0, 1, 1.1)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(4, 4, 0.2)
+	collision.shape = shape
+	wall.add_child(collision)
+	fixture.add_child(wall)
+	var parcel: Package = preload("res://scenes/package/Package.tscn").instantiate()
+	parcel.position = Vector3(0, 1, 0.62)
+	parcel.gravity_scale = 0
+	parcel.max_force_per_grabber = 0
+	parcel.constant_force = Vector3(0, 0, 10)
+	fixture.add_child(parcel)
+	var holder := Node3D.new()
+	fixture.add_child(holder)
+	var target := Node3D.new()
+	target.position = Vector3(0, 1, 0)
+	holder.add_child(target)
+	await frames(12)
+	var state := PhysicsServer3D.body_get_direct_state(parcel.get_rid())
+	check(state != null and state.get_contact_count() > 0, "contact fixture presses real parcel against static wall")
+	var connection := GrabbableBody._GrabConnection.new()
+	connection.grabber = holder
+	connection.target_point = target
+	var legacy_query := PhysicsRayQueryParameters3D.create(target.global_position, fixture.to_global(Vector3(0, 1, 1.04)), 1, [parcel.get_rid()])
+	check(not state.get_space_state().intersect_ray(legacy_query).is_empty(), "original ray-only rule reports shallow contact as a wall")
+	check(not parcel._is_connection_path_blocked(state, connection, fixture.to_global(Vector3(0, 1, 0.8))), "unobstructed grab path stays connected")
+	check(not parcel._is_connection_path_blocked(state, connection, fixture.to_global(Vector3(0, 1, 1.04))), "four centimetre contact overlap does not count as occlusion")
+	check(parcel._is_connection_path_blocked(state, connection, fixture.to_global(Vector3(0, 1, 1.12))), "deep wall occlusion remains blocked despite body contact")
+	var other := StaticBody3D.new()
+	other.position = Vector3(2, 1, 0.3)
+	var other_shape := collision.duplicate()
+	other_shape.shape = BoxShape3D.new()
+	other_shape.shape.size = Vector3(0.2, 4, 0.2)
+	other.add_child(other_shape)
+	fixture.add_child(other)
+	await frames(3)
+	state = PhysicsServer3D.body_get_direct_state(parcel.get_rid())
+	target.position.x = 2
+	check(parcel._is_connection_path_blocked(state, connection, fixture.to_global(Vector3(2, 1, 0.24))), "near-end ray hit without parcel contact remains blocked")
+	target.position.x = 0
+	other.queue_free()
+	await frames(3)
+	var player_holder: Player = preload("res://scenes/player/Player.tscn").instantiate()
+	player_holder.input_profile = Player.InputProfile.NETWORK
+	player_holder.position = Vector3(0, 0.3, 0)
+	player_holder.rotation.y = PI
+	player_holder.collision_layer = 0
+	player_holder.collision_mask = 0
+	fixture.add_child(player_holder)
+	player_holder.set_physics_process(false)
+	player_holder.grab_collision_barrier.collision_layer = 0
+	var player_connection := GrabbableBody._GrabConnection.new()
+	player_connection.grabber = player_holder
+	player_connection.target_point = player_holder.hold_point
+	var virtual_ray := PhysicsRayQueryParameters3D.create(player_holder.hold_point.global_position, fixture.to_global(Vector3(0, 1, 0.8)), 1, [parcel.get_rid()])
+	check(not state.get_space_state().intersect_ray(virtual_ray).is_empty(), "turning spring target beyond wall reproduces virtual occlusion")
+	check(not parcel._is_connection_path_blocked(state, player_connection, fixture.to_global(Vector3(0, 1, 0.8))), "player-side parcel stays connected when virtual target crosses wall")
+	check(not parcel._is_connection_path_blocked(state, player_connection, fixture.to_global(Vector3(0, 1, 1.103))), "visible parcel stays held when its attachment penetrates a stair contact")
+	player_holder.position.z = 2
+	check(parcel._is_connection_path_blocked(state, player_connection, fixture.to_global(Vector3(0, 1, 0.8))), "wall between actual player and parcel still blocks grip")
+	player_holder.queue_free()
+	var blocked_holder := Node3D.new()
+	fixture.add_child(blocked_holder)
+	var blocked_target := Node3D.new()
+	blocked_target.position = Vector3(0, 1, 2)
+	blocked_holder.add_child(blocked_target)
+	var reasons: Array = []
+	parcel.grabber_disconnected.connect(func(_holder, reason): reasons.append(reason))
+	check(parcel.add_grabber(holder, target, parcel.global_position) and parcel.add_grabber(blocked_holder, blocked_target, parcel.global_position), "two grab connections established for wall regression")
+	await frames(8)
+	check(parcel.has_grabber(holder) and not parcel.has_grabber(blocked_holder), "wall releases only obstructed partner connection")
+	check(GrabbableBody.DisconnectReason.BLOCKED in reasons, "real wall release retains blocked reason")
+	parcel.remove_grabber(holder)
+	fixture.queue_free()
+	await frames(4)

@@ -15,6 +15,7 @@ extends RigidBody3D
 
 const _HOLD_BLOCKED_RELEASE_FRAMES: int = 3 # 연속 몇 프레임 정적 차단이 유지되어야 해당 연결만 해제할지(한 프레임짜리 접촉/모서리 오차 무시).
 const _STATIC_BLOCK_MASK: int = 1 # World만. 다른 Grabbable(동적 RigidBody)은 차단 사유에서 제외 — 동적 오브젝트끼리 접촉만으로 연결이 끊기지 않게 한다(T071에서 도입한 정적/동적 분리를 유지).
+const _CONTACT_OCCLUSION_SLOP: float = 0.06 # Contact solver overlap at the grabbed surface is not a wall between player and parcel.
 const _TARGET_VELOCITY_SMOOTH_FACTOR: float = 0.35 # HandPoint 속도 측정 노이즈 완화(지수평활, 최근 3~5 physics frame 반영).
 const _MAX_DELTA: float = 0.1 # 비정상적으로 큰 delta(프레임 드롭 등) 방어.
 const _GRAB_BARRIER_MASK_BIT: int = 32 # collision_layer 6(GrabCollisionBarrier). Grab 중에만 이 비트를 추가해 실제 Grabber 몸 대신 그 전용 Barrier와만 충돌하게 한다(T072 결함 수정 — Player가 밀리는 문제).
@@ -336,13 +337,34 @@ func _update_barrier_mask_for_contact(is_blocked_by_unrelated_body: bool) -> voi
 
 
 func _is_connection_path_blocked(state: PhysicsDirectBodyState3D, connection: _GrabConnection, world_grab_point: Vector3) -> bool:
-	# HandPoint와 실제 Grab Point 사이에 정적 World 장애물(벽 등)이 끼어들면 차단으로 판단한다.
+	# The spring target is 1.5 m ahead and can turn through a nearby wall.
+	# Test visibility from the actual player, not that virtual target: pressing
+	# a parcel against a wall must not release a grip on the player's side.
 	# 다른 Package/PhysicsObject 같은 동적 RigidBody는 여기서 의도적으로 감지하지 않는다.
 	var exclude_rids: Array[RID] = [get_rid()]
 	if connection.grabber is CollisionObject3D:
 		exclude_rids.append((connection.grabber as CollisionObject3D).get_rid())
-	var query := PhysicsRayQueryParameters3D.create(connection.target_point.global_position, world_grab_point, _STATIC_BLOCK_MASK, exclude_rids)
+	var path_origin: Vector3 = connection.target_point.global_position
+	var path_end := world_grab_point
+	if connection.grabber is Player:
+		path_origin = connection.grabber.camera_pivot.global_position
+		# Match Player's initial line-of-sight test. A surface attachment can
+		# penetrate a stair contact while the parcel itself remains visible.
+		path_end = state.transform.origin
+	var query := PhysicsRayQueryParameters3D.create(path_origin, path_end, _STATIC_BLOCK_MASK | (8 if collision_mask & 8 else 0), exclude_rids)
 	var result := state.get_space_state().intersect_ray(query)
+	if not result.is_empty():
+		var penetration := -((path_end - result.position) as Vector3).dot(result.normal)
+		if penetration <= _CONTACT_OCCLUSION_SLOP:
+			for index in state.get_contact_count():
+				if state.get_contact_collider(index) == result.rid:
+					return false
+		if connection.block_streak == _HOLD_BLOCKED_RELEASE_FRAMES - 1 and "grab-diagnostics" in OS.get_cmdline_user_args():
+			var collider: Node3D = result.collider
+			var same_contact := false
+			for index in state.get_contact_count():
+				if state.get_contact_collider(index) == result.rid: same_contact = true
+			print("GRAB_BLOCKED parcel=%s player=%s collider=%s collider_pos=%s depth=%s from=%s to=%s hit=%s normal=%s contacts=%d same_contact=%s" % [name, connection.grabber.name, collider.get_path(), collider.global_position, penetration, path_origin, path_end, result.position, result.normal, state.get_contact_count(), same_contact])
 	return not result.is_empty()
 
 

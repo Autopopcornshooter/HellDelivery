@@ -28,7 +28,7 @@ var network_sprint := false
 @export var push_force: float = 220.0 # 프로토타입 기준값(T061 Baseline Freeze, 실제 플레이 검증 완료 — Package 정지마찰 저항 ≈103N을 확실히 넘도록 설정)
 @export var push_mass: float = 70.0 # TODO: 프로토타입 값, 실측 재검증 필요 — Player가 몸으로 미는 상호작용에서만 쓰는 유효 질량(운동량 보존 계산 전용, CharacterBody3D 자체의 물리 질량이 아니다). _apply_push_resistance() 결함 수정(질량 무시 문제) 참고.
 
-const _DETECT_LOS_MASK: int = 21 # World(1) + Package(4) + PhysicsObject(16). GrabbableBody의 _STATIC_BLOCK_MASK와는 목적이 다르다(감지 차폐 판정 vs Hold 정적 차단 판정) — T071에서 값 그대로 유지.
+const _DETECT_LOS_MASK: int = 29 # World + Package + Vehicle + PhysicsObject; a closed cargo door blocks initial grabbing.
 
 # 조준점(Crosshair) UI가 참조하는 상태값 — 실제 Grab 판정(_detected_grabbable/held_grabbable)과
 # 동일한 데이터에서만 파생시킨다(UI 전용 별도 탐색을 하지 않는다, T073).

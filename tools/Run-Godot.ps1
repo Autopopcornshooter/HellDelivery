@@ -1,12 +1,12 @@
 param(
     [ValidateSet('Import','Test','Visual','Inspect','Route','Export','Smoke','BuildTest','BuildRoute','BuildVisual','BuildRouteVisual','Performance','BuildCoopPerformance','BuildMultiVisual','BuildMultiRouteVisual','SettingsWrite','SettingsRead','BuildMultiTest','BuildRepeat','BuildCoopVisual')][string]$Mode = 'Test',
-    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$BuildName = 'HellDelivery-Windows-Test-30'
+    [ValidatePattern('^[A-Za-z0-9_-]+$')][string]$BuildName = 'HellDelivery-Windows-Test-48'
 )
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
 $engine = Join-Path $workspace 'Godot_v4.7.1-stable_win64.exe/Godot_v4.7.1-stable_win64_console.exe'
 $project = Join-Path $workspace 'hell-delivery'
-$logs = Join-Path $workspace 'validation/villa-30'
+$logs = Join-Path $workspace 'validation/villa-48'
 $build = Join-Path (Join-Path $workspace 'builds') $BuildName
 New-Item -ItemType Directory -Force $logs | Out-Null
 New-Item -ItemType Directory -Force $build | Out-Null

@@ -13,6 +13,7 @@ signal all_packages_delivered
 signal package_rejected(package: RigidBody3D)
 
 var delivered_count: int = 0
+var accepting_deliveries := true
 var _delivered_packages: Dictionary = {} # RigidBody3D -> true. 같은 Package가 Zone을 다시 드나들어도 중복 집계하지 않기 위함.
 
 
@@ -21,9 +22,13 @@ func _ready() -> void:
 
 
 func _on_body_entered(body: Node3D) -> void:
+	if not accepting_deliveries: return
 	if not body.is_in_group("package"):
 		return
 	if _delivered_packages.has(body):
+		return
+	if body is Package and body.damage_enabled and (body.shipment_failed or not body.loaded_once):
+		package_rejected.emit(body)
 		return
 	if delivery_address != "" and (not body is Package or body.delivery_address != delivery_address):
 		package_rejected.emit(body)

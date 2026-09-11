@@ -9,7 +9,7 @@ $runtime = Get-ChildItem $project -Recurse -File | Where-Object {
 $city = 'res://assets/environment/kenney_city-kit-commercial_2.1/Models/GLB format/'
 $factory = 'res://assets/environment/kenney_factory-kit_3.0/Models/GLB format/'
 $dynamic = @('building-a.glb','building-b.glb','building-c.glb','building-d.glb','building-e.glb','detail-awning.glb','detail-overhang-wide.glb') | ForEach-Object { $city + $_ }
-$dynamic += @('box-small.glb','cone.glb') | ForEach-Object { $factory + $_ }
+$dynamic += @('box-small.glb','box-large.glb','cone.glb') | ForEach-Object { $factory + $_ }
 $dynamic += @('delivery.glb','sedan.glb') | ForEach-Object { 'res://assets/environment/kenney_car-kit/Models/' + $_ }
 $paths = @($runtime) + @($dynamic) | Sort-Object -Unique
 foreach ($resource in $paths) {
