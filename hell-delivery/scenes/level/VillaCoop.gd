@@ -88,4 +88,4 @@ func _on_pad_connection_changed(device: int, connected: bool) -> void:
 
 func _back_to_menu() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
+	SceneFader.change_scene("res://scenes/ui/MainMenu.tscn")

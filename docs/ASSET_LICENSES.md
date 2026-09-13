@@ -32,6 +32,13 @@
 
 City Kit Commercial 2.1의 building-d.glb, building-e.glb를 배경에 추가했다. 기존 building-a/b/c와 함께 인스턴스 크기·위치만 조정했다. 기존 CC0 라이선스 동봉. VillaSurface 셰이더와 지형 받침은 프로젝트 코드로 제작했다.
 
+## 메뉴 BGM — "Courier Dash" (Suno AI 생성)
+
+- 로컬: `hell-delivery/assets/audio/courier_dash.mp3`
+- 출처: 사용자가 Suno(AI 음악 생성 서비스)에 직접 프롬프트를 입력해 생성. 제3자가 배포한 기성 음원을 다운로드한 것이 아니다.
+- 사용: 메인 메뉴 배경음악(`MainMenu.gd`), 루프 재생.
+- 비고: Suno 생성물의 소유권/이용 조건은 Suno 이용약관을 따른다. 이 프로젝트 코드가 음원 파일 자체를 만들지는 않았다.
+
 ## Kenney Car Kit (3.1) — villa-09
 
 - 공식 출처: https://kenney.nl/assets/car-kit
@@ -40,3 +47,10 @@ City Kit Commercial 2.1의 building-d.glb, building-e.glb를 배경에 추가했
 - 로컬: hell-delivery/assets/environment/kenney_car-kit/Models/delivery.glb, sedan.glb, Textures.
 - 사용: 배송 트럭과 주차 승용차. 원본 모델 수정 없이 인스턴스 변환·별도 로고·단순 충돌 적용.
 - 배포 licenses/Kenney-Car-Kit.txt에 원문 동봉. 원본 ZIP은 build-tools/kenney_car-kit.zip 보관.
+
+## Pretendard (v1.3.9) — villa-70 UI 폰트
+
+- 공식 출처: https://github.com/orioncactus/pretendard
+- 라이선스: SIL Open Font License 1.1(무료, 상업적 사용 포함 재배포 가능). 원문을 `hell-delivery/assets/fonts/LICENSE.txt`에 동봉.
+- 로컬: `hell-delivery/assets/fonts/Pretendard-Regular.otf`, `Pretendard-Bold.otf`.
+- 사용: 프로젝트 전역 UI 폰트(기존 엔진 기본 폰트를 대체). 원본 파일 수정 없음.

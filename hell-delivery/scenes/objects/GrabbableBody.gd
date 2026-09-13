@@ -6,10 +6,10 @@ extends RigidBody3D
 # 물체는 항상 정상적인 RigidBody3D로서 gravity/mass/충돌의 영향을 그대로 받는다.
 
 @export var grab_spring_strength: float = 500.0 # TODO: 프로토타입 값, 실측 재검증 필요 — Grab Point를 HandPoint로 끌어당기는 스프링 상수(공유, 오브젝트별 배율 없음). mass가 클수록 평형 처짐(mass*gravity/k)이 커져 무게감이 자연히 발생한다.
-@export var grab_damping: float = 60.0 # TODO: 프로토타입 값, 실측 재검증 필요 — 진동 억제 계수(공유). 질량이 클수록 임계감쇠비(2*sqrt(k*mass))가 커지므로, 같은 감쇠값에서 무거운 물체일수록 상대적으로 더 크게 출렁인다.
+@export var grab_damping: float = 90.0 # TODO: 프로토타입 값, 실측 재검증 필요 — 진동 억제 계수(공유). 질량이 클수록 임계감쇠비(2*sqrt(k*mass))가 커지므로, 같은 감쇠값에서 무거운 물체일수록 상대적으로 더 크게 출렁인다. 사용자 실제 플레이 피드백("택배 잔상") 대응으로 60 -> 90 상향해 빠르게 이동/시점 전환할 때 물체가 목표 지점에 처지는(lag) 정도를 줄임 — 체감 확인 필요.
 @export var max_force_per_grabber: float = 300.0 # TODO: 프로토타입 값, 실측 재검증 필요 — Grabber 한 명이 낼 수 있는 최대 힘(N). 여러 Grabber는 각자 이 상한 안에서 독립적으로 힘을 내며, 물체에는 합산된 힘이 적용된다(협동 효과는 이 합산에서만 발생, 별도 배율 없음).
 @export var max_spring_distance: float = 2.5 # Spring 힘 계산에 사용하는 displacement 상한(2차 안전장치 — 대부분의 경우 max_force_per_grabber가 먼저 힘을 제한한다).
-@export var max_grab_distance: float = 3.0 # 연결을 유지할 수 있는 실제 최대 거리(기존 max_hold_distance 값 승계).
+@export var max_grab_distance: float = 4.0 # 연결을 유지할 수 있는 실제 최대 거리(기존 max_hold_distance 값 승계). 화물칸 안쪽 깊숙한 택배까지 커버하도록 3.0 -> 4.0으로 상향(GrabShapeCast 사거리와 함께 조정).
 @export var max_target_speed: float = 15.0 # HandPoint 순간 이동/저프레임으로 인한 속도 폭주 방지 상한.
 @export var push_transmission_accel: float = 12.0 # TODO: 프로토타입 값, 실측 재검증 필요 — T076 결함 수정: 이 물체가 잡힌 채로 무관한 RigidBody와 접촉해 그 안쪽으로 누르는 방향 힘을 지속 전달할 수 있는 질량당 가속도 상한(N/kg). mass가 작을수록(가벼운 held object) 전달 가능한 압축력이 작아진다 — 기존에는 max_force_per_grabber(300N)가 어떤 물체를 들었든 동일하게 적용되어, 가벼운 물체가 빈손 Body Push(push_force 220N)보다 강한 유압식 밀대처럼 작동하는 결함이 있었다.
 

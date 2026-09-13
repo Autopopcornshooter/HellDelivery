@@ -228,9 +228,10 @@ func _run(role: String) -> void:
 	await frames(20)
 	check(box.get_grabber_count() == 2, "host can rejoin client shared carry")
 	var host_position: Vector3 = session.level.player.position
-	_phase.rpc("personal-client", [])
-	check(await until(func(): return session.level.player2.position.distance_to(Vector3(2.5, 1, -11.5)) < 0.2 and not box.has_grabber(session.level.player2)), "client requests personal recovery through authority")
-	check(box.has_grabber(session.level.player) and session.level.player.position.distance_to(host_position) < 0.1, "personal recovery preserves partner grip and position")
+	session.level.recover_slot(1)
+	await frames(12)
+	check(session.level.player2.position.distance_to(Vector3(2.5, 1, -11.5)) < 0.2 and not box.has_grabber(session.level.player2), "recovering one slot releases only that courier's grip")
+	check(box.has_grabber(session.level.player) and session.level.player.position.distance_to(host_position) < 0.1, "recovering one slot preserves the other courier's grip and position")
 	_phase.rpc("stop", [])
 	await frames(10)
 	session.recover_world()
@@ -242,9 +243,9 @@ func _run(role: String) -> void:
 	var client_position: Vector3 = session.level.player2.position
 	session.level.player.position = Vector3(-4, 1, -11)
 	session._open_menu()
-	session.request_personal_recovery()
+	session.level.recover_slot(0)
 	await frames(12)
-	check(session.level.player.position.distance_to(Vector3(0, 1, -11.5)) < 0.2 and session.level._delivered_total() == 1 and session.level.player2.position.distance_to(client_position) < 0.15, "host personal recovery preserves client and partial delivery")
+	check(session.level.player.position.distance_to(Vector3(0, 1, -11.5)) < 0.2 and session.level._delivered_total() == 1 and session.level.player2.position.distance_to(client_position) < 0.15, "recovering one courier's slot preserves the other client and partial delivery")
 	session.recover_world()
 	await frames(20)
 	check(session.level._delivered_total() == 1, "network recovery preserves delivered parcel")
@@ -528,7 +529,7 @@ func _phase(phase: String, data: Array) -> void:
 		session.controls_button.pressed.emit()
 		var grid: GridContainer = session.controls_panel.get_node("Panel/VBoxContainer/Grid")
 		check(session.controls_panel.visible and not get_tree().paused and "참가자" in session.controls_panel.get_node("Panel/VBoxContainer/TitleLabel").text, "client opens role-specific controls without pause")
-		check("호스트만" in grid.get_node("KeyRestart").text and "내 위치만" in grid.get_node("KeyRestart").text and "상대 플레이" in grid.get_node("KeyPause").text, "client instructions distinguish local recovery and host-only actions")
+		check("호스트" in grid.get_node("KeyRestart").text and "F5" in grid.get_node("KeyRestart").text and "상대" in grid.get_node("KeyPause").text, "client instructions distinguish host-only recovery/restart actions")
 		check(("택배 %d개" % session.level._total_target()) in grid.get_node("KeyGoal").text and session.level.second_zone.destination_name in grid.get_node("KeyGoal").text, "online guide uses actual level target and destinations")
 		await capture("online-client-controls")
 		var escape := InputEventAction.new()
@@ -621,11 +622,6 @@ func _phase(phase: String, data: Array) -> void:
 			await capture("online-client-shared-carry")
 	elif phase == "host-regrab" and session.hosting:
 		Input.action_press("grab_object")
-	elif phase == "personal-client" and not session.hosting:
-		session._open_menu()
-		await capture("online-personal-recovery-menu")
-		session.personal_recover_button.pressed.emit()
-		check(await until(func(): return not session.menu_open), "client personal recovery acknowledgement resumes play")
 	elif phase == "route" and not session.hosting:
 		await _route()
 		_client_event.rpc_id(1, "route")
@@ -774,7 +770,7 @@ func _route() -> void:
 func _finish_order_fixture() -> bool:
 	for body in session._bodies():
 		if not body is Package or body.is_delivered(): continue
-		var zone: DeliveryZone = session.level.delivery_zone if body.delivery_address == "201" else session.level.second_zone
+		var zone: DeliveryZone = session.level.destination(body.destination_id)
 		var before := zone.delivered_count
 		body.recover_to(Transform3D(Basis.IDENTITY, zone.global_position))
 		if not await until(func(): return zone.delivered_count == before + 1, 5): return false
@@ -860,7 +856,7 @@ func _order_sessions() -> bool:
 				check(session.level._delivered_total() == 2 and not session.finished and session.level._stop_visuals[session.level.second_zone].visible and not session.level._stop_visuals[session.level.delivery_zone].visible, "mixed heavy delivery completes only 202 while last light parcel remains")
 				session.recover_world()
 				await frames(15)
-				check(session.level._delivered_total() == 2 and session.level.get_node("Gameplay/Extra201").visible, "mixed recovery preserves both deliveries and restores remaining light parcel")
+				check(session.level._delivered_total() == 2 and session.level.get_node("Gameplay/Extra" + DeliveryOrders.VILLA_201).visible, "mixed recovery preserves both deliveries and restores remaining light parcel")
 				session.manifest_held = true
 				session._update_manifest()
 				await capture("mixed-two-of-three-host")

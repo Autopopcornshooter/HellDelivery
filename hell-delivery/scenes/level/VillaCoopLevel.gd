@@ -32,12 +32,12 @@ func _physics_process(delta: float) -> void:
 	_second_feedback.update_player(player2, delta)
 	if player2.global_position.y < FALL_LIMIT:
 		_recover_second()
-	var status := "201호 %s · 202호 %s" % ["완료" if delivery_zone.delivered_count > 0 else "대기", "완료" if second_zone.delivered_count > 0 else "대기"]
+	var status := " · ".join(destinations.map(func(zone): return "%s %s" % [zone.display_name, "완료" if zone.delivered_count > 0 else "대기"]))
 	delivery_hud.get_node("RouteLabel").text = "P1 %s | P2 %s | %s" % [_carrying(player), _carrying(player2), status]
 
 func _carrying(courier: Player) -> String:
 	var parcel := courier.held_grabbable as Package
-	return "%s호 운반" % parcel.delivery_address if parcel != null and not parcel.is_delivered() else "빈손"
+	return "%s 운반" % parcel.display_name if parcel != null and not parcel.is_delivered() else "빈손"
 
 func recover_all() -> void:
 	super.recover_all()

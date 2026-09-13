@@ -6,7 +6,10 @@ extends Area3D
 # "Package" 그룹 기반 판정(PhysicsCrate/Barrel/SmallBox 등은 이 그룹에 없어 자동으로 제외)은 그대로 유지한다.
 @export_range(1, 99) var target_package_count: int = 3
 @export var destination_name: String = "초록색 배송 구역"
-@export var delivery_address: String = ""
+@export var destination_id: String = ""
+@export var display_name: String = "" # 짧은 표시용 라벨(예: "201호"). Registry 항목의 사람이 읽는 이름.
+@export var receipt_offset: Vector3 = Vector3(0, -0.42, 0.25) # 완료 영수증 라벨의 zone 기준 위치(맵마다 문 방향에 맞춰 다름).
+@export var receipt_rotation_y: float = 0.0
 
 signal package_delivered(package: RigidBody3D, delivered_count: int, target_count: int)
 signal all_packages_delivered
@@ -30,7 +33,7 @@ func _on_body_entered(body: Node3D) -> void:
 	if body is Package and body.damage_enabled and (body.shipment_failed or not body.loaded_once):
 		package_rejected.emit(body)
 		return
-	if delivery_address != "" and (not body is Package or body.delivery_address != delivery_address):
+	if destination_id != "" and (not body is Package or body.destination_id != destination_id):
 		package_rejected.emit(body)
 		return
 	if delivered_count >= target_package_count:

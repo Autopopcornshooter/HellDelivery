@@ -21,7 +21,10 @@ const _DEFAULT_MOUSE_SENSITIVITY: float = 0.003
 const _DEFAULT_GAMEPAD_LOOK_SENSITIVITY: float = 2.5
 const _DEFAULT_INVERT_GAMEPAD_Y: bool = false
 const _DEFAULT_MASTER_VOLUME: float = 1.0
+const _DEFAULT_BGM_VOLUME: float = 1.0
+const _DEFAULT_SFX_VOLUME: float = 1.0
 const _DEFAULT_ONBOARDING_SEEN: bool = false
+const _DEFAULT_FREIGHT_ONBOARDING_SEEN: bool = false # 전체 배송(물류센터→차량→빌라) 전용 첫 안내를 이미 봤는지 — 빌라 연습 온보딩과 별개 플래그.
 const _DEFAULT_CHARACTER_ID: String = "" # T085D: 실제 기본값은 CharacterCatalog.get_default_id()에서 가져온다(캐릭터 목록을 여기서 중복 관리하지 않기 위함).
 const _DEFAULT_FOV: float = 75.0 # T085D: Player.tscn의 기존 Camera3D가 fov를 따로 지정하지 않아 Godot 4 Camera3D 기본값(75.0)을 그대로 썼다 — 임의로 새 값을 만들지 않음.
 
@@ -36,7 +39,10 @@ var mouse_sensitivity: float = _DEFAULT_MOUSE_SENSITIVITY
 var gamepad_look_sensitivity: float = _DEFAULT_GAMEPAD_LOOK_SENSITIVITY
 var invert_gamepad_y: bool = _DEFAULT_INVERT_GAMEPAD_Y
 var master_volume: float = _DEFAULT_MASTER_VOLUME # 0.0~1.0
+var bgm_volume: float = _DEFAULT_BGM_VOLUME # 0.0~1.0 - "BGM" 버스(배경 음악)
+var sfx_volume: float = _DEFAULT_SFX_VOLUME # 0.0~1.0 - "SFX" 버스(효과음/차량 엔진음)
 var onboarding_seen: bool = _DEFAULT_ONBOARDING_SEEN # T080: 첫 실행 안내 Overlay를 이미 봤는지
+var freight_onboarding_seen: bool = _DEFAULT_FREIGHT_ONBOARDING_SEEN
 var selected_character_id: String = _DEFAULT_CHARACTER_ID # T085D: 싱글플레이 확정 캐릭터 ID. 로컬 협동의 Player별 선택은 CharacterSelectionManager가 별도로 소유한다(여기 저장하지 않음).
 var fov: float = _DEFAULT_FOV # T085D: 실제 Gameplay Camera3D.fov에만 적용(Preview Camera·UI SubViewport Camera는 제외).
 
@@ -68,7 +74,10 @@ func load_settings(path: String = SETTINGS_PATH) -> void:
 	gamepad_look_sensitivity = _safe_float(config, "input", "gamepad_look_sensitivity", _DEFAULT_GAMEPAD_LOOK_SENSITIVITY, _GAMEPAD_SENSITIVITY_RANGE)
 	invert_gamepad_y = _safe_bool(config, "input", "invert_gamepad_y", _DEFAULT_INVERT_GAMEPAD_Y)
 	master_volume = _safe_float(config, "audio", "master_volume", _DEFAULT_MASTER_VOLUME, Vector2(0.0, 1.0))
+	bgm_volume = _safe_float(config, "audio", "bgm_volume", _DEFAULT_BGM_VOLUME, Vector2(0.0, 1.0))
+	sfx_volume = _safe_float(config, "audio", "sfx_volume", _DEFAULT_SFX_VOLUME, Vector2(0.0, 1.0))
 	onboarding_seen = _safe_bool(config, "onboarding", "seen", _DEFAULT_ONBOARDING_SEEN)
+	freight_onboarding_seen = _safe_bool(config, "onboarding", "freight_seen", _DEFAULT_FREIGHT_ONBOARDING_SEEN)
 	var loaded_character_id: String = _safe_string(config, "character", "selected_id", _DEFAULT_CHARACTER_ID)
 	selected_character_id = CharacterCatalog.resolve_id_or_default(loaded_character_id)
 	fov = _safe_fov(config, "display", "fov", _DEFAULT_FOV, _FOV_RANGE)
@@ -88,7 +97,10 @@ func save_settings(path: String = SETTINGS_PATH) -> void:
 	config.set_value("input", "gamepad_look_sensitivity", gamepad_look_sensitivity)
 	config.set_value("input", "invert_gamepad_y", invert_gamepad_y)
 	config.set_value("audio", "master_volume", master_volume)
+	config.set_value("audio", "bgm_volume", bgm_volume)
+	config.set_value("audio", "sfx_volume", sfx_volume)
 	config.set_value("onboarding", "seen", onboarding_seen)
+	config.set_value("onboarding", "freight_seen", freight_onboarding_seen)
 	config.set_value("character", "selected_id", selected_character_id)
 	config.set_value("display", "fov", fov)
 	config.set_value("display", "shadows_enabled", shadows_enabled)
@@ -142,8 +154,28 @@ func set_master_volume(value: float) -> void:
 	settings_changed.emit()
 
 
+func set_bgm_volume(value: float) -> void:
+	bgm_volume = clampf(value, 0.0, 1.0)
+	_apply_audio_settings()
+	save_settings()
+	settings_changed.emit()
+
+
+func set_sfx_volume(value: float) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	_apply_audio_settings()
+	save_settings()
+	settings_changed.emit()
+
+
 func set_onboarding_seen(value: bool) -> void:
 	onboarding_seen = value
+	save_settings()
+	settings_changed.emit()
+
+
+func set_freight_onboarding_seen(value: bool) -> void:
+	freight_onboarding_seen = value
 	save_settings()
 	settings_changed.emit()
 
@@ -167,14 +199,17 @@ func set_shadows_enabled(value: bool) -> void:
 
 
 func reset_to_defaults() -> void:
-	# T080: onboarding_seen은 의도적으로 여기서 건드리지 않는다 — "기본값 복원"은 화면/입력/오디오
-	# 설정만 되돌리는 기능이고, 첫 실행 안내를 다시 보게 만드는 것과는 무관하다(사용자 지시).
+	# T080: onboarding_seen/freight_onboarding_seen은 의도적으로 여기서 건드리지 않는다 —
+	# "기본값 복원"은 화면/입력/오디오 설정만 되돌리는 기능이고, 첫 실행 안내를 다시 보게
+	# 만드는 것과는 무관하다(사용자 지시).
 	window_mode = _DEFAULT_WINDOW_MODE
 	window_resolution = _DEFAULT_WINDOW_RESOLUTION
 	mouse_sensitivity = _DEFAULT_MOUSE_SENSITIVITY
 	gamepad_look_sensitivity = _DEFAULT_GAMEPAD_LOOK_SENSITIVITY
 	invert_gamepad_y = _DEFAULT_INVERT_GAMEPAD_Y
 	master_volume = _DEFAULT_MASTER_VOLUME
+	bgm_volume = _DEFAULT_BGM_VOLUME
+	sfx_volume = _DEFAULT_SFX_VOLUME
 	fov = _DEFAULT_FOV
 	shadows_enabled = true
 	_apply_display_settings()
@@ -192,12 +227,18 @@ func _apply_display_settings() -> void:
 
 
 func _apply_audio_settings() -> void:
-	var bus_index := AudioServer.get_bus_index("Master")
+	_apply_bus_volume("Master", master_volume)
+	_apply_bus_volume("BGM", bgm_volume)
+	_apply_bus_volume("SFX", sfx_volume)
+
+
+func _apply_bus_volume(bus_name: String, volume: float) -> void:
+	var bus_index := AudioServer.get_bus_index(bus_name)
 	if bus_index < 0:
-		return
-	AudioServer.set_bus_mute(bus_index, master_volume <= 0.0)
-	if master_volume > 0.0:
-		AudioServer.set_bus_volume_db(bus_index, linear_to_db(master_volume))
+		return # BGM/SFX 버스가 없는 헤드리스 테스트용 최소 버스 레이아웃 등에서는 조용히 건너뛴다.
+	AudioServer.set_bus_mute(bus_index, volume <= 0.0)
+	if volume > 0.0:
+		AudioServer.set_bus_volume_db(bus_index, linear_to_db(volume))
 
 
 func _safe_float(config: ConfigFile, section: String, key: String, default: float, valid_range: Vector2) -> float:

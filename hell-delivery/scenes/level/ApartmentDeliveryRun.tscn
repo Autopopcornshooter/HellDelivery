@@ -1,0 +1,46 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" uid="uid://b3jquiepe38bb" path="res://scenes/level/PrototypeLevel.gd" id="1_level_script"]
+[ext_resource type="Script" path="res://scenes/level/ApartmentBuilding.gd" id="2_building"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/package/Package.tscn" id="4_package"]
+[ext_resource type="PackedScene" path="res://scenes/delivery/DeliveryZone.tscn" id="5_delivery_zone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/DeliveryHUD.tscn" id="6_delivery_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="7_pause_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/OnboardingOverlay.tscn" id="8_onboarding_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/ui/CompletionOverlay.tscn" id="9_completion_overlay"]
+
+[node name="ApartmentDeliveryRun" type="Node3D"]
+script = ExtResource("1_level_script")
+route_hint = "엘리베이터 고장 · 비상계단으로 6층 604호까지 배송하세요"
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 0.7, -0.7, 0, 0.7, 0.7, 0, 0, 0)
+
+[node name="Building" type="Node3D" parent="Environment"]
+script = ExtResource("2_building")
+
+[node name="Gameplay" type="Node3D" parent="."]
+
+[node name="Player" parent="Gameplay" instance=ExtResource("3_player")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.5, 1, 2)
+
+[node name="Package" parent="Gameplay" instance=ExtResource("4_package")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -42)
+
+[node name="DeliveryZone" parent="Gameplay" instance=ExtResource("5_delivery_zone")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 5)
+target_package_count = 1
+destination_name = "행복아파트 6층 604호"
+
+[node name="UI" type="Node3D" parent="."]
+
+[node name="DeliveryHUD" parent="UI" instance=ExtResource("6_delivery_hud")]
+
+[node name="PauseMenu" parent="UI" instance=ExtResource("7_pause_menu")]
+
+[node name="OnboardingOverlay" parent="UI" instance=ExtResource("8_onboarding_overlay")]
+
+[node name="CompletionOverlay" parent="UI" instance=ExtResource("9_completion_overlay")]

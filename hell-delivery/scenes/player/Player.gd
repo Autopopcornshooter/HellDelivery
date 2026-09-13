@@ -30,6 +30,20 @@ var network_sprint := false
 
 const _DETECT_LOS_MASK: int = 29 # World + Package + Vehicle + PhysicsObject; a closed cargo door blocks initial grabbing.
 
+# 품질 점검 "이동/카메라 세부 다듬기"(나중에 등급) — T061 Baseline Freeze 이동값은 그대로 두고,
+# 착지 시 카메라가 살짝 가라앉았다 돌아오는 시각 효과만 순수 추가(Collision/이동 로직 무관).
+const CAMERA_LAND_DIP_MAX := 0.12
+const CAMERA_LAND_DIP_FALL_SPEED_REF := 9.0
+const CAMERA_LAND_DIP_RECOVER_SPEED := 9.0
+var _camera_dip := 0.0
+var _camera_pivot_rest_y := 0.0
+var _was_grounded_for_dip := true
+# 품질 업그레이드: 세게 착지했을 때 화면이 살짝 흔들리는 타격감(순수 시각 효과).
+const CAMERA_SHAKE_MAX := 0.035
+const CAMERA_SHAKE_FALL_SPEED_REF := 12.0
+const CAMERA_SHAKE_DECAY := 6.0
+var _shake_intensity := 0.0
+
 # 조준점(Crosshair) UI가 참조하는 상태값 — 실제 Grab 판정(_detected_grabbable/held_grabbable)과
 # 동일한 데이터에서만 파생시킨다(UI 전용 별도 탐색을 하지 않는다, T073).
 const GRAB_AIM_NONE: int = 0
@@ -61,6 +75,12 @@ var _gamepad_grab_just_released: bool = false
 
 func _ready() -> void:
 	_gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+	_camera_pivot_rest_y = camera_pivot.position.y
+	# Physics Interpolation(전역 설정)이 이 카메라에도 적용되면, 착지 dip/셰이크처럼 매 물리 틱마다
+	# 확 바뀌는 값을 이전 값과 부드럽게(보간) 섞어버려 화면이 번지는 "잔상"처럼 보인다(실제 재현·
+	# 엔진 경고로 확인: "Interpolated Camera3D triggered from outside physics process"). 카메라는
+	# 항상 그 프레임의 진짜 값을 그대로 보여줘야 하므로 보간 대상에서 제외한다.
+	camera_pivot.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	if input_profile == InputProfile.KEYBOARD_MOUSE:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	# T085D: 기본값은 싱글플레이 저장 선택(GameSettings)이다 — 로컬 협동 등 외부에서 다른 캐릭터를
@@ -193,6 +213,7 @@ func _physics_process(delta: float) -> void:
 	_pad_jump_was_pressed = pad_jump
 	_update_gamepad_grab_edge()
 	_apply_gamepad_look(delta)
+	var fall_speed_before_move := velocity.y
 
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
@@ -225,6 +246,15 @@ func _physics_process(delta: float) -> void:
 
 	var intended_horizontal_velocity := horizontal_velocity
 	move_and_slide()
+	if not _was_grounded_for_dip and is_on_floor() and fall_speed_before_move < -2.0:
+		_camera_dip = clampf(-fall_speed_before_move / CAMERA_LAND_DIP_FALL_SPEED_REF, 0.0, 1.0) * CAMERA_LAND_DIP_MAX
+		if fall_speed_before_move < -6.0:
+			_shake_intensity = clampf(-fall_speed_before_move / CAMERA_SHAKE_FALL_SPEED_REF, 0.0, 1.0) * CAMERA_SHAKE_MAX
+	_was_grounded_for_dip = is_on_floor()
+	_camera_dip = move_toward(_camera_dip, 0.0, CAMERA_LAND_DIP_RECOVER_SPEED * delta)
+	_shake_intensity = move_toward(_shake_intensity, 0.0, CAMERA_SHAKE_DECAY * delta)
+	var shake := Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)) * _shake_intensity
+	camera_pivot.position = Vector3(shake.x, _camera_pivot_rest_y - _camera_dip, shake.z)
 	# AnimatableBody3D(GrabCollisionBarrier)는 sync_to_physics 특성상 일반 자식 노드처럼 부모
 	# Transform을 자동으로 따라가지 않는다 — 매 물리 프레임 명시적으로 Player를 따라가도록
 	# 직접 옮겨줘야 실제로 Player 위치에서 충돌 반응을 낸다(T072 결함 수정에서 발견). Barrier는
@@ -242,7 +272,7 @@ func _physics_process(delta: float) -> void:
 ## Grab 물리 자체(held_grabbable 대입 등)는 여기서 전혀 건드리지 않는다.
 func _update_character_animation(is_sprinting: bool) -> void:
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
-	character_visual.animation_controller.update_locomotion(horizontal_speed, is_sprinting, is_on_floor())
+	character_visual.animation_controller.update_locomotion(horizontal_speed, is_sprinting, is_on_floor(), velocity.y)
 	character_visual.animation_controller.set_carrying(held_grabbable != null)
 	character_visual.animation_controller.carry_pitch = camera_pivot.rotation.x
 

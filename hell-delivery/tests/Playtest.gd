@@ -125,16 +125,16 @@ func _run() -> void:
 		return
 	await grab_contact_test()
 	var menu: Node = await enter("res://scenes/ui/MainMenu.tscn")
-	check(menu.get_node("CenterContainer/VBoxContainer/FullDeliveryButton").has_focus(), "menu focuses full delivery entry")
+	check(menu.get_node("LeftColumn/CenterContainer/VBoxContainer/FullDeliveryButton").has_focus(), "menu focuses full delivery entry")
 	await capture("01-menu")
-	menu.get_node("CenterContainer/VBoxContainer/FullDeliveryButton").pressed.emit()
+	menu.get_node("LeftColumn/CenterContainer/VBoxContainer/FullDeliveryButton").pressed.emit()
 	await frames(6)
 	check(current_scene.full_route and "1~4인" in current_scene._panel_title.text, "main menu opens full delivery connection flow")
 	await capture("52-full-delivery-connection")
 	current_scene.leave()
 	await frames(6)
 	menu = current_scene
-	menu.get_node("CenterContainer/VBoxContainer/OnlineButton").pressed.emit()
+	menu.get_node("LeftColumn/CenterContainer/VBoxContainer/OnlineButton").pressed.emit()
 	await frames(6)
 	check(current_scene.scene_file_path.ends_with("OnlineSession.tscn") and current_scene.panel.visible, "menu opens online connection screen")
 	await capture("49-online-connection")
@@ -341,7 +341,7 @@ func _run() -> void:
 
 func villa_coop_test() -> void:
 	var menu: MainMenu = await enter("res://scenes/ui/MainMenu.tscn")
-	menu.get_node("CenterContainer/VBoxContainer/CoopButton").pressed.emit()
+	menu.get_node("LeftColumn/CenterContainer/VBoxContainer/CoopButton").pressed.emit()
 	await frames(20)
 	var coop: Node = current_scene
 	check(paused and coop._character_select_overlay.visible, "coop selection pauses the shared villa")
@@ -691,13 +691,13 @@ func multi_stop_test() -> void:
 	check(menu.quit_button.get_global_rect().end.y <= menu.get_viewport_rect().size.y and menu.start_button.get_global_rect().position.y >= 0, "six menu actions fit minimum resolution")
 	await capture("32-menu-minimum")
 	root.size = Vector2i(1280, 720)
-	menu.get_node("CenterContainer/VBoxContainer/DeliveryRunButton").pressed.emit()
+	menu.get_node("LeftColumn/CenterContainer/VBoxContainer/DeliveryRunButton").pressed.emit()
 	await frames(30)
 	var level: Node = current_scene
 	check(level.scene_file_path.ends_with("VillaDeliveryRun.tscn"), "menu enters multi-stop villa")
 	var first: Package = level.get_node("Gameplay/Package")
 	var second: Package = level.get_node("Gameplay/Package202")
-	check(first.delivery_address == "201" and second.delivery_address == "202", "parcels have different delivery addresses")
+	check(first.destination_id == DeliveryOrders.VILLA_201 and second.destination_id == DeliveryOrders.VILLA_202, "parcels have different delivery addresses")
 	check(first.get_node("ShippingLabels").get_child_count() == 5 and second.get_node("ShippingLabels").get_child_count() == 5, "addresses readable from sides and top")
 	check(level.delivery_hud.progress_label.text.ends_with("0 / 2"), "multi-stop HUD counts both parcels")
 	check("2" in level.onboarding_overlay._title_label.text and "202" in level.onboarding_overlay._title_label.text, "onboarding describes both stops")
@@ -859,7 +859,7 @@ func _route_grab(player: Player, package: Package) -> bool:
 	Input.action_press("grab_object")
 	await frames(18)
 	var grabbed := player.held_grabbable == package
-	check(grabbed, "input route grabs " + package.delivery_address)
+	check(grabbed, "input route grabs " + package.destination_id)
 	player.camera_pivot.rotation.x = 0
 	return grabbed
 

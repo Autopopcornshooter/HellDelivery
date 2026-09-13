@@ -38,26 +38,26 @@ func configure_coop() -> void:
 	grid.get_node("KeyGrab").text = "P1 왼쪽 클릭 유지  |  P2 RT 또는 A 유지\n놓기: 버튼 해제 · 같은 상자를 함께 잡을 수 있음"
 	grid.get_node("KeyJump").text = "P1 Space  |  P2 X"
 	grid.get_node("KeySprint").text = "P1 Shift 유지  |  P2 L3 유지"
-	grid.get_node("KeyPause").text = "Esc 또는 P2 Start · 메뉴 선택은 P1"
-	grid.get_node("KeyRestart").text = "R 전체 재시작 · F5 두 사람/미배송 택배 복구\nF5와 메뉴 복구는 완료한 배송을 유지"
+	grid.get_node("KeyPause").text = "Esc/P2 Start (선택은 P1)"
+	grid.get_node("KeyRestart").text = "F5 전원/미배송 복구 · R 재시작 (배송 완료분 유지)"
 
 
 func configure_online(host: bool, count: int, destination: String) -> void:
 	$Panel/VBoxContainer/TitleLabel.text = "온라인 조작법 · " + ("호스트" if host else "참가자")
 	var grid: GridContainer = $Panel/VBoxContainer/Grid
-	grid.get_node("KeyGrab").text = "왼쪽 버튼 유지: 잡기 · 해제: 놓기\n같은 상자 함께 잡기 · G 운반 도움 요청/취소"
+	grid.get_node("KeyGrab").text = "클릭 잡기/놓기 · 같은 상자 함께 잡기 · G 도움 요청"
 	grid.get_node("ActionPause").text = "내 메뉴"
-	grid.get_node("KeyPause").text = "Esc · 상대 플레이는 계속됩니다"
+	grid.get_node("KeyPause").text = "Esc (상대는 계속 진행)"
 	grid.get_node("ActionRestart").text = "복구 / 재시작"
-	grid.get_node("KeyRestart").text = "Esc 메뉴: 내 위치만 복구 (양쪽 모두)\n" + ("호스트: F5 전체 복구 · R 전체 재시작" if host else "전체 복구(F5)와 재시작(R)은 호스트만 가능")
-	configure_delivery_goal(count, destination + "\n상자 주소에 맞춰 배송 · 복구는 완료한 배송을 유지")
+	grid.get_node("KeyRestart").text = "F5 복구 · R 재시작 (호스트 전용)" if host else "F5·R은 호스트 전용"
+	configure_delivery_goal(count, destination + "\n상자 주소에 맞춰 배송")
 
 func configure_freight() -> void:
 	$Panel/VBoxContainer/TitleLabel.text = "전체 배송 · 물류센터 → 차량 → 빌라"
 	var grid: GridContainer = $Panel/VBoxContainer/Grid
-	grid.get_node("KeyMove").text = "WASD 이동 / 탑승 시 운전 · Space 브레이크"
-	grid.get_node("KeySprint").text = "Shift 달리기 · F 탑승/하차 · 트럭 뒤 E 화물 문"
-	grid.get_node("KeyGoal").text = "직접 적재 → 빌라 주차 → 주소에 맞춰 배송\n시간·택배 상태·차량 상태로 평가 · 복구 1회 -50점"
+	grid.get_node("KeyMove").text = "WASD 이동/운전 · Space 브레이크"
+	grid.get_node("KeySprint").text = "Shift 달리기 · F 탑승/하차 · E 화물문"
+	grid.get_node("KeyGoal").text = "적재 → 주차 → 주소 배송 · 시간/상태로 평가 (복구 1회 -50점)"
 
 func configure_goal(zone: DeliveryZone) -> void:
 	configure_delivery_goal(zone.target_package_count, zone.destination_name)

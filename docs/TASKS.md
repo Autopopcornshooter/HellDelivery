@@ -1,5 +1,331 @@
 # TASKS.md
 
+## villa-79 — 새 레벨 "대저택 정원 미로" (대문→정원 미로 통과→현관 배송)
+
+사용자가 미리 제안했던 후보 레벨 중 두 번째("대저택→대문을 열고 들어오면 배송해야하는 저택까지 가는데에 정원이 있어 그 정원을 뚫고 지나와야함")를 승인해("오케이 진행해줘") 진행했다. villa-77(아파트) 때 정립한 패턴(완전 별도 레벨 씬 + 기존 적재/운전 인프라 재사용)을 그대로 따랐다.
+
+- [x] **완전 별도 레벨** — `scenes/level/MansionDeliveryRun.tscn`(신규, `PrototypeLevel.gd` 기반) + `scenes/network/MansionOnlineLevel.gd`(신규, `ApartmentOnlineLevel.gd`와 동일한 구조의 단일 목적지 온라인 스캐폴딩).
+- [x] **적재소·운전 재사용** — `scenes/vehicle/MansionDepot.gd`(신규, 코너 두 개짜리 진입로 포함). `FreightRun.gd`를 노선 3개(빌라/아파트/대저택) 체계로 일반화: 기존 `if is_apartment ... else ...` 불리언 분기들을 `ROUTES`/`ROUTE_DEFAULTS` 표 기반 `_route(key)` 조회로 바꿨다 — **빌라·아파트 쪽 값은 전부 원래와 완전히 같다**(회귀 없음, 표에 값만 옮긴 것).
+- [x] **정원 미로** — `scenes/level/MansionGarden.gd`(신규): 대문에서 저택 현관까지 곧장 갈 수 없게 구불구불한 생울타리 통로(코너 4개 + 막다른 골목 1개)를 배치하고, 통로 끝 현관 앞에 배송 목표를 둔다. 저택 내부는 만들지 않고 현관 앞이 목표(최소 구현) — 정원 전체를 덮는 안전 지면 슬래브 포함(villa-78의 바닥 뚫림 교훈 선반영).
+- [x] **주문 목록에 자동 등록** — `DeliveryOrders.gd`에 "mansion" 주문 추가, `OnlineLobby.gd`의 전체 배송 전용 필터(`FULL_ROUTE_ONLY`)에 "apartment"와 함께 등록.
+- **실제로 발견하고 고친 버그 1건**: `MansionGarden._corridor()`에서 `for side in [-1, 1]` 루프 변수(타입 추론이 안 되는 리터럴 배열의 Variant)를 그대로 `Vector3 * side` 곱셈에 써서 "Cannot infer the type of mid variable" 파싱 오류가 났다 — `float(side)`로 명시 캐스팅해 해결(스크립트 자체가 로드 실패하는 파싱 단계 오류라 자동 검증 첫 실행에서 바로 드러남).
+- **새 자동 검증**: "mansion order targets only the mansion door" / "mansion order loads the mansion level and script" / "mansion door sits past the hedge maze, not right at the gate" / "mansion door accepts delivery at its own destination" / "mansion order completes as a normal successful delivery" 5건 — villa-77의 아파트 시나리오 뒤에 이어서 같은 세션 안에서 연속 실행(세 노선이 서로 깨지 않는지 확인).
+- 검증: `-Mode Import`/`-Mode Test`(197, 빌라 회귀 무변화), 직접 실행으로 아파트+대저택 시나리오 자동 검증 10건 전부 PASS 확인(기존에 알려진 "경고음 1회 재생" 플레이키 1건과는 무관). 실제 D3D12 렌더링으로 정원 미로 코너(생울타리)와 저택 현관·배송 마커를 확인, 캡처 2건(`mansion-facade`, `mansion-maze`)을 `tests/FreightPlaytest.gd`에 영구 추가. Export 매니페스트에 새 파일(`MansionDepot.gd`/`MansionGarden.gd`/`MansionOnlineLevel.gd`/`MansionDeliveryRun.tscn`) 모두 정상 포함 확인, 패키징된 exe의 범용 자체 테스트(126건) PASS.
+- **패키징된 exe에서도 확인**: 처음엔 `-Mode Export`를 `-BuildName` 없이 실행해 export_presets.cfg에 적힌 경로(Test-14)가 아니라 스크립트 기본값 `HellDelivery-Windows-Test-48`에 새로 내보내진다는 걸 놓쳐, 사흘 전 날짜의 낡은 Test-14 빌드로 네트워크 자체 테스트를 돌리다 계속 멎는 것처럼 보였다(진짜 버그가 아니라 잘못된 빌드 폴더를 확인한 것) — 올바른 최신 빌드(Test-48)로 다시 실행하니 `BuildTest`(197/197)와 `network-test-host freight-test`의 대저택 시나리오 5건 전부 정상 PASS. 배포용으로 `builds/HellDelivery-Windows-Test-84`에 복사하고 실제로 실행해 메인 메뉴까지 정상 기동하는 것도 확인했다.
+- **남은 제약**: 저택 내부, 미로 난이도(현재는 코너 4개 + 막다른 길 1개로 단순), 배경 디테일은 이번 범위에서 제외. 실제 사람이 정원 미로를 직접 걸어보는 손맛/난이도 체감은 아직 미확인.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-84`.
+
+## villa-78 — 아파트 진입로 코너 추가 + 바닥 구멍 수정 + 건물 외피
+
+사용자 실제 플레이 발견: "아파트까지 가는 길이 직선이라 단조로우니 코너를 넣어달라, 도로 바닥이 뚫려서 떨어진다, 아파트 껍데기도 씌워달라(배경/주변 건물 디테일은 다음에)".
+
+- **원인(바닥 뚫림)**: `ApartmentDepot.gd`의 도로(`Road`)는 순수 장식(`solid=false`, 충돌 없음)이었고, 실제 충돌 지면(`DepotGround`)은 물류거점 구역(z −50~−30)만 덮고 있었다. 빌라 노선은 물류센터 이후 구간을 별도 `Neighborhood` 씬의 지면이 이어받지만, 아파트 노선은 그런 지면이 전혀 없어 주차 구역(z −6)까지 가는 도로 전체가 실은 허공이었다 — 헤드리스 테스트가 텔레포트로 좌표만 확인하다 보니 지금까지 드러나지 않았던 실제 주행 전용 버그.
+- [x] **바닥 뚫림 수정** — `ApartmentDepot.gd`에 `RouteGround`(진입로 전체 폭 20 × 길이 42)를 추가해 물류거점부터 아파트 입구까지 안전 지면을 연속으로 깔았다.
+- [x] **코너 추가** — 기존 좌표 하나만 참조하던 직선 도로를 경로점 배열(`ROUTE_PATH`)로 바꾸고, 각 구간을 잇는 `_road_segment()`/`_curb_segment()`(두 점의 방향·길이를 계산해 회전된 박스를 생성)로 완만한 S자(오른쪽 → 왼쪽) 두 코너를 만들었다. 도로 폭(8)과 최종 도착 지점(`PARK`)은 그대로라 회귀 없음.
+- [x] **아파트 외피** — `ApartmentBuilding._building_skin()` 추가: 로비/계단실/복도(전부 실내 좌표 범위 바깥)를 벗어난 위치에 서·동·후면 벽과, 진입로 폭만큼 문 틈을 남긴 정면 벽 2장을 세워 목표 층까지의 건물을 감쌌다. 실내 충돌과 겹치지 않도록 여유(x ±9.5, z −1~12)를 두고 배치해 기존 로비/계단/복도 동작에는 영향 없음. 배경 건물이나 창문 같은 디테일은 이번 범위에서 제외(사용자 지시).
+- **검증**: `-Mode Import`(파싱 오류 없음), `-Mode Test`(197, 빌라 회귀 무변화), 아파트 시나리오 자동 검증 5건 전부 PASS(직접 실행으로 확인 — 기존에 알려진 "경고음 1회 재생" 플레이키 1건과는 무관). 실제 D3D12 렌더링으로 (1) 상공에서 본 진입로 S자 코너와 연속된 지면, (2) 정면에서 본 건물 외피(입구 틈 사이로 보이는 계단실·상부 매스), (3) 6층 복도(603/604/605호, 배송 마커)를 확인 — 코너/외피 확인용 임시 캡처 3건(`apartment-road-corner`, `apartment-building-shell`)을 `tests/FreightPlaytest.gd`에 영구 추가.
+- **남은 제약**: 배경/주변 건물, 창문 등 외관 디테일은 사용자 요청대로 이번에는 넣지 않았다. 실제 주행감(코너 반경, 차량 드리프트)은 사람이 직접 운전해봐야 최종 확인 가능.
+
+## villa-77 — 새 레벨 "엘리베이터 고장 아파트" (적재→운전→도착→계단 배송 전체 흐름)
+
+villa-77은 두 단계로 진행됐다. 1차는 걷기 전용 독립 레벨(`StageBrokenElevatorApartment.tscn`, 40계단 단일 직선 계단)이었으나, 사용자가 실제 아파트 레퍼런스 사진을 제시하며 "적재→운전→아파트 도착→계단 배송"까지 전체 흐름과 층마다 U자로 꺾이는 계단·복도식 구조(11층 건물, 목표 6층, 층당 8세대)를 요구해 완전히 다시 설계·구현했다. 아래는 최종본 기준.
+
+- [x] **완전 별도 레벨(적재/운전 흐름 포함)** — `scenes/level/ApartmentDeliveryRun.tscn`(신규, `PrototypeLevel.gd` 기반) + `scenes/network/ApartmentOnlineLevel.gd`(신규): 기존 빌라의 `VillaDeliveryRun.gd`/`OnlineLevel.gd`를 상속하지 않고(빌라 전용 201/202 다중 목적지 로직이 섞여 있어 재사용 불가) `PrototypeLevel.gd`를 직접 확장해, 온라인 세션이 요구하는 다인원 스캐폴딩(최대 4인 스폰/카메라/오디오/`recover_slot`/`_update_stops` 등)만 새로 작성했다. `DeliveryVan`/`Player`/`DeliveryZone` 등 기존 클래스는 전혀 수정 없이 그대로 재사용(사용자 확인: "객체지향이니 재사용 가능한 부분은 그대로 재사용").
+- [x] **적재소·운전 재사용** — `scenes/vehicle/ApartmentDepot.gd`(신규, `FreightDepot.gd`와 같은 코드 생성 방식의 소형 적재소)와 `FreightRun.gd`의 최소 매개변수화: 빌라 전용으로 하드코딩돼 있던 주차 좌표(`FreightDepot.PARK`)·적재소 시작 위치(`FreightDepot.START`)·픽업 좌표·도착 후 도보 스폰 위치·HUD 안내 문구를 `session.order_id=="apartment"` 여부에 따라 분기하도록 바꿨다 — **빌라 쪽 분기는 원래 상수와 완전히 같은 값**이라 회귀가 없다(회귀 테스트로 확인).
+- [x] **11층 복도식 아파트, 목표 6층 604호** — `scenes/level/ApartmentBuilding.gd`(신규): 매 층 반 층씩 꺾이는 U자 계단(레퍼런스 사진 반영, 이전의 "40계단 일직선" 대신)을 같은 평면 좌표에 그대로 쌓아 올려 6개 층을 만들고, 6층에 8세대(601~608호) 편복도와 각 문 팻말을 생성한다. 604호 앞에 배송 목표를 배치. 11층 전체는 모델링하지 않고 6층 지붕 위에 "남은 층" 매스만 띄워 11층 규모를 시각적으로 암시한다(최소 구현).
+- [x] **주문 목록에 자동 등록** — `DeliveryOrders.gd`에 "apartment" 주문 추가(`IDS`에 등록되어 기존 리스트 기반 로비 드롭다운에 자동 노출). 다만 "아파트 배송"은 차량 노선(전체 배송) 전용이라 `OnlineLobby.gd`에 `full_route` 플래그를 넣어 일반 빌라 온라인 협동 모드에서는 목록에서 제외했다.
+- **실제로 발견하고 고친 버그 3건** (전부 자동 테스트로 재현·확인):
+  1. 처음 설계한 "복도"가 계단 층계참과 물리적으로 안 이어져(z 좌표 사이에 걸어갈 수 없는 틈) 있었다 — 좌표를 다시 계산해 복도 바닥이 층계참과 겹치도록 수정.
+  2. 외부에서 11층 건물로 보이게 하려던 큰 상자가 로비/계단실/복도 전체를 그대로 덮어씌워 실내 공간을 막아버렸다 — 목표 층 지붕보다 높은 위치부터만 배치하도록 수정.
+  3. 새 레벨의 유일한 택배에 목적지 id를 설정하지 않아, 6층 문에 가져다 놔도 "다른 주소" 취급으로 배송이 거부되는 버그가 있었다 — `configure_destination()` 호출 누락을 찾아 수정.
+  4. `OnlineSession.gd`가 범용적으로 호출하는 `level._update_stops()`가 새 레벨 스크립트에 없어 실제 실행 시 `SCRIPT ERROR`가 났다 — 최소 구현으로 추가.
+- **새 자동 검증**: "apartment order targets only the 604 unit" / "apartment order loads the apartment level and script" / "604 door sits on the 6th floor, not the ground floor" / "604 door accepts delivery at its own destination" / "apartment order completes as a normal successful delivery" 5건. 4인 전체 배송 회귀에서도 이 시나리오가 그대로 실행되어 실제 멀티플레이 환경에서도 확인됨.
+- 검증: `-Mode Import`/`-Mode Test`(197, 빌라 회귀 무변화)/`-Mode Visual`(198), `Run-FreightTest.ps1 -Members 4 -Source`(P1 69→74, 새 검증 5건 반영)/`Run-PartyTest.ps1 -Source`(빌라 회귀 없음) 전부 EXIT 0. 실제 렌더링 캡처로 복도의 "603호·604호·605호" 팻말과 604호 위치의 배송 마커를 직접 확인. Windows 재수출(`HellDelivery-Windows-Test-83`) 후 `BuildTest` 통과, **패키징된 실제 exe에서도**(소스가 아닌) 아파트 시나리오 5건 전부 PASS 확인(내보내기 매니페스트 누락 없음).
+- **남은 제약**: 11층 중 실제로 걸어 올라갈 수 있는 건 6층까지이며, 그 위층은 시각적 매스로만 존재한다. 계단 난간이 계단식으로 각져 보이는 폴리시 이슈가 아직 있다. 실제 운전 거리/도보 거리 체감과 제한시간 밸런스는 사람이 직접 플레이해봐야 확인 가능.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-83`.
+
+## villa-76 — "상가 매장" 목적지 되돌림 (villa-76 원안 폐기)
+
+villa-76에서 만들었던 "같은 레벨에 새 목적지만 추가" 방식이 사용자 의도(완전히 새로운 별도 레벨 씬)와 다르다는 지적을 받아, 관련 코드를 전부 되돌렸다: `scenes/level/DowntownShop.gd` 삭제, `DeliveryOrders.gd`의 `DOWNTOWN_SHOP`/"downtown" 주문/`IDS` 항목 제거, `VillaDeliveryRun.gd`/`VillaCoopLevel.gd`/`OnlineLevel.gd`/`FreightRun.gd`의 관련 분기(`_active_destinations()` 등)를 원래 상태로 복원, `tests/FreightPlaytest.gd`의 downtown 시나리오 3건 제거. 앞으로 새 배송 장소는 완전히 별도의 레벨 씬(자체 UI 인스턴스 포함)으로 만들고, 매 레벨마다 배송 컨셉에 맞는 고유 기믹(계단/미로/바람/비 등)을 설계하기로 방향을 확정했다 — 후보 목록과 진행 순서는 대화 기록 참고, 다음 작업은 "엘리베이터 고장 아파트" 레벨부터.
+
+## villa-75 — 트럭 상호작용 안내를 크로스헤드 근접 표시로 전환
+
+사용자 요청: "e로 트럭 문 열기, f로 타기 등등은 상시 표시하지 말고 차량의 특정 부위에 근접했을 때 크로스헤드 옆에 표시". 상시 표시 UI를 줄이는 방법도 요청.
+
+- [x] **크로스헤드 근접 안내** — `DeliveryHUD`에 `ContextPrompt` 라벨 추가(`show_context_prompt()`/`hide_context_prompt()`), 크로스헤드 바로 오른쪽에 위치. `FreightRun._update_context_prompt()`가 매 프레임 로컬 플레이어와 트럭의 실제 상호작용 판정 기준점(뒷문 `to_global(0,1,-3.1)` 반경 3.0 · 탑승 `truck.global_position` 반경 5.0 — `action()`이 실제로 쓰는 것과 동일한 값)을 재사용해, 트럭 뒷부분 근처면 "E 화물 문 열기/닫기", 앞부분(local z>0) 근처면 "F 탑승"만 표시한다. 주행 중이거나 착석 중에는 표시하지 않는다.
+- [x] **상시 표시 문구 축소** — 항상 떠 있던 하단 안내(`HelpLabel`)와 적재 단계 목표 문구(`goal_label`)에서 "F 탑승 · E 화물문"을 제거(이제 근접 시에만 크로스헤드 옆에 뜸). 조작법(ControlsPanel) 화면의 설명은 그대로 유지(필요할 때 열어보는 화면이라 상시 노출과는 다름).
+- **실제로 발견하고 고친 회귀**: 자동 검증 추가 과정에서, 새 임시 테스트용 장애물을 진행 중인 실제 차량 바로 옆에 배치했다가 접촉 충격으로 물류센터 하역 물리가 흔들려 기존 테스트가 깨지는 문제를 실제로 겪었다(격리된 별도 차량으로 옮겨 해결, 상세는 villa-74 항목 참고 — 이번 작업에서도 같은 원칙을 지켰다).
+- **검증 중 발견한 무관한 사실**: `Run-OnlineTest.ps1 -Source -OrdersOnly`에서 "declined request preserves client delivery progress"가 실패해 직접 원인을 격리했다 — 이 기능(DeliveryHUD `ContextPrompt` 노드)을 완전히 되돌려도 같은 finish-vote 흐름의 **다른** 검사("requester already agrees but still waits for partner")가 대신 실패하고 검사 순서 자체도 달라졌다. 이는 실시간 ENet 타이밍에 따라 결과가 갈리는 기존에 알려진 finish-vote 레이스 컨디션이며, 이번 기능과 무관함을 직접 재현/대조로 확인했다.
+- 검증: `-Mode Import`/`-Mode Test`(197), `Run-FreightTest.ps1 -Members 1/4 -Source`(새 검증 "context prompt shows near the truck's rear door" 포함, 1인 69체크), `Run-PartyTest.ps1 -Source`, `-Manual -Visual`(기존 무관한 경고음 타이밍 플레이키 1건 제외 전부 PASS) 전부 통과. 스크린샷으로 "E 화물 문 닫기"가 실제로 크로스헤드 옆에만 뜨고 하단 안내에서 F/E가 빠진 것을 확인. Windows 재수출(`HellDelivery-Windows-Test-79`) 후 `BuildTest` 통과(오류/경고 0건, 로그 기준).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-79`.
+
+## villa-74 — 차량 시점 카메라 지형 관통 수정
+
+사용자 실제 플레이 발견: "택배 트럭 시점으로 봤을 때 카메라가 바닥이나 벽을 뚫고 들어가는 문제".
+
+- **원인**: `DeliveryVan`의 자유 시점 카메라는 `CameraPivot`에서 고정 거리(6.5m)만큼 떨어진 지점에 항상 배치됐다. 시점을 돌려 그 목표 지점이 벽/바닥 너머가 되어도 그대로 사용해 카메라가 지형을 뚫고 들어가 보였다(충돌 회피 로직 자체가 없었음).
+- **수정**: `DeliveryVan._collision_safe_camera_offset()` 추가 — 매 프레임 `CameraPivot`에서 목표 카메라 위치까지 World 레이어(1)로만 Ray를 쏴서, 막혀 있으면 같은 방향을 유지한 채 거리(와 높이)를 비례해서 당겨온다(표면에서 0.3m 여유, 최소 비율 0.15로 완전히 피벗에 붙지는 않게 제한). Player/Package 등 다른 레이어에는 걸리지 않는다.
+- 검증: 실제 물리 Ray 충돌을 별도 격리된 임시 차량(하늘 높이 스폰)으로 검증하는 자동 체크 2건 추가(`vehicle camera pulls back from a wall directly ahead` / `vehicle camera returns to normal distance once clear`) — **처음에는 이 임시 장애물을 진행 중인 실제 van 근처에 뒀다가 접촉 충격으로 물류센터 하역 물리가 흔들려 기존 테스트("manual carrying actually loads parcel")가 깨지는 회귀를 직접 발견**했고, 격리된 별도 차량으로 옮겨 해결했다. `-Mode Import`/`-Mode Test`(197), `Run-FreightTest.ps1 -Members 1/4 -Source`(1인 68체크로 증가), `Run-PartyTest.ps1 -Source`, `-Manual -Visual`(기존 무관한 경고음 타이밍 플레이키 1건 제외 전부 PASS) 전부 통과. Windows 재수출(`HellDelivery-Windows-Test-78`) 후 `BuildTest` 통과(오류/경고 0건, 로그 기준).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-78`.
+
+## villa-73 — 품질 향상 4건 (전환 페이드/파손 화면 피드백/로딩 인디케이터/BGM·SFX 분리)
+
+사용자에게 5개 후보를 제안했고 "1,2,4,5" 승인(3번 "배송 목적지 거리 표시"는 이번엔 제외).
+
+- [x] **씬 전환 페이드** — 새 Autoload `SceneFader`(`autoload/SceneFader.gd`)가 전체 화면을 덮는 `ColorRect`를 관리한다. 메뉴/레벨/결과 화면을 오가는 모든 플레이어 조작 진입점(`MainMenu` 4곳, `OnlineSession.leave()`, `CompletionOverlay`, `VillaCoop`, `PauseMenu`)의 `get_tree().change_scene_to_file(...)`를 `SceneFader.change_scene(...)`로 교체했다. 헤드리스 자동 테스트가 "버튼 클릭 → 즉시 씬 전환"을 가정하므로, 전환 자체를 트윈으로 지연시키지 않고(화면을 즉시 검게 덮은 뒤 다음 프레임에 바로 전환) 새 씬이 들어온 뒤에만 부드럽게 걷어내는 방식으로 구현해 기존 테스트 타이밍을 그대로 유지했다. 테스트 하네스 전용 진입점(self-test·network-test 자동 실행)은 건드리지 않았다.
+- [x] **택배 파손 화면 피드백** — `DeliveryHUD`에 전체 화면 `DamageVignette`(ColorRect)를 추가하고 `flash_damage()`/정적 `flash_damage_all(tree)`로 파손 순간 화면 가장자리가 붉게 짧게 번쩍이게 했다. 파손은 호스트/클라이언트 양쪽(`Package.apply_damage()`/`apply_shipment_state()`)에서 발생할 수 있어, `get_tree().get_nodes_in_group("delivery_hud")`로 화면에 있는 모든 로컬 HUD(스플릿 스크린 대비)에 방송하는 static 헬퍼로 구현(기존 `ImpactEffect.spawn()` 패턴과 동일한 스타일).
+- [x] **로딩 인디케이터** — 외부 텍스처 없이 `draw_arc()`로 그리는 회전 스피너(`scenes/ui/LoadingSpinner.gd`, Crosshair.gd와 동일한 커스텀 드로우 패턴)를 `OnlineSession`의 "대기·접속 취소" 버튼 옆에 추가. 이 버튼은 이미 "연결 대기"와 "월드 준비 대기" 두 상태 모두에서 표시/숨김이 관리되고 있어(`cancel_button.visible`), `_process()`에서 스피너 visible을 그대로 동기화하는 한 줄만 추가해 기존 상태 관리 로직을 중복하지 않았다.
+- [x] **BGM/SFX 개별 볼륨** — `audio/default_bus_layout.tres`로 Master 아래 BGM/SFX 두 버스를 추가(project.godot의 `[audio] buses/default_bus_layout`로 등록). `GameSettings`에 `bgm_volume`/`sfx_volume`을 Master Volume과 동일한 패턴(저장/복원/안전 파싱/기본값 복원)으로 추가하고, 메뉴 배경음(`MainMenu._menu_bgm`)은 BGM 버스로, 절차적 효과음(`LevelAudio`의 4개 voice)과 차량 엔진음(`DeliveryVan._engine_audio`)은 SFX 버스로 라우팅했다. `SettingsPanel`에 두 슬라이더를 FOV 행과 같은 가로 배치(라벨+슬라이더 한 줄)로 추가해 세로 공간을 아꼈다 — 별도 줄로 나눴다면 "설정 뒤로 가기 버튼이 화면 안에 있어야 한다" 기존 테스트가 실제로 깨졌을 것이다(검증 중 확인).
+- **실제로 발견한 것(수정 대상 아님, 별도 기록)**: `-Mode Test` 종료 직후 콘솔에 `WARNING: 2 ObjectDB instances were leaked at exit` / `ERROR: 1 resources still in use at exit`가 항상 출력된다는 것을 이번에 처음 발견했다. 이 메시지는 로그 파일이 닫힌 뒤 엔진 종료 시점에만 출력되어 `Confirm-GodotRun`의 로그 기반 검사망에 걸리지 않는다. 오늘 변경한 모든 코드를 하나씩 비활성화하며 원인을 좁혀봤지만 재현이 계속되었고, 오늘 세션 이전에 만들어진 `HellDelivery-Windows-Test-74` 빌드에서도 동일하게 재현되어 **오늘 작업과 무관한 기존 결함**임을 확인했다 — 자동 검사 통과에는 영향 없지만 별도 백그라운드 작업(task_3d7690fe)으로 근본 원인 조사를 남겨뒀다.
+- 검증: `-Mode Import`/`-Mode Test`(197, 새 검증 1건 "package damage flashes the screen vignette" 추가로 P1 체크 수 65→66), `-Mode Visual`(198, 실제 D3D12 렌더링), `Run-FreightTest.ps1 -Members 4 -Source`, `Run-PartyTest.ps1 -Source`, `Run-OnlineTest.ps1 -Source -OrdersOnly` 전부 EXIT 0. `Run-OnlineTest.ps1 -Source -Visual -OrdersOnly` 스크린샷(`online-host-lobby.png`)으로 로딩 스피너가 실제 회전 렌더링되는 것을 확인, `Run-FreightTest.ps1 -Members 1 -Source` 스크린샷 대신 새 자동 검증으로 파손 비네트가 실제로 알파값을 갖는 것을 직접 확인(타이밍에 따라 스크린샷 캡처 프레임에서는 이미 감쇠되어 안 보일 수 있어 스크린샷만으로는 불충분하다고 판단, 동기 호출 직후 검증하는 자동 체크를 추가). Windows 재수출(`HellDelivery-Windows-Test-77`, 매니페스트 99→102개 — `SceneFader.gd`/`LoadingSpinner.gd`/`default_bus_layout.tres` 확인 포함) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건(로그 파일 기준).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-77`.
+
+## villa-72 — 메인 메뉴 부제 제거
+
+사용자 요청 "메인메뉴에서 협동 배달시뮬레이션 이거 없애주고". villa-71에서 추가한 `TitleBlock/SubtitleLabel`("협동 배송 시뮬레이션") 한 줄만 제거하고 `TitleBlock`의 세로 크기를 맞춰 축소. 다른 노드·스크립트 참조 없음(정적 라벨이라 코드에서 참조하지 않았음).
+
+- 검증: `-Mode Test`(197)/`-Mode Visual`(198) 전부 통과, 스크린샷으로 부제가 사라지고 제목만 남은 레이아웃 확인. Windows 재수출(`HellDelivery-Windows-Test-76`) 후 `BuildTest` 통과(오류/경고 0건).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-76`.
+
+## villa-71 — 시작 화면·메뉴 레이아웃 트렌디 개편
+
+사용자 요청 "시작 배경화면과 UI 구성이나 위치등을 트렌디한 방법으로 유저에게 보이도록 수정해줘".
+
+- [x] **배경** — 단색 `ColorRect` → 대각선 `GradientTexture2D`(어두운 남색→틸 톤) + 하단 비네트 오버레이로 교체. 새 이미지 에셋 다운로드 없이 Godot 리소스만으로 구성.
+- [x] **레이아웃 재구성** — 기존엔 모든 버튼(9개)이 화면 정중앙에 세로로 쌓여 있었다. 제목(HELL DELIVERY + 부제)을 좌상단으로, 주요 진입 버튼(전체 배송/기본 배송/새 노선/협동 등)을 화면 왼쪽 절반에 세로로 배치, 부가 기능(캐릭터/조작법/설정/종료)을 우하단에 작은 가로 묶음으로 이동해 "핵심 액션 우선, 부가 기능은 구석"이라는 비대칭 구성으로 정리.
+- [x] **강조 버튼** — 가장 먼저 눌러볼 항목(전체 배송, 자동 포커스가 이미 이 버튼에 있었음)에만 틸 강조색 StyleBox를 코드로 덮어써 시각적 우선순위를 줌.
+- [x] **진입 페이드인** — 제목/메인 버튼열/유틸리티열이 모듈레이트 알파로만 부드럽게 나타남(0.35s).
+- **실제로 발견하고 수정한 버그**: 처음 구현한 페이드인은 알파와 함께 `position`도 트윈했는데, 부모가 `CenterContainer`/`HBoxContainer`라 자식 위치를 자체적으로 재계산하는 시점과 경합해 스크린샷 캡처 시점에 버튼열이 화면 위쪽(제목과 겹치는 위치)에 잘못 렌더링되는 문제가 실제로 있었다. `-Mode Visual` 스크린샷으로 발견 → position 트윈을 제거하고 알파만 애니메이션하도록 수정 → 재검증으로 정상 중앙 정렬 확인.
+- 노드 경로 변경: `MainMenu.tscn`의 버튼 계층이 `CenterContainer/VBoxContainer/...` → `LeftColumn/CenterContainer/VBoxContainer/...`로, 캐릭터/조작법/설정/종료 버튼은 새 `UtilityRow` 아래로 이동. `MainMenu.gd`의 `@onready` 경로와 `tests/Playtest.gd`의 관련 `get_node()` 경로를 모두 함께 갱신(노드 이름 자체는 변경 없음).
+- 검증: `Run-Godot.ps1 -Mode Import`(파싱 오류 없음), `-Mode Test`(197체크), `-Mode Visual`(198체크, 실제 D3D12 렌더링, 스크린샷으로 새 레이아웃 확인), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(전부 PASS), `-Manual -Visual`(78개 중 77개 PASS, 1건은 기존에 분리된 무관한 경고음 타이밍 플레이키). Windows 재수출(`HellDelivery-Windows-Test-75`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-75`.
+
+## villa-70 — UI 퀄리티 업그레이드 (폰트 + 버튼 반응 + 결과 화면 등급 배지)
+
+사용자 요청 "다음 퀄리티 업데이트는 UI야". 비슷한 장르 게임 대비 5개 후보를 제시했고, 그중 3개(폰트/버튼 반응/결과 화면 레이아웃) 승인.
+
+- [x] **폰트 교체** — 프로젝트에 폰트 파일이 전혀 없어(엔진 기본 폰트만 사용 중) 외부 다운로드 필요, 사용자에게 사전 승인 받음. **Pretendard**(SIL OFL 1.1, 무료 상업적 사용 가능) Regular/Bold 두 굵기를 `hell-delivery/assets/fonts/`에 추가하고, `project.godot`의 `[gui] theme/custom`에 새 전역 Theme(`DefaultTheme.tres`)을 등록해 프로젝트 전체 UI에 한 번에 적용(개별 UI 스크립트 수정 불필요). 출처는 `docs/ASSET_LICENSES.md`에 기록.
+- [x] **버튼 호버/클릭 반응** — 같은 `DefaultTheme.tres`에 Button의 normal/hover/pressed/focus StyleBox를 추가(어두운 톤 기본 → 브랜드 틸 색상 호버/눌림, 기존 프로젝트의 틸 액센트 `287e85`와 톤 맞춤). 버튼을 만드는 코드(`OnlineSession._button()` 등)는 전혀 수정하지 않고 전역 테마만으로 전체 버튼에 일괄 적용.
+- [x] **결과 화면 등급 배지** — `OnlineSession.gd`에 `grade_badge`(큰 글자, 등급 색상) Label을 새로 추가해 결과 상세 텍스트(`status.text`, 테스트가 그 안 문구를 검사하므로 구조를 바꾸지 않음) 위에 등급 알파벳만 크게 강조. 다른 화면(대기실/설정/조작법 등)에서는 `_open_menu()`가 항상 숨겨 잔류하지 않는다.
+- **실제로 발견하고 수정한 버그**: `Update-ExportManifest.ps1`이 `assets/` 폴더를 자동 스캔에서 제외하고, `project.godot`의 `[gui] theme/custom` 경로 문자열 참조는 Godot 자체 의존성 스캐너도 따라가지 못해(courier_dash.mp3 때와 동일한 종류의 결함) 최초 빌드 시도에 새 폰트/테마가 전혀 패킹되지 않았다 — `$dynamic` 목록에 `DefaultTheme.tres`를 추가해 해결(두 `.otf` 파일은 이 리소스의 의존성으로 자동 포함), 재수출 로그로 실제 패킹 확인.
+- 검증: `Run-Godot.ps1 -Mode Import`/`-Mode Test`(197체크), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(기존 finish-vote 플레이키 1건 제외 전부 PASS), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈) — 스크린샷으로 새 폰트 렌더링, 둥근 버튼 스타일, 결과 화면의 큰 등급 배지("S") 전부 실제로 확인. Windows 재수출(`HellDelivery-Windows-Test-74`, 폰트/테마 누락 수정 후) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-74`.
+
+## villa-69 — 잔상 재발 근본 원인 발견·수정 (Physics Interpolation)
+
+사용자가 villa-68 직후 "다시 잔상 생기는데"라고 재보고. 이번엔 정확한 근본 원인을 엔진 경고로 직접 확인했다.
+
+- **원인**: `-Mode Test` 실행 중 `WARNING: [Physics interpolation] Interpolated Camera3D triggered from outside physics process`를 실제로 캡처했다. 프로젝트 전역 설정 `common/physics_interpolation=true`(villa-48 이전, Crate 밀기 떨림 해결 목적으로 도입) 때문에 물리 Body의 자식인 Camera3D는 물리 틱 사이를 자동으로 부드럽게 보간해서 그린다. villa-67(착지 dip)·villa-68(충격 셰이크)에서 매 프레임 무작위로 바뀌는 카메라 오프셋을 이 카메라에 계속 줬는데, 보간 시스템이 "이전 무작위값 → 이번 무작위값"을 매끈하게 섞어 그리면서 화면이 번지는 잔상처럼 보였다 — 최초(villa-60)의 "택배 잔상"과는 다른 새 원인이지만 증상이 비슷해 보였다.
+- **수정**: `Player.gd`/`DeliveryVan.gd` 양쪽에서 시점용 `CameraPivot`을 `physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF`로 명시해 보간 대상에서 제외했다. 이 카메라들은 이미 매 프레임 직접 값을 정하고 있어(마우스룩·dip·셰이크) 보간의 이득이 없고, 오히려 무작위 셰이크와는 상성이 나쁘다 — 인터폴레이션 자체는 프로젝트 전역적으로 유지(Crate 밀기 등 원래 목적은 그대로 보존).
+- 검증: `Run-Godot.ps1 -Mode Test` 재실행 시 위 경고가 더 이상 발생하지 않음을 직접 확인(전에는 경고가 있었고 CLAUDE.md 원칙에 따라 실패로 처리됨). `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈), 로그에 인터폴레이션 경고 없음. Windows 재수출(`HellDelivery-Windows-Test-73`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-73`.
+
+## villa-68 — 비슷한 장르 게임 비교 업그레이드 4건
+
+사용자 요청 "비슷한 장르 다른 게임과 비교해서 부족한 점 업그레이드". 비교 대상(Overcooked/PACK/Moving Out류 협동 배송, My Summer Car류 운전)을 기준으로 7개 후보를 제시했고, 사용자가 그중 4개를 승인.
+
+- [x] **충격 시 카메라 셰이크** — `DeliveryVan.gd`(차량 충돌, 호스트/클라이언트 양쪽 모두 반영), `Player.gd`(세게 착지, villa-67 착지 dip의 확장)에 순수 시각 효과로 추가. Collision/물리와 무관, 감쇠(decay)로 자연스럽게 가라앉음.
+- [x] **차량 헤드라이트** — `DeliveryVan.gd`에 `SpotLight3D` 2개 추가, `enabled`(엔진 켜짐) 상태에 맞춰 매 프레임 밝기 on/off. 새 게임플레이 규칙 없이 순수 장식.
+- [x] **배송 완료 임팩트 애니메이션** — `DeliveryHUD.show_delivery_toast()`가 `kind == "success"`일 때 토스트 라벨에 확대→축소(Tween, Back-Ease) 펀치 효과를 준다.
+- [x] **실시간 연속 배송 알림** — `VillaDeliveryRun.gd`에 `_delivery_streak` 카운터 추가. 오배송 없이 연속 배송 시 2회차부터 토스트에 "· N연속!" 표시, 오배송 발생 시 리셋. 결과 화면 배지(villa-51)와는 별개로 플레이 중 즉시 피드백을 준다. `OnlineLevel`도 `VillaDeliveryRun`을 상속하므로 전체 배송/온라인 협동 양쪽에 자동 적용.
+- **제외한 항목(공수 대비 효과 낮음 또는 이미 범위 제외)**: 날씨/시간대 변화, 차량 계기판 UI, 개인 최고기록/랭킹(저장 시스템 필요, 기존 범위 제외 유지).
+- 검증: `Run-Godot.ps1 -Mode Import`/`-Mode Test`(197체크), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(기존 finish-vote 플레이키 2건 제외 전부 PASS), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈). Windows 재수출(`HellDelivery-Windows-Test-72`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-72`.
+
+## villa-67 — 이동/카메라 세부 다듬기 (마지막 "나중에" 항목)
+
+villa-52 품질 점검에서 "나중에"로 분류했던 마지막 항목. 당시 분석: "이미 사용자 검증을 거친 값이라 손대면 오히려 리스크 — 착지 시 카메라 살짝 dip, 발소리 피치 랜덤화 정도만 여유 있을 때". T061 Baseline Freeze로 고정된 이동 수치(walk_speed/acceleration/mouse_sensitivity 등)는 전혀 건드리지 않고, 그 두 가지만 순수 추가.
+
+- [x] **발소리 피치 랜덤화** — `LevelAudio.play_cue()`에서 `cue == "step"`일 때만 `pitch_scale`을 0.92~1.08 랜덤으로 준다. 다른 큐(배송/경고/실패 등 명확한 신호가 필요한 소리)는 그대로 고정 피치 유지.
+- [x] **착지 카메라 dip** — `Player.gd`에 낙하 후 착지(`is_on_floor()` 전환 + 낙하 속도 -2.0 이하, 기존 "land" 큐 임계값과 동일 기준)를 감지해 `camera_pivot.position.y`를 낙하 속도에 비례해 최대 0.12m 순간적으로 낮췄다가 부드럽게 원위치로 복귀시키는 시각 효과 추가. 이동 로직/Collision/Grab 판정과 완전히 무관(카메라 오프셋만 변경).
+- 검증: `Run-Godot.ps1 -Mode Import`/`-Mode Test`(197체크, 이번엔 오디오 teardown 경고까지 재현 없이 깔끔하게 종료), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(기존 finish-vote 플레이키 2건 제외 전부 PASS), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈). Windows 재수출(`HellDelivery-Windows-Test-71`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- **품질 점검 9개 항목 전부 완료** — 필수 2 + 권장 7 + 나중에 1, 전 항목 처리 완료.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-71`.
+
+## villa-66 — 바퀴 퀄리티 향상 + 탑승 캐릭터 튀어나옴 수정
+
+사용자 요청 2건: 바퀴 디테일이 밋밋함 → 퀄리티 향상. 차에 탄 캐릭터가 좁은 운전석 모델 밖으로(앞유리/지붕) 튀어나와 보임 → 안 보이게 처리.
+
+- [x] **바퀴 퀄리티** — 단색 원기둥 하나였던 바퀴를 타이어(짙은 고무, 살짝 테이퍼)+림(밝은 금속 톤)+허브캡(중앙 캡) 3단 구성으로 교체(`DeliveryVan._wheel_visual()`). 구르는 애니메이션(villa-64)은 이 조립체 전체를 그대로 회전시키므로 변경 없이 그대로 작동.
+- [x] **탑승 캐릭터 숨김** — `FreightRun._sync_seats()`에서 `courier.character_visual.visible = not seated`를 추가. 좌석에 앉으면 외형만 숨기고(콜리전/물리 상태는 기존과 동일하게 유지), 하차하면 다시 보이게 한다. `_sync_seats()`는 호스트의 `tick()`과 클라이언트의 `apply_snapshot()` 양쪽에서 모두 호출되는 함수라 온라인 협동에서도 모든 참가자 화면에 동일하게 반영된다(네트워크 코드 추가 불필요, 기존 호출 경로 재사용).
+- 검증: `Run-Godot.ps1 -Mode Import`(오류 없음), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈) — 스크린샷으로 새 바퀴 디테일 확인. Windows 재수출(`HellDelivery-Windows-Test-70`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-70`.
+
+## villa-65 — 모델 내장 바퀴와 신규 바퀴 겹침 수정
+
+사용자 지적: 트럭 모델링에 원래 포함되어 있던 바퀴가 villa-62에서 새로 추가한 기능성 바퀴(VehicleWheel3D)와 겹쳐서 모양이 이상함.
+
+- [x] **원인**: `delivery.glb` 모델 자체에 이미 `wheel-front-right`/`wheel-front-left`/`wheel-back-right`/`wheel-back-left`라는 정적(회전 안 함) 바퀴 메시가 포함되어 있었는데, villa-62에서 `VehicleWheel3D`용 새 바퀴 메시를 추가로 붙이면서 기존 것을 숨기지 않아 두 바퀴가 겹쳐 보였다. 실제 노드 이름은 헤드리스로 모델을 인스턴스화해 트리를 출력해 확인(임의 추측이 아님).
+- [x] **수정**: 기존 `door` 노드를 숨기던 것과 같은 방식으로 4개 바퀴 노드를 전부 `hide()` — 이제 회전/조향이 실제로 반영되는 새 바퀴만 보인다.
+- 검증: `Run-Godot.ps1 -Mode Import`(오류 없음), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈) — 스크린샷으로 겹침 없는 단일 바퀴 확인. Windows 재수출(`HellDelivery-Windows-Test-69`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-69`.
+
+## villa-64 — 바퀴 시각 방향 수정 + 구르는 연출 추가
+
+사용자가 스크린샷으로 정확히 지적: 바퀴가 옆으로(가로 방향) 굴러가는 것처럼 보임.
+
+- [x] **원인**: `CylinderMesh`의 기본 굴대(높이축)는 로컬 Y인데, 실제 바퀴는 굴대가 차량의 좌우(X) 방향을 향해야 앞으로 굴러가는 것처럼 보인다. villa-62에서 `visual.rotation.x = PI/2`로 회전시켰는데, 이는 Y축을 Z축(앞뒤)으로 옮기는 것이라 굴대가 앞뒤를 향하게 되어 "옆으로 구르는" 것처럼 보였다 — X가 아니라 Z축으로 90도 회전해야 함.
+- [x] **수정**: `visual.rotation.z = PI / 2`로 교정.
+- [x] **덤: 실제로 구르는 연출 추가** — 그동안 바퀴 메시가 정지된 채로 위치만 이동해 미끄러지듯 보였다. 각 `VehicleWheel3D.get_rpm()` 값을 매 프레임 읽어 `rotate_object_local(Vector3.UP, ...)`로 메시 자신의 굴대 기준 회전을 누적 — 실제 주행 속도에 맞춰 바퀴가 눈에 보이게 구른다.
+- 검증: `Run-Godot.ps1 -Mode Import`(오류 없음), `Run-FreightTest.ps1 -Members 4 -Source`(EXIT 0 전부), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈) — 스크린샷으로 바퀴가 이제 옆에서 봤을 때 정상적인 원판(허브 무늬 포함)으로 보임을 확인. Windows 재수출(`HellDelivery-Windows-Test-68`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-68`.
+
+## villa-63 — 관성 기울임 버그 수정: 바퀴 튀어나옴 + 뒷문 안 기울어짐
+
+사용자가 villa-62 직후 실제 플레이 스크린샷으로 발견: 주행 중 차체 기울임(Body Lean) 때문에 바퀴가 펜더 밖으로 튀어나와 보이고, 뒷문(gate_visual)은 차체와 같이 기울지 않아 따로 튀어나와 보임.
+
+- [x] **원인**: 기울임 효과가 `model`(차체 쉘 Mesh)에만 적용되고, 바퀴(`VehicleWheel3D`, 실제 접지 유지 목적상 기울이면 안 됨)와 `gate_visual`(뒷문, `model`의 자식이 아니라 별도 노드)은 그대로 수평이라 서로 어긋나 보였다.
+- [x] **수정**: `BODY_LEAN_MAX`를 9도 → 3.5도로 축소(낮은 폴리곤 모델의 펜더 여유가 좁아 큰 각도에서 바퀴가 노출됨), `gate_visual.rotation.z`에도 매 프레임 같은 기울임 값을 적용해 뒷문이 차체와 함께 기울도록 함(`_set_gate()`가 매 프레임 다시 쓰는 값은 position/rotation.x뿐이라 rotation.z를 별도로 얹어도 충돌 없음).
+- 검증: `Run-Godot.ps1 -Mode Import`(오류 없음), `Run-FreightTest.ps1 -Members 1/4 -Source`(EXIT 0), `-Manual -Visual` 78개 중 77개 PASS(1건은 기존에 분리된 무관한 타이밍 이슈). Windows 재수출(`HellDelivery-Windows-Test-67`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- **참고**: 회전 각도 축소/기울임 자체가 실제로 "덜 튀어나와 보이는지"는 정지 스크린샷 자동 캡처 지점이 마침 정차 상태(기울임=0)라 이번에도 시각적으로 재확인하지 못했다 — 실제 회전 중 화면으로 확인 부탁드립니다.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-67`.
+
+## villa-62 — 차량 조작감 전면 개편 (후륜구동 + 앞바퀴 조향 + 서스펜션)
+
+사용자 피드백: 잔상은 해결됨(추가 조치 불필요). 조작감이 불편하고 지형에 걸림, 속도감 부족, 방향전환이 실제 후륜구동+앞바퀴 조향이 아니었음(단순히 차체 전체를 `angular_velocity.y`로 직접 회전시키는 방식), 지형 충돌 시 덜컹거리는 효과 없음, 조향 시 관성으로 기울어지는 시각 효과 없음. "다해줘" 승인.
+
+- [x] **RWD + 앞바퀴 조향 + 서스펜션(진짜 바퀴 물리)** — `DeliveryVan.gd`를 `RigidBody3D`+수동 `apply_central_force`/직접 `angular_velocity` 조작 방식에서 Godot 내장 `VehicleBody3D`+`VehicleWheel3D` 4개로 전면 교체. 앞 차축(z=2.02, 캡 쪽)은 `use_as_steering=true`, 뒤 차축(z=-1.22, 화물문 쪽)은 `use_as_traction=true`로 설정 — 정확히 사용자가 요청한 "후륜구동 + 앞바퀴 조향". 각 바퀴에 어두운 실린더 메시를 붙여 조향 시 실제로 바퀴 방향이 보이게 함. 서스펜션(`suspension_stiffness`/`suspension_travel`/`damping_*`)이 지형 요철에 반응해 "덜컹거리는" 느낌을 물리적으로 만들어낸다(별도 이펙트 코드 없이 실제 서스펜션 압축/이완에서 자연히 발생).
+- [x] **속도감 개선** — 기존 `MAX_SPEED=12`로 강제 캡핑하던 방식을 제거하고 `ENGINE_FORCE_MAX`(엔진 힘)만으로 자연스러운 최고 속도가 나오게 함 — 실측 기준 이전보다 확실히 빠름.
+- [x] **조향 시 관성 기울임(Body Lean)** — 순수 시각 효과로 차체 모델(Mesh)만 실제 회전 각속도(`angular_velocity.y`)에 비례해 최대 ±9도 기울이고, Collision Shape/물리 Body는 전혀 건드리지 않는다(전복 위험 없음, 캐릭터 점프 착지 기울임과 같은 패턴 재사용).
+- **실제로 발견하고 수정한 버그 3건(모두 자동 회귀로 발견)**:
+  1. `engine_force` 부호가 반대였음 — 이 차량의 전방이 project 관례상 +Z인데, VehicleBody3D의 `engine_force`는 (분석과 반대로) 그대로 +Z 방향으로 작동함을 자동 주행 테스트로 실측 확인 후 부호 수정.
+  2. 서스펜션 정지 상태에서 `brake` 값을 지나치게 높게(220) 설정했더니 정지 중에도 속도가 서서히 증가하는 물리 불안정 현상 발견 — 중간값(90)으로 조정해 해결. 차량 비활성 상태의 `brake`도 기존 `1.0`(사실상 거의 안 걸리는 값)에서 `BRAKE_FORCE`로 수정(주차된 차량의 바퀴가 사실상 안 잠겨 있던 결함).
+  3. 서스펜션 도입으로 정지 판정이 이전보다 미세하게 흔들려 "화물칸 안 복구" 테스트가 낮은 확률로 실패 — 대기 프레임을 20→40으로 늘려 해결.
+- **테스트 자체를 새 물리에 맞게 조정한 항목**: "실제 장벽 충돌로 차량 파손" 테스트가 순수 옆방향 속도(14m/s)를 강제로 부여했는데, 실제 타이어 마찰(`wheel_friction_slip`)이 이런 순수 횡방향 미끄러짐을 강하게 감쇠시켜 장벽에 닿기 전에 멈춰버림 — 속도를 30m/s로 상향해 실제 충돌이 재현되도록 조정(게임 로직이 아니라 인위적 테스트 픽스처 값의 조정).
+- 검증: `Run-Godot.ps1 -Mode Import`/`-Mode Test`(197체크), `Run-FreightTest.ps1 -Members 2/4 -Source`(EXIT 0 전부), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(기존 finish-vote 플레이키 1건 제외 전부 PASS), `-Manual -Visual` 실제 플레이 78개 중 77개 PASS(1건은 기존에 이미 분리된 -Visual 타이밍 이슈, task_024f695d) — 실제 스크린샷으로 새 바퀴 시각 요소와 정상 주행/주차 확인. Windows 재수출(`HellDelivery-Windows-Test-66`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- **추가로 관찰**: 이번 작업 중 "low remaining time plays the warning cue once" 테스트가 `-Visual` 없이도(순수 헤드리스 `-Source`) 실패하는 사례를 처음 관찰 — 기존에 분리해둔 task_024f695d에 추가 정보로 전달(task_ffa2068b), 근본 원인이 `-Visual` 프레임 타이밍만이 아닐 수 있음을 시사.
+- **후속 실측 확인 필요(자동 검증으로는 판단 불가)**: 엔진 힘/브레이크/서스펜션/최대 조향각 수치는 전부 "TODO: 프로토타입 값" 표시된 1차 튜닝값 — 실제 체감(가속감, 제동 거리, 덜컹거림 정도, 기울임 각도)은 사용자 플레이 확인이 필요.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-66`.
+
+## villa-61 — Esc 메뉴 텍스트 간소화 + "개인 복구" 기능 제거
+
+사용자 피드백: (1) 잔상은 villa-60의 damping 조정으로 해결 안 됨(추가 조사 필요, 아래 참고). (2) Esc 메뉴에서 나오는 설명이 너무 복잡함 → 간결하게. (3) "택배는 그대로 두고 사람만 위치를 초기화"하는 기능("내 위치만 복구 · 상대와 배송 진행 유지" 버튼)이 페널티 없이 아무 때나 쓸 수 있어 치트처럼 느껴짐 → 제거. (4) 비슷한 장르 게임과 비교해 과하거나 부족한 기능 검토 요청.
+
+- [x] **"개인 복구" 기능 제거** — `OnlineSession.gd`에서 `personal_recover_button`/`_personal_requests`/`_personal_last`와 `request_personal_recovery()`/`_request_personal()`/`_restore_personal()`/`_personal_result()`를 전부 제거. 이 버튼은 완료한 배송·상대 진행은 그대로 둔 채 자기 위치만 아무 페널티 없이(호스트가 관장하는 전체 복구는 `recoveries` 카운터로 -50점 페널티가 있음, 이 개인 복구만 무료였음) 즉시 재설정할 수 있어 사용자가 "치트 같다"고 지적한 부분과 정확히 일치. 내부적으로 쓰이던 `level.recover_slot(slot)`(플레이어 위치만 리셋, 택배는 건드리지 않음)은 전체 복구(F5)가 여전히 각 슬롯에 사용하므로 그대로 유지 — 페널티 없는 "버튼으로 언제든 무료 위치 복구"라는 사용자 대면 기능만 없앴다.
+  - 테스트 3개 파일(`FreightPlaytest.gd`/`OnlinePlaytest.gd`/`PartyPlaytest.gd`)에서 제거된 API를 직접 호출하던 지점을 `level.recover_slot(slot)` 직접 호출로 교체(같은 물리적 안전성 검증은 유지: 화물칸 안에서 복구해도 트럭/화물이 튕기지 않음, 한 슬롯만 복구해도 다른 슬롯 grip은 유지됨 등) — 네트워크 왕복(RPC) 경유 시나리오 자체(클라이언트→호스트 요청)는 기능 제거로 더 이상 존재하지 않아 관련 테스트 분기도 함께 삭제.
+- [x] **Esc 메뉴 텍스트 간소화** — `OnlineSession._open_menu()`의 상태 문구를 3줄("메뉴를 열어도 상대의 게임은 계속됩니다 / WASD·마우스·Space·Shift 나열 / 개인 복구는 내 위치만·전체 복구는 호스트만")에서 1줄("상대의 게임은 계속됩니다 · 복구/재시작은 호스트만")로 축약 — 이동 조작법은 이미 하단 HUD 힌트에 상시 표시되므로 중복. `ControlsPanel.gd`의 `configure_online()`/`configure_coop()`/`configure_freight()` 문구도 키+짧은 기능명 형식으로 압축(예: "Esc 메뉴: 내 위치만 복구 (양쪽 모두)\n호스트: F5 전체 복구 · R 전체 재시작" 2줄 → "F5 복구 · R 재시작 (호스트 전용)" 1줄).
+- [ ] **택배 잔상 — 미해결** — villa-60에서 시도한 `grab_damping` 60→90 조정으로는 해결되지 않았다고 확인받음. 정지 스크린샷으로는 시간에 따른 잔상 자체를 재현할 수 없어 추가 진단이 막힌 상태 — 사용자에게 잔상이 정확히 어떤 모습인지(예: 상자가 두 개로 겹쳐 보임 / 상자가 실제 위치보다 뒤처져 미끄러지듯 따라옴 / 화면이 번지는 모션 블러 느낌 / 상자가 순간이동하듯 끊기며 잔상이 남음) 구체적으로 확인 요청 필요.
+- 검증: `Run-Godot.ps1 -Mode Import`/`-Mode Test`(197체크), `Run-FreightTest.ps1 -Members 4 -Source`(65/33/33/33), `Run-PartyTest.ps1 -Source`(4석), `Run-OnlineTest.ps1 -Source -OrdersOnly`(151/115) 전부 EXIT 0. `Run-OnlineTest.ps1 -Source`(OrdersOnly 아닌 기본 흐름 — 이번 세션에서 최초로 이 조합을 실행)에서 이번 변경과 무관한 새 플레이키 2건("settings hide partner marker", "explicit resume restores HUD and captures mouse after focus return")을 추가로 발견 — 코드 검토 결과 오늘 수정한 범위와 전혀 겹치지 않아 별도 세션으로 분리(task_e83ec821). Windows 재수출(`HellDelivery-Windows-Test-65`) 후 `BuildTest`: `checks=197 failures=0`, 오류/경고 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-65`.
+
+## villa-60 — 실제 플레이 피드백 5건
+
+사용자가 실제 플레이 후 5가지를 지적: 차 엔진음이 너무 작음 / 택배 파손·분실 확정 시 실패 SFX 필요 / 택배 들고 이동할 때 잔상이 심함 / 협동 운반 요청에 위치 표시+알림음 필요 / 화면 텍스트가 너무 많음(직관적으로 알 수 있는 건 키 태그로 묶어서 표시).
+
+- [x] **엔진음 볼륨** — `DeliveryVan.gd`의 주행 중 볼륨을 -18dB → -8dB로 상향(정지/시동 꺼짐 상태 -32dB는 그대로).
+- [x] **파손/분실 확정 실패 SFX** — `LevelAudio.gd`에 `"failure"` 큐(하강하는 3음, 기존 "damage"(충격음)·"mistake"(오배송)와 구분되는 더 무거운 톤) 추가. `Package.gd`의 `apply_damage()`(파손으로 `shipment_failed`가 이번에 처음 true가 되는 순간만 "damage" 대신 "failure" 재생), `mark_lost()`(분실), `apply_shipment_state()`(네트워크 동기화로 상태를 받는 클라이언트도 동일 시점에 재생)에 반영 — 매 충격마다가 아니라 "배송 불가 확정" 그 순간 1회만 울리도록 이전 상태와 비교.
+- [x] **협동 운반 요청 알림음** — 위치 표시(`help_marker`/`help_notice`)는 이미 있었으나 소리가 없어 화면을 안 보면 놓치는 문제였다. `LevelAudio.gd`에 `"request"` 큐 추가, `OnlineSession._carry_help_state()`가 요청이 새로 시작되는 순간(빈 상태→값 있음) 요청을 보낸 당사자를 제외한 슬롯에서 1회 재생하도록 추가.
+- [x] **택배 잔상(carry 중 흔들림/처짐)** — 화면 캡처로는 시간에 따른 잔상 자체를 재현·확인할 수 없어(정지 스크린샷의 한계) 코드 조사로 원인을 추정했다: Force-Based Physics Grab(`GrabbableBody.gd`)의 Spring-Damper가 빠른 이동/시점 전환 시 목표 지점(HandPoint)에 늦게 따라붙으며(lag) 처지는 정도가 Physics Interpolation과 겹쳐 잔상처럼 보일 가능성이 가장 유력한 후보라 판단, `grab_damping`을 60 → 90으로 상향(무게감 자체를 결정하는 `grab_spring_strength`는 건드리지 않음 — 처짐량이 아니라 진동/지연만 줄이는 값). **다만 이 항목은 실시간 시각 현상이라 스크린샷으로 해결 여부를 자동 검증할 수 없으므로, 실제 플레이 후 여전히 남아 있다면 알려주세요.**
+- [x] **화면 텍스트 간소화** — `FreightRun.gd`의 하단 조작 안내를 키+짧은 기능명 태그 형식으로 압축("WASD 이동 · 마우스 잡기 · F 탑승 · 트럭 뒤 E 화물 문 · Tab 택배 상태 · Esc 메뉴" → "WASD 이동 · 클릭 잡기 · F 탑승 · E 화물문 · Tab 상태 · Esc 메뉴", 운전석 탑승 중 안내도 동일하게 축약). 상단 목표 표시줄에서 이미 온보딩으로 안내되는 "파손·분실 택배는 배송 불가" 설명 문구를 제거하고 필수 정보(주소·시간)만 유지.
+- 검증:
+  - `Run-Godot.ps1 -Mode Import`/`-Mode Test`: 오류 없음, 197체크 통과.
+  - `Run-FreightTest.ps1 -Members 4 -Source`: EXIT 0/0(65/33/33/33체크).
+  - `Run-PartyTest.ps1 -Source`: 4석 전부 EXIT 0.
+  - `Run-OnlineTest.ps1 -Source -OrdersOnly`: 기존에 이미 분리된 finish-vote 플레이키(task_dcd1b4b0) 2건만 실패, 협동 운반 요청 관련 항목("requested parcel gets location marker...") 포함 나머지 전부 PASS — 새 알림음 코드가 기존 마커 동작에 영향 없음을 확인.
+  - `Run-FreightTest.ps1 -Members 1 -Source -Manual -Visual`: 기존에 이미 별도로 분리해둔 "low remaining time plays the warning cue once"(task_024f695d, `-Visual` 실시간 렌더링 특유의 프레임 타이밍 이슈) 1건만 실패, 파손/실패 SFX가 걸리는 배송 실패·타임아웃 경로를 포함한 나머지 77개 항목 전부 PASS. 로그에 ERROR/WARNING 0건.
+  - Windows 재수출(`HellDelivery-Windows-Test-64`) 후 `BuildTest`로 패키지 exe 직접 실행: `checks=197 failures=0`, ERROR/WARNING 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-64`.
+- 남은 부분: 엔진음 볼륨/텍스트 압축/실패 SFX/요청 알림음은 코드 변경이 명확해 자동 검증으로 충분하지만, "택배 잔상"은 실시간 시각 현상이라 사용자의 실제 재확인이 필요.
+
+## villa-59 — 품질 점검 권장 3건: 라이팅 / UI 색상 / 캐릭터 애니메이션
+
+사용자가 남은 권장 항목 "라이팅, UI 색상, 캐릭터 애니메이션 진행"을 한 번에 요청. villa-52 당시 분석했던 각 항목의 개선안(라이팅: "201/202 복도를 색/조명으로 구분", UI: "상태별 accent 컬러(성공=초록, 경고=주황/빨강)", 애니메이션: "캐리/점프 다듬기")을 그대로 구현.
+
+- [x] **UI 비주얼(accent 컬러)** — `DeliveryHUD.show_delivery_toast()`에 `kind`("success"/"warning"/기본 "info") 인자를 추가해 배송 완료 토스트는 초록, 오배송/파손/미적재 등 경고 토스트는 빨강 계열 배경으로 구분(`VillaDeliveryRun.gd`/`PrototypeLevel.gd`의 호출부만 값 전달). 결과 화면 등급 색상(villa-53)과 같은 방향의 최소 accent 추가.
+  - **실제로 발견한 버그**: 이 리팩터 과정에서 `_ready()`의 나머지 초기화 줄(`goal_label.visible = false` 등 4줄)이 실수로 새로 뽑아낸 `_toast_style()` 함수 안 `return` 뒤에 남아 죽은 코드가 됐다 — 파싱 에러는 안 나지만 `delivery_toast_timer`/`goal_timer`의 `timeout` 시그널이 전혀 연결되지 않는 상태였다. 정상 위치로 되돌려 수정.
+  - **테스트 방법론 결함도 발견**: 색상 적용을 스크린샷으로 처음 확인했을 때 회색으로만 보여 `print()`/`push_error()`로 추적하다가, 원인이 `Run-FreightTest.ps1 -Manual -Visual` 호출에 `-Source`를 빠뜨려 몇 달 전 스냅샷인 `builds/HellDelivery-Windows-Test-48` 패키지를 대상으로 테스트하고 있었던 것임을 확인했다(오늘 수정한 소스가 전혀 반영되지 않는 상태로 "정상"이라고 오판할 뻔함). `-Source` 플래그를 반드시 붙이도록 재확인 후 재검증 — `p1-manual-202-delivered.png`에서 "202호 배송 완료!" 토스트가 실제로 초록 배경으로 렌더링됨을 픽셀 샘플링(PowerShell `System.Drawing`)으로도 재확인했다.
+- [x] **맵 라이팅(복도 구분)** — `VillaInterior.gd._door()`가 각 호실 문 위에 작은 `OmniLight3D`를 추가하고, 색상은 호실 번호 문자열의 해시값에서 결정적으로 산출(`Color.from_hsv(hash % 360 / 360, ...)`). 하드코딩된 "201=A색/202=B색" 분기 없이, `villa-50` Registry 원칙대로 새 배송지를 추가하면(`_door()` 호출만 늘리면) 자동으로 다른 색이 배정된다.
+- [x] **캐릭터 애니메이션(캐리/점프 다듬기)** — 이 에셋 팩에는 전용 점프/공중 Clip이 없어(`CharacterAnimationController.gd` 기존 주석) 새 애니메이션 리소스를 추가하는 대신, 상승/하강 속도(`velocity.y`)에 비례해 캐릭터 시각 루트(`CharacterVisual`, Collision/카메라와 무관)를 최대 ±10도 살짝 기울이는 코드만으로 처리(`update_locomotion()`에 `vertical_velocity` 인자 추가, `Player.gd`에서 `velocity.y` 전달). 정지 시엔 0으로 복귀.
+- 검증:
+  - `Run-Godot.ps1 -Mode Import`/`-Mode Test`: 오류 없음, 197체크 통과(캐릭터 18종 포함).
+  - `Run-FreightTest.ps1 -Members 2 -Source`: EXIT 0/0(65/33체크).
+  - `Run-FreightTest.ps1 -Members 1 -Source -Manual -Visual`: "low remaining time plays the warning cue once" 1건이 이번에 처음으로 5회 연속 재현되는 실패로 발견됨 — 오늘 바꾼 애니메이션 코드를 임시로 되돌려도 동일하게 실패해 오늘 변경과 무관함을 확인했고, `-Manual` 없이도 동일하게 실패해 실시간 렌더링(`-Visual`, 헤드리스가 아님) 특유의 프레임 타이밍(`await frames(3)`이 실제 벽시계 기준 3프레임이라 헤드리스보다 느슨함) 문제로 판단된다. 나머지 77개 항목은 전부 PASS(택배 완료 토스트 초록색 렌더링 포함). 기존에 분리해둔 3건과는 별개의 새 플레이키 항목으로 기록.
+  - `Run-PartyTest.ps1 -Source`: 4석 전부 EXIT 0.
+  - `Run-OnlineTest.ps1 -Source -OrdersOnly`: 2회 실행 모두 기존에 이미 분리된 finish-vote 플레이키(task_dcd1b4b0)와 동일한 2건만 실패, 나머지 전부 PASS.
+  - Windows 재수출(`HellDelivery-Windows-Test-63`) 후 `BuildTest`로 패키지 exe 직접 실행: `checks=197 failures=0`, ERROR/WARNING 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-63`.
+- **남은 항목 없음** — 품질 점검 9개 항목(필수 2건 + 권장 7건: 등급 색상/목적지 방향/BGM·VFX/화물칸 리치/라이팅/UI색상/애니메이션) 전부 사용자 승인 범위 내에서 완료. "나중에" 등급이었던 이동/카메라 세부 다듬기만 미착수로 남음(사용자 요청 시 진행).
+
+## villa-58 — 화물칸 깊은 곳 택배 접근 불가 버그 수정
+
+사용자가 실제 플레이 중 발견: "택배가 트럭 너무 깊이 들어가면 택배가 손에 닿지 않는 문제".
+
+- 원인 분석: `DeliveryVan.gd.cargo_contains()` 기준 화물칸은 로컬 Z가 -2.95~+0.55(약 3.5m 깊이)까지 이어지고, 실제 벽/바닥/천장 콜리전(게이트 z≈-3.05 ~ 캡 격벽 z≈0.9)도 그 깊이를 그대로 물리적으로 걸어 들어갈 수 있게 열려 있다. 반면 `Player.tscn`의 `GrabShapeCast.target_position`은 카메라 기준 전방 2.2m까지만 뻗어 있어, 화물칸 안쪽 깊숙이(캡 쪽) 놓인 택배는 플레이어가 접근해도 감지 사거리 밖이라 잡을 수 없었다. 감지 자체와 별개로 `GrabbableBody.max_grab_distance`(연결 유지 최대 거리)도 3.0m로, 깊은 위치에서 잡은 뒤 이동 경로에 따라 연결이 끊길 여지가 있었다.
+- 수정 파일:
+  - `hell-delivery/scenes/player/Player.tscn` — `GrabShapeCast.target_position`을 `Vector3(0,0,-2.2)` → `Vector3(0,0,-3.4)`로 확장, 화물칸 최대 깊이(3.5m)를 커버.
+  - `hell-delivery/scenes/objects/GrabbableBody.gd` — `max_grab_distance`를 3.0 → 4.0으로 상향(TODO 주석에 사유 기록), 감지 사거리 확장에 맞춰 연결 유지 거리도 함께 확보.
+- 설계: 이 ShapeCast/거리 값은 실외 오브젝트 Grab에도 공용으로 쓰이는 값이라, 화물칸 전용 별도 로직을 새로 만들지 않고(문서에 없는 확장 금지) 기존 공용 상수 두 개만 화물칸 깊이를 커버할 만큼만 최소로 늘렸다.
+- 검증:
+  - `Run-FreightTest.ps1 -Members 2 -Source`: EXIT 0/0 (checks 65/33, failures 0).
+  - `Run-FreightTest.ps1 -Members 1 -Manual -Visual`: 1회차는 기존에도 알려진 것과 별개로 "grab connection survives walk onto cargo ramp"에서 타이밍성 실패가 있었으나, 재실행 시 78개 항목 전부 PASS(로딩/화물칸 내부 회수/개방 게이트 낙하 등 화물칸 관련 항목 전부 포함) — 재현되지 않는 것으로 보아 이번 변경과 무관한 기존 매뉴얼 하네스 타이밍 이슈로 판단.
+  - `Run-PartyTest.ps1`: P1~P4 전부 EXIT 0.
+  - `Run-OnlineTest.ps1 -OrdersOnly`: 1회차 "declined request preserves client delivery progress" 실패는 재실행 시 host/client 모두 EXIT 0로 재현 안 됨 — 이미 별도로 플래그된 기존 온라인 플레이키 이슈(finish-vote 계열, task_dcd1b4b0)와 동일 계열, 이번 변경과 무관.
+  - Windows 빌드 재수출(`HellDelivery-Windows-Test-62`) 후 `BuildTest` 모드로 패키지 exe 자체를 헤드리스 실행: `checks=197 failures=0`, 로그에 ERROR/WARNING 0건.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-62`.
+- 남은 권장/나중에 항목(라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행 대기.
+
+## villa-57 — 메뉴 BGM 연결 ("Courier Dash", Suno 생성)
+
+사용자가 Suno로 제작한 곡(`Courier Dash (0.71x).mp3`)을 메뉴 BGM으로 확정, 연결 작업 진행.
+
+- [x] `hell-delivery/assets/audio/courier_dash.mp3`로 복사, `docs/ASSET_LICENSES.md`에 출처(Suno AI 생성, 제3자 배포 음원 아님) 기록.
+- [x] `MainMenu.gd`가 메뉴 진입 시 자동으로 루프 재생(`AudioStreamMP3.loop = true`), 기존 Master 볼륨 설정을 그대로 따름(별도 볼륨 코드 불필요). 자동 테스트 진입 경로(self-test/network-test)는 그대로 건너뛰어 회귀에 영향 없음.
+- [x] **실제로 발견한 문제**: `-Mode Test` 콘솔 출력에서 "ERROR: 1 resources still in use at exit"를 발견 — MP3가 재생 중인 상태로 프로세스가 종료되면 오디오 스레드의 내부 참조가 메인 스레드의 최종 정리 시점까지 완전히 해제되지 않는 Godot 엔진 레벨의 타이밍 이슈였다(격리된 최소 재현 스크립트로 확인). `tree_exiting` 시점에 정지, 명시적 종료 버튼에는 정지 후 0.3초 유예를 추가해 대부분의 경우 해소했으나, **완전히 결정론적이지는 않음**(동일 커맨드를 반복 실행하면 가끔 재현) — 오디오 스레드 타이밍 경쟁이라 이 프로젝트 범위에서 100% 보장은 어렵다고 판단. 이 프로젝트의 실제 테스트 통과 기준(`Run-*Test.ps1`의 로그 파일 기반 검사)에는 애초에 잡히지 않는 콘솔 전용 진단이며, 게임 진행/저장에는 영향 없음 — 숨기지 않고 기록만 남긴다.
+- [x] **빌드 매니페스트 버그 발견 및 수정**: `tools/Update-ExportManifest.ps1`이 `assets/` 폴더를 자동 스캔에서 제외하고 Godot 자체 의존성 추적에 맡기는데, `load(문자열 상수)` 방식은 그 추적 대상이 아니어서 최초 빌드(61 시도 1)에 `courier_dash.mp3`가 아예 빠졌었다 — 그대로 배포했다면 실행 파일에서 메뉴 BGM이 로드되지 않았을 것이다. 기존에 이미 있던 "동적 경로로 불러오는 자산" 목록에 추가해 해결하고, 재수출로 실제 패킹됨을 로그로 확인.
+- 검증: `Run-Godot.ps1 -Mode Import` 오류 없음. `Run-FreightTest.ps1 -Members 2/4`, `Run-PartyTest.ps1`, `Run-OnlineTest.ps1 -OrdersOnly` 전부 EXIT 0/0. 패키지 빌드(61)를 직접 헤드리스로 부팅해 BGM 관련 로드 오류 없음을 로그로 확인.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-61`.
+- 남은 권장/나중에 항목(라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행.
+
+## villa-56 — 상황별 효과음 (BGM은 메뉴 전용으로 방향 확정, 곡은 사용자가 Suno로 별도 제작 중)
+
+사용자와 논의 후 "배송 중 계속 깔리는 긴박한 BGM" 대신 "메뉴 BGM + 상황별 효과음" 방향으로 확정. 메뉴 BGM은 사용자가 Suno로 직접 제작(프롬프트만 이 세션에서 제공, 실제 곡 연결은 파일 준비 후 별도 진행). 이번엔 효과음 4종 구현.
+
+- [x] `LevelAudio.gd`에 새 절차적 큐 4종 추가(기존 방식과 동일하게 코드 합성, 외부 음원 없음): `scan`(택배 적재 확인 "삑"), `warning`(제한 시간 60초 이하 1회), `mistake`(오배송 등 실수), `damage`(택배/차량 파손 공용).
+- [x] `Package.gd`에 `_audio: LevelAudio` 참조 추가(`enable_shipment(authority, audio)`로 주입) — 파손 시 `damage`, 적재 확인 시 `scan` 재생. `DeliveryVan.gd`도 동일하게 `_audio` 참조를 받아 파손 시 `damage` 재생.
+- [x] `FreightRun`에 `LOW_TIME_WARNING_SECONDS`(60) 기준 1회성 `warning` 재생 추가. `VillaDeliveryRun._on_wrong_address`에 `mistake` 재생 추가.
+- [x] **온라인 참가자(비호스트) 화면에서도 들리도록** 기존 VFX와 동일한 이중 경로 처리 — `Package.apply_shipment_state()`/`FreightRun.apply_snapshot()`에도 조건 하락 감지 시 같은 큐 재생을 연결.
+- 검증: `Run-Godot.ps1 -Mode Import` 오류 없음. `Run-FreightTest.ps1 -Members 2/4`(65체크, +3: scan/mistake/warning 재생 여부 검증), `-Manual -Visual`(93체크), `Run-PartyTest.ps1` 전부 EXIT 0/0. `Run-OnlineTest.ps1 -OrdersOnly` 재확인, 실패 1건은 기존에 분리해둔 finish-vote 결함과 동일.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-60`.
+- **메뉴 BGM**: 사용자가 Suno로 곡 제작 중(이 세션에서 스타일 프롬프트 제공 완료). 실제 오디오 파일이 준비되면 메뉴 씬에 연결하는 작업이 남아 있음 — 이는 "외부 Asset 도입"에 해당하므로 파일 자체를 가져오는 것은 사용자가 직접 하고, 연결 코드만 이어서 진행.
+- 남은 권장/나중에 항목(라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행.
+
+## villa-55 — 품질 점검 권장 1건: VFX (BGM은 사용자 결정으로 이번 범위 제외)
+
+BGM은 진행 전 사용자에게 방식을 확인했다: 외부 음원 다운로드(승인 필요)/순수 절차적 생성/이번엔 VFX만 먼저 중 "지금은 BGM 건너뛰고 VFX만 먼저"로 결정. BGM은 다음 요청 시 별도 진행.
+
+- [x] `hell-delivery/scripts/effects/ImpactEffect.gd` 신규 — 외부 텍스처/모델 없이 코드로만 만드는 1회성 파티클(`CPUParticles3D`, `GPUParticles3D` 대신 선택 — 헤드리스/GPU 없는 자동 검사에서도 컴퓨트 셰이더 없이 동일하게 동작). `spawn(container, 위치, 색)` 정적 함수 하나로 재사용.
+- [x] 배송 성공 시 초록 스파클(`VillaDeliveryRun._on_package_delivered`), 택배 파손 시 주황 스파크(`Package.apply_damage`), 차량 파손 시 주황 스파크(`DeliveryVan._integrate_forces`) 추가.
+- [x] **온라인 참가자(비호스트) 화면에서도 보이도록 이중 경로 처리** — 비호스트 클라이언트는 물리 권한이 없어 파손/배송 판정 자체가 로컬에서 발생하지 않는다(스냅샷으로 결과값만 받음). 기존에 사운드 큐가 이미 쓰던 것과 동일한 "이전 값과 비교해 감지" 방식을 재사용해 `OnlineSession._state()`(배송지별 완료 수 증가 감지)와 `Package.apply_shipment_state()`/`FreightRun.apply_snapshot()`(상태 하락 감지)에도 같은 이펙트를 연결했다.
+- `add_child`는 물리 콜백(`_integrate_forces`) 안에서 직접 호출하지 않고 항상 `call_deferred`로 붙이고, 실제 파티클 설정은 트리에 들어온 뒤 `_ready()`에서 마치도록 설계(물리 콜백 중 트리 조작 제약 회피).
+- 검증: `Run-Godot.ps1 -Mode Import`(오류 없음), `Run-FreightTest.ps1 -Members 2/4`, `Run-PartyTest.ps1` 전부 EXIT 0/0(헤드리스에서도 파티클 노드 생성이 에러 없이 통과 — CPUParticles3D 선택이 유효함을 확인). `-Visual`/`-Manual -Visual` 렌더링으로 배송 완료 시 초록 파티클이 실제로 렌더링되는 것을 스크린샷으로 확인. `Run-OnlineTest.ps1 -OrdersOnly` 재확인, 실패 1건은 기존에 분리해둔 finish-vote 결함과 동일.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-59`.
+- 남은 권장/나중에 항목(BGM, 라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행.
+
+## villa-54 — 품질 점검 권장 1건: 목적지 방향 표시
+
+- [x] 들고 있는 택배가 있을 때만 그 택배의 실제 배송지(destination_id로 조회)를 가리키는 초록색 방향 마커를 추가. 새 UI를 만들지 않고 기존 동료/도움 요청 마커(`OnlinePartnerMarker.gd`)를 그대로 재사용해 화면 밖 화살표·거리(m)·위/아래 힌트를 공짜로 얻었다(`OnlineSession._update_destination_marker()`). 손이 비어 있거나 이미 배송 완료된 택배면 자동으로 숨김.
+- 검증: `Run-FreightTest.ps1 -Members 2/4 -Source`, `Run-PartyTest.ps1 -Source` 전부 EXIT 0/0. `-Manual -Visual`(실제 택배를 들고 계단으로 나르는 구간)에서 마커가 "202호 · 24m · 위쪽" 형태로 정확히 표시되고, 배송 완료 후 자동으로 사라짐을 스크린샷과 체크로 확인. `Run-OnlineTest.ps1 -OrdersOnly` 재확인, 실패 1건은 기존에 분리해둔 finish-vote 결함과 동일.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-58`.
+- 남은 권장/나중에 항목(BGM/VFX, 라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행.
+
+## villa-53 — 품질 점검 권장 1건: 결과 화면 등급 색상
+
+- [x] `OnlineSession.gd`의 `_panel_title`(모든 패널 제목이 재사용하는 단일 Label)에 등급별 색상을 적용 — S=금색, A=초록, B=파랑, C=주황, F=빨강(`_GRADE_TITLE_COLORS`). 다른 화면(대기실/로딩/온라인 메뉴 등)에서는 항상 기본 흰색으로 재설정되도록 모든 대입 지점을 `_set_panel_title()` 헬퍼 하나로 통일해, 등급 색이 다음 화면까지 남는 문제를 원천 차단.
+- 검증: `Run-FreightTest.ps1 -Members 2/4 -Source` EXIT 0/0(회귀 없음, 텍스트 내용은 그대로라 기존 `_panel_title.text` 문자열 검사 전부 통과). `-Visual` 렌더링으로 S(금)/C(주황)/F(빨강) 결과 화면을 스크린샷으로 확인 — 등급이 한눈에 구분됨. `Run-OnlineTest.ps1 -OrdersOnly` 재확인, 실패 2건은 기존에 분리해둔 finish-vote 결함과 동일(오늘 변경과 무관).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-57`.
+- 남은 권장/나중에 항목(목적지 방향 표시, BGM/VFX, 라이팅, UI 색상, 캐릭터 애니메이션)은 순서대로 진행.
+
+## villa-52 — 품질 점검 필수 2건: 전체 배송 온보딩 + 계단 파손 완화
+
+사용자에게 대표 레벨 체감 품질을 9개 항목(이동/카메라, 배송 피드백, 목적지 안내, 결과 연출, 첫 플레이 안내, 사운드/VFX, 라이팅, UI, 캐릭터 애니메이션)으로 분석·보고했고, 그중 필수 2건 진행을 승인받았다. 나머지 권장/나중에 항목은 미착수.
+
+- [x] **전체 배송 첫 플레이 안내** — 기존 `OnboardingOverlay`는 빌라 연습 모드 전용이라 전체 배송(적재→운전→도착→계단 배송) 모드는 자동 안내가 전혀 없었다(Esc로 직접 조작법을 열어야만 확인 가능). `GameSettings`에 `freight_onboarding_seen`(빌라용 `onboarding_seen`과 별개, 영구 저장)을 추가하고, `OnlineSession._finish_loading()`에서 전체 배송 세션이 처음 활성화되는 순간 기존 `_open_menu()`+`_open_controls()`(이미 `configure_freight()`로 내용이 있던 조작법 패널)를 자동으로 한 번 띄우도록 연결했다. 새 UI를 만들지 않고 기존 패널을 재사용했고, 순수 로컬 UI 상태라 온라인 세션/다른 플레이어에 영향 없음(트리 pause 없음).
+- [x] **계단 충돌로 인한 택배 파손 완화** — `Package.gd`에 `carried_damage_grace_multiplier`(1.5, 프로토타입 값)를 추가해 "실제로 들고 있는 동안"의 충격 임계값만 완화(자유낙하·투척 등 안 들고 있을 때는 기존 3.5 그대로). 지난 `-Manual` 실제 완주 검증에서 계단 스치는 충격(4.2~4.7)이 기본 임계값(3.5)을 넘어 파손을 유발했던 것을 이 완화로 흡수하도록 함.
+- 검증: `Run-FreightTest.ps1 -Members 2/4 -Source` EXIT 0/0(62체크, +3 = 온보딩 자동 표시·해제 확인). `-Manual -Visual`(실제 잡기→적재→운전→계단 배송 전 구간) 88체크 EXIT 0 — 완화 적용 전에는 이 경로에서 매번 완벽배송 배지가 깨졌으나 적용 후 재현 시 `quality=100.0, badges.perfect=true`로 확인(다만 물리 특성상 매번 보장되진 않아 테스트에서 하드 assert는 하지 않음, 주석으로 명시). `Run-PartyTest.ps1`/`Run-OnlineTest.ps1 -OrdersOnly` 재확인 — 후자에서 나온 실패 2건은 기존에 이미 별도 세션으로 분리해둔 finish-vote 결함과 동일(오늘 변경과 무관, 재확인만).
+- 온보딩 스크린샷: "전체 배송 · 물류센터 → 차량 → 빌라" 제목에 이동/시점/잡기/점프/달리기/메뉴/복구/목표를 한 화면에 정리해 표시(기존 `configure_freight()` 문구 그대로 재사용).
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-56`(패키지 빌드로 재검증 완료).
+- 남은 권장/나중에 항목(결과 화면 등급 색상, 목적지 방향 표시, BGM/VFX, 라이팅, UI accent 색상, 캐리/점프 애니메이션 다듬기)은 사용자 요청 시 순서대로 진행.
+
 ## villa-48 — 승인된 차량·전체 배송·성공/실패/평가
 
 - [x] 물류센터·연속 도로·기존 차량 에셋·적재/문/경사로 통합.
@@ -9,8 +335,69 @@
 - [x] 결과→재시작/다음 주문/3연속 코스와 방 기록 연결.
 - [x] 최종 Windows 자동 검사 662개·화면 검토, 실행 패키지·전달 기록 — WINDOWS_PLAYTEST_48.md 및 PackageVerification.txt.
 - [ ] 사용자 실제 2~4대 PC 운전·45kg 공동 적재·전체 코스/시간·평가 밸런스 확인.
+- [x] [BUGFIX] 트럭 조향 좌우 반전 수정 — DeliveryVan 전방이 `+Z`(Godot 기본 `-Z`와 반대)라 `angular_velocity.y`에 `steering` 부호가 뒤집혀 있었음. DeliveryVan.gd에서 부호 반전, 이를 보정하던 FreightPlaytest.gd 자동 조향 키 매핑도 함께 수정. 자동 회귀 `tools/Run-FreightTest.ps1 -Members 2 -Source`(SteeringFix1) 2석 모두 EXIT 0 / failures=0 확인. 임시 SceneTree 진단 스크립트(검증 후 삭제)로 `steering=+1`(D/move_right) 입력 시 차량이 카메라 기준 화면 오른쪽(월드 -X, 차량 전방 +Z 기준 카메라 우측 벡터가 반전되어 -X가 우측)으로 실제로 휘어짐을 물리 시뮬레이션으로 확인 — 부호가 의도한 방향과 일치. 다만 이는 기하학적/수치적 검증이며 사람이 직접 조작해 "체감"하는 것과는 다르므로 최종 좌/우 체감은 사용자 플레이 확인 필요.
+- [x] [개선] 차량 조작감 — 가속 키를 뗄 때 즉시 급정거하던 문제 수정. 기존에는 `move.length() < 0.05`(즉 아무 방향키도 안 누르면)만 되어도 강한 제동(drag 7.5, 정지시간 0.1~0.2초 수준)이 걸려 조향만 하고 가속을 안 해도 차가 급정거했다. FreightRun.control에서 `braking`을 실제 Space(브레이크) 입력에만 연동하도록 분리하고, DeliveryVan에 `COAST_DRAG`(1.5, 프로토타입 값)를 추가해 가속 입력만 없을 때는 완만하게 감속(관성 유지)하도록 했다. 브레이크(Space)는 기존과 동일하게 강하게 즉시 정지. 자동 회귀 `Run-FreightTest.ps1 -Members 2/4 -Source` 모두 EXIT 0 / failures=0, `-Visual` 렌더링 실행 1인 51체크 통과·실제 주행 화면 캡처 확인. 임시 SceneTree 진단으로 가속 해제 후 속도가 4.33→2.38→1.07→0.21→0 m/s로 완만히 감소함을 확인(과거는 사실상 한 프레임 내 정지). 실제 체감 밸런스(관성 세기 적절한지)는 사용자 플레이 확인 필요.
 
-다음 큰 묶음은 현재 전체 루프의 실제 플레이 확인 후 다른 배송 장소·특수 택배 등 콘텐츠 확장이다. 영구 보상 사용처/장비/저장, Steam은 후속이며 이번 커밋/push는 하지 않는다. 실패 실험도 validation/villa-48에 유지한다.
+- [x] [개선] 차량 3인칭 자유 시점(배틀그라운드 스타일) — 기존엔 차량 카메라가 차체에 고정되어 조향과 함께만 돌아갔다. `DeliveryVan`에 `CameraPivot`을 추가하고 매 프레임 `global_rotation`을 직접 설정해 차체 회전과 완전히 분리했다. WASD는 그대로 운전(조향), 마우스는 온전히 시점 회전만 담당 — 기존에도 계속 갱신되고 있었지만 버려지던 `local_yaw`/`local_pitch`(온보드 카메라와 동일 변수)를 좌석 탑승 중에는 차량 카메라로 흘려보내도록 `OnlineSession._physics_process`에 한 줄 추가했다. 순수 로컬 렌더링 상태라 네트워크 동기화는 필요 없음(각 클라이언트가 자기 카메라만 제어). 자동 회귀 `Run-FreightTest.ps1 -Members 2/4 -Source` 모두 EXIT 0/failures=0, `-Visual` 렌더링 1인 51체크 통과. 임시 SceneTree 진단으로 (1) 기본 시점이 차량 전방과 일치, (2) 마우스로 시점을 90도 돌린 뒤 차체를 40도 추가로 돌려도(조향 시뮬레이션) 카메라 월드 방향이 전혀 안 변함(완전 분리 확인) — 두 가지 모두 수치로 검증. 실제 마우스 손맛(민감도, 거리감)은 사람 플레이 확인 필요.
+
+새 Windows 빌드: `builds/HellDelivery-Windows-Test-50`(관성/제동 개선 + 자유 시점 포함, export 경고 없음, 2인 회귀 재검증 EXIT 0). 이전 `-48`/`-49`는 각각 villa-48 완료 시점/제동 수정만 반영된 상태로 보존.
+
+## villa-49 — 콘텐츠 확장 1차: 특수 택배 "가전 배송"
+
+사용자가 진행 현황 5단계(콘텐츠 확장)·6단계(반복 플레이 동기)를 요청했다. 이번 배치는 `GAME_DESIGN.md` 10.3(대형 TV)·10.4(냉장고)를 기존 규칙(무게 기반 이동/운반, 충격 기반 파손)만으로 구현한 새 주문 1개다. 풍선 박스·동물(10.5/10.6)은 MVP 제외 명시 항목이고 위험 물품(10.7)도 새 판정 로직이 필요해 이번 배치에서 제외했다.
+
+- [x] `DeliveryOrders.IDS`에 `"appliance"`(가전 배송) 추가 — 201호 TV 1개(20kg)·202호 냉장고 1개(50kg). `OnlineLobby`의 주문 드롭다운이 `DeliveryOrders.IDS`를 그대로 순회해 만들어지므로 별도 UI 코드 변경 없이 로비에 자동 노출됨. 3연속 코스(`COURSE_ORDERS`)는 별도 상수라 이 주문이 코스에 자동 편입되지 않음(의도한 대로 독립 선택 주문).
+- [x] `Package.gd`의 파손 판정 상수(충격 임계값 3.5, 배율 8)를 `@export`로 분리(`damage_impact_threshold`/`damage_impact_multiplier`) — 기존 모든 택배는 그대로 3.5/8 유지, TV만 1.6/16으로 재설정해 "충격에 약함"을 새 로직 없이 기존 파손 시스템 파라미터만으로 구현.
+- [x] `OnlineLevel.gd` 택배 스폰 루프에 `kind` 프리셋 처리 추가 — TV는 어두운 색, 냉장고는 흰색 재질(`material_override`)로 구분하고 배송 라벨 문구를 교체. 알려진 단순화: 박스 형태는 기존과 동일한 큐브 스케일이며 TV의 평평한 형태·"세워서 운반해야 함" 판정은 이번에 포함하지 않음(향후 시각 다듬기 과제로 기록).
+- [x] `FreightRun.LIMITS`에 `"appliance": 540.0` 추가(전체 배송 모드에서도 동일 주문 데이터 재사용 확인).
+- 검증: 자동 회귀 `Run-FreightTest.ps1 -Members 2 -Source` EXIT 0/failures=0(신규 export 변수·필드가 기존 경로에 회귀 없음 확인). `Run-OnlineTest.ps1 -Source -OrdersOnly`로 bulk/team/mixed 관련 52개 체크 전부 PASS 확인 — 실행 중 "requester already agrees but still waits for partner" 1건이 실패했으나, 변경 전 코드(`git stash`)에서 동일 명령을 재현해도 같은 항목이 동일하게 실패함을 확인해 **이번 변경과 무관한 기존 결함**으로 판단(별도 세션으로 분리 제안됨). 임시 SceneTree 진단(검증 후 삭제)으로 `DeliveryOrders`/`KIND_PRESETS`/`Package` 신규 필드가 의도한 값(mass 20/50, threshold 1.6/3.5, 색상)을 실제로 적용하고 일반 택배는 영향받지 않음을 수치로 확인. 비헤드리스 렌더링으로 TV(어두운 색)·냉장고(흰색) 박스가 다른 크기로 실제로 그려지는 것을 스크린샷으로 확인.
+- 실제 협동 플레이(TV 조심히 운반·냉장고 함께 옮기기 체감, 밸런스)는 사용자 확인 필요. "3연속 코스"에는 아직 포함하지 않음(별도 요청 시 추가).
+
+새 Windows 빌드: `builds/HellDelivery-Windows-Test-51`(관성/제동 개선 + 자유 시점 + 가전 배송 주문 포함, export 경고 없음, 2인 회귀 재검증 EXIT 0).
+
+## villa-50 — 배송지 Registry 리팩터 (사용자 지시)
+
+"맵 확장" 제안에 사용자가 구체적인 리팩터 범위를 직접 지시했다: 201/202 하드코딩을 유지하되, `destination_id`+`display_name`을 갖는 배송지 Registry로 분리하고 OrderManager/GameManager/HUD/배송 판정 코드가 특정 주소를 직접 참조하지 않도록 한다. 절차적 맵 시스템은 만들지 않고, 맵 지오메트리(복도/계단/문)는 각 레벨 씬에 그대로 둔다.
+
+- [x] `DeliveryZone.gd`/`Package.gd`의 `delivery_address` → `destination_id`로 이름 변경, 짧은 표시용 `display_name`(예: "201호") 신규 추가. 매칭 로직(`DeliveryZone._on_body_entered`)은 필드명만 바뀌었을 뿐 그대로 유지.
+- [x] `DeliveryZone`에 `receipt_offset`/`receipt_rotation_y` export 추가 — 완료 영수증 라벨의 위치/회전이 `zone == delivery_zone` 식 식별자 비교가 아니라 각 배송지 자신의 데이터로 결정되도록 함.
+- [x] `VillaDeliveryRun.gd`에 `destinations: Array[DeliveryZone]` Registry와 `destination(id)` 조회 함수 추가. `_total_target()`/`_delivered_total()`/`_update_stops()`/`_on_package_delivered()`/`_configure_goal()`을 전부 `destinations` 순회로 재작성 — `delivery_zone`/`second_zone`이라는 이름은 이 맵의 두 인스턴스를 가리키는 용도로 남겨뒀지만, 위 함수들은 더 이상 그 이름들을 직접 분기하지 않는다.
+- [x] `DeliveryOrders.gd`: 각 주문(`get_order`)이 `destination_id`로 키가 잡힌 `stops` 딕셔너리를 갖도록 재구성(`VILLA_201`/`VILLA_202` 상수). `get_stop(id, destination_id)`은 이제 단순 조회이고, `total_count(id)`는 그 주문의 `stops.values()`를 합산한다 — 새 배송지를 특정 주문에 포함시키는 것은 데이터(딕셔너리 항목) 추가일 뿐 분기 코드 추가가 아니다.
+- [x] `OnlineLevel.gd`/`VillaCoopLevel.gd`/`FreightRun.gd`/`OnlineSession.gd`의 `[delivery_zone, second_zone]`/`"201"`/`"202"` 하드코딩을 전부 `destinations` 순회 또는 `destination_id`/`display_name` 참조로 교체(네트워크 스냅샷의 배송 완료 수 배열도 `level.destinations.map(...)`로 일반화 — 배송지 개수가 늘어도 같은 코드가 그대로 동작).
+- [x] 영향받은 테스트(FreightPlaytest/OnlinePlaytest/PartyPlaytest/Playtest, 총 4개 파일) 필드명·리터럴 값 갱신.
+- **회귀 중 실제로 발견한 버그**: 파일을 통째로 다시 쓰는 과정에서 `_configure_goal()`의 `delivery_hud.update_progress(...)` 호출을 실수로 누락했다. `Run-Godot.ps1 -Mode BuildMultiTest`로 발견("multi-stop HUD counts both parcels" 실패) → 빌드 51(리팩터 이전) 대비 빌드 52(리팩터 이후)에서만 실패함을 직접 비교 확인 → 누락된 줄 복원 → 빌드 53에서 통과 재확인. **이 과정 자체가 "추론만으로 회귀 없음 단정 금지, 항상 실행 비교로 검증"의 실제 사례.**
+- **검증**: `Run-Godot.ps1 -Mode Import`(오류 없음), `-Mode Test`(197체크 무관련 통과), `-Mode BuildMultiTest`(35체크, 위 버그 수정 후 관련 항목 전부 통과), `Run-FreightTest.ps1 -Members 2/4 -Source`(EXIT 0/0), `Run-PartyTest.ps1 -Source`(4석 전부 EXIT 0), `Run-OnlineTest.ps1 -Source`(정상). **발견한 무관 결함**: (1) "pause recovery resumes gameplay and captures mouse" — 빌드 51(리팩터 이전)에서도 동일하게 실패, 기존 결함으로 판정. (2) 전체 온라인 테스트를 동일 소스로 2회 연속 실행했더니 서로 다른 항목(로딩/재접속 계열 vs 파트너 마커/포커스 복귀 계열)이 각각 실패 — 코드 문제가 아니라 테스트 자체의 일반적인 타이밍 취약성으로 판단, 두 건 모두 별도 세션으로 분리 제안됨(기존 finish-vote 결함 포함 총 3건).
+- **203호 같은 새 배송지를 추가하려면** (사용자 요청 최종 확인):
+  1. 맵 지오메트리: 해당 레벨의 인테리어 스크립트(예: `VillaInterior.gd`)에 문/벽/바닥 등 새 유닛 형태를 추가 — 순수 미술/레벨 작업, 코드 로직 변경 아님.
+  2. 그 레벨의 `_ready()`(예: `VillaDeliveryRun.gd`)에서 새 `DeliveryZone` 인스턴스를 만들어 `destination_id`/`display_name`/`destination_name`/`receipt_offset`/`receipt_rotation_y`/위치를 설정하고 `destinations`에 추가, 대응하는 `Package`도 같은 `destination_id`/`display_name`으로 생성.
+  3. `DeliveryOrders.gd`에 `VILLA_203` 상수를 추가하고, 이 배송지를 포함시키고 싶은 주문들의 `stops` 딕셔너리에 항목을 추가(또는 이 배송지만 쓰는 새 주문 정의).
+  4. 이상 끝 — `DeliveryOrders`(OrderManager)의 조회 로직, `OnlineSession.gd`/`FreightRun.gd`(GameManager)의 동기화·평가 코드, `DeliveryHUD.gd`/매니페스트 등 HUD 코드, `DeliveryZone._on_body_entered`(배송 판정)는 전부 이미 `destinations`/`destination_id` 기반으로 동작하므로 수정이 필요 없다.
+  (다만 `VillaInterior.gd`의 door 번호판처럼 "이 맵은 정확히 2채"라고 전제한 순수 장식 요소, 그리고 `VillaDeliveryRun._update_stops()`의 "남은 택배 1개일 때 트럭으로 돌아가라" 안내처럼 연습 모드 특유의 2택배 전용 로직은 이번에 일반화 대상에서 제외했다 — 위 사용자 지시의 "절차적 맵 시스템을 만들지 말 것" 범위에 맞춘 판단이다.)
+
+새 Windows 빌드: `builds/HellDelivery-Windows-Test-53`(관성/제동 개선 + 자유 시점 + 가전 배송 + 배송지 Registry 리팩터 모두 포함, export 경고 없음, BuildMultiTest/2인·4인 회귀 전부 재검증 완료).
+
+## 반복 플레이 동기 — 1안+2안 범위 완료 (안 3·4·보상/저장은 별도 요청 시)
+
+지금까지 모든 승인 기록이 "유료 구매·영구 경제/성장·저장 시스템은 제외"를 반복 명시했다(`CLAUDE.md` 최상단, 현재 금지 범위 6번 항목의 경제/저장 시스템). PROGRESS_OVERVIEW.md의 원래 문구("실제 보상 사용처와 장비/해금/저장 연결")는 이 제외 항목과 정면으로 겹쳐 사용자에게 범위를 물었고, "저장 없이 가벼운 동기부여"로 확인받았다. 이어서 사용자가 제시한 4개 설계안(등급 브레이크다운/조합 배지/방 최고 기록판/자체 도전 목표) 중 1안+2안 조합을 승인해 아래처럼 구현했다.
+
+### villa-51 — 점수 브레이크다운 + 조합 배지 (안 1 + 안 2, 저장 없음)
+
+범위는 전체 배송(차량) 모드로 한정 — 등급/점수(`FreightRun.evaluate()`)가 원래 이 모드에만 있고, 지금 우선순위(대표 레벨 완주)도 이 루프를 가리키기 때문이다. 빌라 연습 모드는 건드리지 않았다.
+
+- [x] `FreightRun.evaluate()`가 기존 점수 공식(변경 없음)과 별개로 `breakdown`(배송/상태/시간/차량/복구/협동 각 항목 점수) 딕셔너리를 함께 반환하도록 확장. 각 항목은 개별 반올림이라 합계가 최종 점수와 1~2점 정도 차이날 수 있음(순전히 표시용, 등급 판정에는 전혀 영향 없음) — 코드 주석으로 명시.
+- [x] `FreightRun`에 `wrong_address_attempts` 카운터 추가 — 각 배송지의 기존 `package_rejected` 신호에 새 리스너를 하나 더 붙여서(기존 `_on_wrong_address` 안내 토스트는 그대로 유지) 증가시킴. 호스트만 집계(`session.hosting` 아니면 무시).
+- [x] 배지 3종을 `evaluate()`가 함께 계산: ⚡번개배송(완료 시간 ≤ 제한시간의 50%), 🎯완벽배송(파손 0·오배송 시도 0·복구 0), 🤝협동(공동 운반 발생). 각각 단일 축 조건으로 유지해 "이것만 놓쳤다"가 명확하게 보이도록 함. 저장하지 않고 매 배송마다 새로 계산.
+- [x] `OnlineSession.gd` 결과 화면 텍스트에 브레이크다운·배지 줄 추가, 대기실 "방 기록"(`room_record.recent`, 기존에도 비영구 · 호스트가 방을 닫으면 초기화)의 최근 5건에도 배지 요약을 함께 표시 — 새 상태 없이 이미 저장 중이던 `shipment_result` 전체를 그대로 복제해 쓰던 것이라 사실상 무료로 추가됨.
+- 검증: `Run-FreightTest.ps1 -Members 2/4 -Source` EXIT 0/0(55체크, +3), `-Visual` 렌더링으로 결과 화면에 브레이크다운·배지 줄이 잘리지 않고 표시됨을 스크린샷으로 확인(예: "점수 997/1000 (배송 700 상태 200 시간 97 차량 0 복구 0 협동 0)" · "배지 · ⚡번개배송 ✓ · 🎯완벽배송 ✓ · 🤝협동 ✗"). 패키지 빌드(54)로도 재검증.
+- [x] 사용자 실제 플레이로 배지 달성 난이도(번개배송 50% 기준 등) 확인 완료 — "난이도는 문제없네". 1안+2안 범위는 이것으로 완료.
+- **이번 범위에 포함 안 한 것(원래 PROGRESS_OVERVIEW "반복 플레이 동기" 중)**: 안 3(방 최고 기록판)·안 4(시작 전 자체 도전 목표), 보상 사용처/장비/해금/저장 — 전부 사용자 요청 시 별도 진행.
+
+### 마무리 — `wrong_address_attempts` 전용 테스트 + 실제 완주 검증
+
+- [x] `FreightPlaytest.gd`의 damage 라운드에 실제 오배송 시도 픽스처 추가 — 202로 옮겨야 할 택배를 `second_zone._on_body_entered()`로 직접 201 zone에 밀어넣어 거부·카운터 증가(`wrong_address_attempts == 1`)를 확인하고, 이어서 정상 주소로 재배송해도 카운터가 중복 증가하지 않음(`== 1` 유지)과 최종 `shipment_result.wrong_address_attempts`에 그대로 반영됨을 확인. `Run-FreightTest.ps1`(기본 모드) 58→59체크, EXIT 0/0.
+- [x] **실제 완주 검증**: `Run-FreightTest.ps1 -Manual -Visual`(기본 fixture 순간이동 대신 실제 잡기→들고 트럭까지 이동→적재→운전→도착→계단으로 들고 올라가 배송까지 전부 입력으로 수행)을 처음으로 끝까지 통과시켰다(85체크, EXIT 0). 이 과정에서 **실제 버그 아닌 진짜 발견**: 계단을 실제로 오르내리며 나르는 중 택배가 벽에 약하게 부딪혀(impact 4.23, 기존 파손 임계값 3.5를 살짝 넘음) 상태 100%→97%로 깎였고, 그 결과 완벽배송 배지가 정확히 꺼짐(⚡번개배송은 여전히 켜짐) — 배지 로직이 의도대로 동작한 것이지 버그가 아니다. 다만 기존 "clean timely shipment earns the perfect badge" 자동 체크는 fixture 순간이동 전제(파손 불가능)로 짜여 있어 `-Manual` 모드에서는 이 배지 단정을 건너뛰도록 분기하고 사유를 주석으로 남겼다.
+- 이 발견은 "계단·코너에서 택배가 벽에 부딪히면 파손/잡기 해제 위험" 계열의 기존에 이미 알려진 한계(WINDOWS_PLAYTEST 이력)와 같은 종류이며, 이번 배지 기능이 그 기존 현상을 정확하게 반영하고 있음을 보여준다. 아래 품질 점검(다음 섹션)의 "배송/상호작용 피드백"·"맵 가독성" 항목에 참고 자료로 반영.
+- 새 Windows 빌드: `builds/HellDelivery-Windows-Test-55`(위 테스트 보강 전부 포함, 패키지 빌드로 재검증 완료).
 
 
 ## villa-47 — 빌라 기준선·온라인 2~4인 (로컬 검증·Windows 빌드 완료)

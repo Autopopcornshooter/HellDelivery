@@ -161,6 +161,16 @@ func _door(location: Vector3, yaw: float, number: String, delivery: bool) -> voi
 	if delivery:
 		_local_box(door, Vector3(-0.94, 1.6, 0.03), Vector3(0.43, 0.56, 0.035), ivory)
 		_label(door, "택배는\n현관 앞", Vector3(-0.94, 1.6, 0.058), 30, 0.0027, metal.albedo_color)
+	# 품질 점검 권장 7번(맵 가독성/라이팅): 호수 번호마다 서로 다른 색 조명을 문 위에 달아
+	# 복도에서 어느 집인지 눈으로 바로 구분되게 한다. 번호 문자열에서 결정적으로 색을 뽑으므로
+	# 203 등 새 배송지를 추가해도(villa-50 Registry 규칙) 이 함수 호출만 늘리면 자동으로 구분된다.
+	var accent := OmniLight3D.new()
+	accent.position = Vector3(0, 1.95, 0.4)
+	accent.light_color = Color.from_hsv(float(number.hash() % 360) / 360.0, 0.55, 1.0)
+	accent.light_energy = 0.55
+	accent.omni_range = 2.2
+	accent.shadow_enabled = false
+	door.add_child(accent)
 
 func _lighting() -> void:
 	var luminous := _material("fff4da")

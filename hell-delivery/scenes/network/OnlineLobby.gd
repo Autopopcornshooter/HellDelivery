@@ -14,14 +14,18 @@ var previews: Array[CharacterVisual] = []
 var _character_id := ""
 var order_choice: OptionButton
 var order_brief: Label
+var full_route := false # villa-77/79: "아파트"/"대저택" 주문은 차량 노선(전체 배송) 전용이라, 그 외 모드에서는 목록에서 뺀다.
+const FULL_ROUTE_ONLY := ["apartment", "mansion"]
+var _ids: Array[String] = []
 
 func _ready() -> void:
 	add_theme_constant_override("separation", 6)
 	order_choice = OptionButton.new()
-	for id in DeliveryOrders.IDS:
+	_ids = DeliveryOrders.IDS.filter(func(id): return full_route or id not in FULL_ROUTE_ONLY)
+	for id in _ids:
 		order_choice.add_item(DeliveryOrders.get_order(id).title)
 	order_choice.add_item("3연속 배송 코스 · 일반 → 혼합 → 공동")
-	order_choice.item_selected.connect(func(index): order_changed.emit("course" if index == DeliveryOrders.IDS.size() else DeliveryOrders.IDS[index]))
+	order_choice.item_selected.connect(func(index): order_changed.emit("course" if index == _ids.size() else _ids[index]))
 	add_child(order_choice)
 	order_brief = Label.new()
 	order_brief.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -100,7 +104,7 @@ func cycle_character(direction: int) -> void:
 func show_state(characters: Array, readiness: Array, joined: bool, local_slot: int, host: bool, order_id: String = "standard", participants: Array = []) -> void:
 	show()
 	var order := DeliveryOrders.get_order(order_id)
-	order_choice.select(DeliveryOrders.IDS.find(order.id))
+	order_choice.select(_ids.find(order.id))
 	order_choice.disabled = not host
 	order_brief.text = order.brief
 	_character_id = characters[local_slot]

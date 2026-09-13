@@ -24,8 +24,15 @@ func _ready() -> void:
 	_cues["jump"] = _tone([220.0, 330.0], 0.10, 0.08)
 	_cues["land"] = _impact(0.16, 0.16, 75.0)
 	_cues["impact"] = _impact(0.12, 0.13, 155.0)
+	_cues["scan"] = _tone([1400.0, 1800.0], 0.09, 0.14) # 택배 적재 확인 "삑" (바코드 스캐너 연상)
+	_cues["warning"] = _tone([1046.5, 1046.5], 0.22, 0.15) # 제한 시간 얼마 안 남았을 때 1회
+	_cues["mistake"] = _tone([392.0, 293.66], 0.2, 0.16) # 오배송 등 실수 피드백
+	_cues["damage"] = _impact(0.2, 0.2, 90.0) # 택배/차량 파손 공용
+	_cues["failure"] = _tone([392.0, 329.63, 261.63], 0.45, 0.18) # 택배가 완전히 파손/분실되어 배송 불가로 확정되는 순간 1회
+	_cues["request"] = _tone([880.0, 1108.73], 0.16, 0.15) # 동료의 공동 운반 요청 수신 알림
 	for i in 4:
 		var voice := AudioStreamPlayer.new()
+		voice.bus = "SFX"
 		add_child(voice)
 		_voices.append(voice)
 
@@ -41,6 +48,10 @@ func play_cue(cue: String, intensity: float = 1.0) -> void:
 	_voice_index = (_voice_index + 1) % _voices.size()
 	voice.stream = _player_stream(cue)
 	voice.volume_db = linear_to_db(clampf(intensity, 0.2, 1.0))
+	# 발소리가 매번 완전히 같은 음높이로 반복되면 단조롭게 들린다(품질 점검 "나중에" 항목) —
+	# 발소리에만 살짝 랜덤 피치를 줘 반복감을 줄인다. 다른 큐(배송/경고 등)는 명확한 신호여야
+	# 하므로 그대로 둔다.
+	voice.pitch_scale = randf_range(0.92, 1.08) if cue == "step" else 1.0
 	voice.play()
 
 

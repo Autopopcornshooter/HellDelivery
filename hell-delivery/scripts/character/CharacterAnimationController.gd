@@ -20,6 +20,11 @@ const _MAX_SPEED_SCALE := 1.5
 const _GRAB_START_ANIM := "pick-up"
 const _CARRY_POSE_SOURCE_ANIM := "holding-both"
 const _AIR_ANIM := "static" # 이 팩에는 전용 공중(Jump/Fall) Clip이 없어 중립 자세로 대체
+# 품질 점검 권장 9번(캐릭터 애니메이션): 전용 Clip이 없는 대신, 상승/하강 속도에 따라 몸 전체를
+# 살짝 뒤/앞으로 기울여(코드만으로) "그냥 멈춰 서 있는" 느낌을 줄인다. 새 Clip/Asset은 추가하지 않는다.
+const AIR_LEAN_MAX := deg_to_rad(10.0)
+const AIR_LEAN_VELOCITY_REF := 6.0
+const AIR_LEAN_SMOOTH := 8.0
 
 enum LocomotionState { IDLE, WALK, SPRINT, AIR }
 
@@ -53,6 +58,7 @@ var _look_head: Node3D
 var _head_rest := Quaternion.IDENTITY
 var _head_pitch: float = 0.0
 const HEAD_PITCH_LIMIT := deg_to_rad(55.0)
+var _air_lean: float = 0.0
 
 
 func _ready() -> void:
@@ -95,7 +101,7 @@ func setup(anim_player: AnimationPlayer, arm_left: Node3D, arm_right: Node3D, lo
 
 
 ## 실제 물리 velocity 기반 수평 속력을 받는다(입력값이 아니라) — 미끄러질 때도 자연스럽게 반영된다.
-func update_locomotion(horizontal_speed: float, is_sprinting: bool, is_on_floor: bool) -> void:
+func update_locomotion(horizontal_speed: float, is_sprinting: bool, is_on_floor: bool, vertical_velocity: float = 0.0) -> void:
 	if _anim_player == null:
 		return
 	var new_state: LocomotionState
@@ -112,6 +118,17 @@ func update_locomotion(horizontal_speed: float, is_sprinting: bool, is_on_floor:
 		_locomotion_state = new_state
 		_play_locomotion_animation(false)
 	_update_playback_speed(horizontal_speed)
+	_update_air_lean(new_state, vertical_velocity, get_physics_process_delta_time())
+
+
+func _update_air_lean(state: LocomotionState, vertical_velocity: float, delta: float) -> void:
+	if _arm_reference == null:
+		return
+	var target := 0.0
+	if state == LocomotionState.AIR:
+		target = clampf(-vertical_velocity / AIR_LEAN_VELOCITY_REF, -1.0, 1.0) * AIR_LEAN_MAX
+	_air_lean = lerp_angle(_air_lean, target, 1.0 - exp(-AIR_LEAN_SMOOTH * delta))
+	_arm_reference.rotation.x = _air_lean
 
 
 ## Player.gd의 실제 Grab 보유 여부를 그대로 반영한다 — Grab 물리 자체는 건드리지 않는다.

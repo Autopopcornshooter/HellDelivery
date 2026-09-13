@@ -48,6 +48,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5)
 
 [node name="GrabShapeCast" type="ShapeCast3D" parent="CameraPivot"]
 shape = SubResource("SphereShape3D_1")
-target_position = Vector3(0, 0, -2.2)
+target_position = Vector3(0, 0, -3.4)
 collision_mask = 20
 enabled = true

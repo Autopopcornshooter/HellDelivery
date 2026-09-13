@@ -16,6 +16,7 @@ var course: Dictionary = {}
 var help_packages: Array[String] = ["", "", "", ""]
 var help_deadlines: Array[int] = [0, 0, 0, 0]
 var help_marker: PanelContainer
+var destination_marker: PanelContainer
 var help_notice: Label
 var room_record: Dictionary = {"orders": 0, "complete": 0, "delivered": 0, "target": 0, "elapsed": 0.0, "recent": []}
 var history_panel: PanelContainer
@@ -76,10 +77,9 @@ var rtt_ms := -1
 var _ping_time := 0.0
 var _pending_pings: Dictionary = {}
 var cancel_button: Button
-var personal_recover_button: Button
-var _personal_requests: Dictionary = {}
-var _personal_last: Dictionary = {}
+var loading_spinner: LoadingSpinner
 var status: Label
+var grade_badge: Label
 var address: LineEdit
 var port_input: SpinBox
 var lobby: VBoxContainer
@@ -116,6 +116,18 @@ func _label(text: String, size: int = 20) -> Label:
 	item.add_theme_font_size_override("font_size", size)
 	return item
 
+# 결과 화면 등급별 색상(반복 플레이 동기부여 안 1 연장) — 그 외 모든 패널 제목(대기실/로딩/메뉴 등)은
+# 항상 기본 흰색으로 재설정된다. _panel_title은 이 모든 상태에서 재사용되는 하나의 Label이라
+# 매번 명시적으로 색을 지정해야 등급 색이 다음 화면까지 남지 않는다.
+const _GRADE_TITLE_COLORS := {
+	"S": Color("ffd700"), "A": Color("4ade80"), "B": Color("60a5fa"), "C": Color("fbbf24"), "F": Color("f87171"),
+}
+const _DEFAULT_TITLE_COLOR := Color(1, 1, 1)
+
+func _set_panel_title(text: String, color: Color = _DEFAULT_TITLE_COLOR) -> void:
+	_panel_title.text = text
+	_panel_title.add_theme_color_override("font_color", color)
+
 func _button(parent: Node, text: String, action: Callable) -> Button:
 	var item := Button.new()
 	item.text = text
@@ -143,6 +155,12 @@ func _build_ui() -> void:
 	margin.add_child(lobby)
 	_panel_title = _label("전체 배송 · 1~4인" if full_route else "온라인 협동 · 2~4인", 28)
 	lobby.add_child(_panel_title)
+	# 품질 업그레이드(UI): 결과 화면이 텍스트 나열뿐이라 등급이 눈에 잘 안 띈다는 지적 —
+	# 기존 status.text 구조(테스트가 그 안의 문구를 그대로 검사함)는 건드리지 않고, 등급만
+	# 별도의 큰 배지로 강조해 시각적 위계를 준다.
+	grade_badge = _label("", 56)
+	grade_badge.hide()
+	lobby.add_child(grade_badge)
 	status = _label("방 만들기 → 준비 → 배송 시작 · 혼자 또는 동료와 함께\n물류센터 적재 → 운전 → 빌라 배송 → 결과 평가" if full_route else "호스트가 방을 만들고 다른 PC에서 IP로 참가하세요", 17)
 	status.custom_minimum_size.x = 560
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -162,6 +180,7 @@ func _build_ui() -> void:
 	host_button = _button(lobby, "방 만들기", host_game)
 	join_button = _button(lobby, "IP로 참가", join_game)
 	room_ui = preload("res://scenes/network/OnlineLobby.gd").new()
+	room_ui.full_route = full_route
 	lobby.add_child(room_ui)
 	room_ui.character_changed.connect(select_lobby_character)
 	room_ui.ready_pressed.connect(toggle_ready)
@@ -170,7 +189,11 @@ func _build_ui() -> void:
 	room_ui.history_pressed.connect(_open_history)
 	room_ui.hide()
 	var connection_actions := HBoxContainer.new()
+	connection_actions.add_theme_constant_override("separation", 10)
 	lobby.add_child(connection_actions)
+	loading_spinner = LoadingSpinner.new()
+	loading_spinner.hide()
+	connection_actions.add_child(loading_spinner)
 	cancel_button = _button(connection_actions, "대기·접속 취소", func(): _connection_ended("취소했습니다 · 방을 만들거나 다시 참가할 수 있습니다"))
 	cancel_button.custom_minimum_size.x = 180
 	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -184,7 +207,6 @@ func _build_ui() -> void:
 	copy_button.custom_minimum_size.x = 100
 	copy_row.hide()
 	resume_button = _button(lobby, "계속하기", _resume)
-	personal_recover_button = _button(lobby, "내 위치만 복구 · 상대와 배송 진행 유지", request_personal_recovery)
 	recover_button = _button(lobby, "전원·미배송 택배 복구", recover_world)
 	restart_button = _button(lobby, "전원 처음부터 재시작", restart_world)
 	return_lobby_button = _button(lobby, "다음 주문 준비 · 함께 대기실로", return_to_lobby)
@@ -196,7 +218,7 @@ func _build_ui() -> void:
 	controls_button = _button(lobby, "조작법 · 배송 목표 / 복구 안내", _open_controls)
 	controls_button.hide()
 	_button(lobby, "메인 메뉴 · 연결 종료", leave)
-	for item in [resume_button, personal_recover_button, recover_button, restart_button]:
+	for item in [resume_button, recover_button, restart_button]:
 		item.hide()
 	_hud_status = _label("", 17)
 	_hud_status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -214,6 +236,9 @@ func _build_ui() -> void:
 	help_marker = preload("res://scenes/network/OnlinePartnerMarker.gd").new()
 	canvas.add_child(help_marker)
 	help_marker.modulate = Color(1.0, 0.85, 0.5)
+	destination_marker = preload("res://scenes/network/OnlinePartnerMarker.gd").new()
+	canvas.add_child(destination_marker)
+	destination_marker.modulate = Color(0.6, 1.0, 0.6)
 	help_notice = _label("", 18)
 	help_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	help_notice.offset_top = -92
@@ -307,6 +332,10 @@ func _toggle_carry_help(epoch: int, slot: int) -> void:
 @rpc("authority", "call_local", "reliable")
 func _carry_help_state(epoch: int, slot: int, parcel_name: String) -> void:
 	if epoch != generation or not active or finished: return
+	# 새 요청이 시작되는 순간(빈 상태 -> 값 있음)에만, 요청을 보낸 본인이 아닌 다른 슬롯에서 1회 알림음.
+	# 화면을 안 보고 있어도 동료의 운반 요청을 알아챌 수 있도록(사용자 실제 플레이 피드백).
+	if help_packages[slot].is_empty() and not parcel_name.is_empty() and slot != local_slot and is_instance_valid(level):
+		level._feedback.play_cue("request")
 	help_packages[slot] = parcel_name
 
 func _advance_carry_help() -> void:
@@ -336,9 +365,9 @@ func _update_carry_help() -> void:
 		if requested != null: break
 	if requested != null and not requested.is_delivered():
 		if not manifest_held:
-			help_marker.update_partner(own.camera_pivot.get_node("Camera3D"), own.global_position, requested.global_position, "함께 운반 · %s호" % requested.delivery_address, 0.0, 0.65)
+			help_marker.update_partner(own.camera_pivot.get_node("Camera3D"), own.global_position, requested.global_position, "함께 운반 · %s" % requested.display_name, 0.0, 0.65)
 			for marker in partner_markers: marker.hide()
-		help_notice.text = "P%d 동료가 %s호 택배 운반을 요청했습니다 · 같은 상자를 잡아주세요" % [request_slot + 1, requested.delivery_address]
+		help_notice.text = "P%d 동료가 %s 택배 운반을 요청했습니다 · 같은 상자를 잡아주세요" % [request_slot + 1, requested.display_name]
 	elif not help_packages[local_slot].is_empty():
 		help_notice.text = "운반 도움 요청 보냄 · 20초 표시 · G 취소"
 	elif own.held_grabbable is Package:
@@ -347,7 +376,8 @@ func _update_carry_help() -> void:
 	help_notice.show()
 
 func _record_order(elapsed: float, counts: Array) -> void:
-	var delivered: int = int(counts[0]) + int(counts[1])
+	var delivered: int = 0
+	for c in counts: delivered += int(c)
 	var target: int = level._total_target()
 	var successful: bool = delivered == target and (not full_route or shipment_result.get("success", false))
 	if not course.is_empty():
@@ -366,6 +396,14 @@ func _record_order(elapsed: float, counts: Array) -> void:
 		room_record.recent[0]["rating"] = shipment_result.duplicate(true)
 	if room_record.recent.size() > 5: room_record.recent.pop_back()
 
+const _BADGE_LABELS := {"lightning": "⚡번개배송", "perfect": "🎯완벽배송", "teamwork": "🤝협동"}
+
+func _format_badges(badges: Dictionary) -> String:
+	var parts: Array[String] = []
+	for key in ["lightning", "perfect", "teamwork"]:
+		parts.append("%s %s" % [_BADGE_LABELS[key], "✓" if badges.get(key, false) else "✗"])
+	return " · ".join(parts)
+
 func _history_contents() -> String:
 	var lines: Array[String] = ["종료한 주문 %d건 · 전량 완료 %d건" % [room_record.orders, room_record.complete], "배송 %d/%d개 · 합계 시간 %s" % [room_record.delivered, room_record.target, DeliveryOrders.format_time(room_record.elapsed)], ""]
 	if room_record.recent.is_empty(): lines.append("아직 마무리한 주문이 없습니다")
@@ -373,7 +411,9 @@ func _history_contents() -> String:
 		lines.append("최근 주문 · 최신순 (최대 5건)")
 		for entry in room_record.recent:
 			lines.append("#%d %s · %d/%d개 · %s · %s" % [entry.number, DeliveryOrders.get_order(entry.order).title, entry.delivered, entry.target, DeliveryOrders.format_time(entry.elapsed), "완료" if (entry.rating.success if entry.has("rating") else entry.delivered == entry.target) else "부분 종료"])
-			if entry.has("rating"): lines.append("  %s등급 · %d점 · %s" % [entry.rating.grade, entry.rating.score, entry.rating.reason])
+			if entry.has("rating"):
+				lines.append("  %s등급 · %d점 · %s" % [entry.rating.grade, entry.rating.score, entry.rating.reason])
+				if entry.rating.has("badges"): lines.append("  " + _format_badges(entry.rating.badges))
 	lines.append("\n호스트가 방을 닫으면 초기화됩니다\n연결 끊김·재시작으로 중단한 주문은 기록하지 않습니다")
 	return "\n".join(lines)
 
@@ -397,7 +437,7 @@ func _manifest_contents() -> String:
 	var numbers: Dictionary = {}
 	for parcel in _bodies():
 		if not parcel is Package: continue
-		var address_id: String = parcel.delivery_address
+		var address_id: String = parcel.destination_id
 		numbers[address_id] = int(numbers.get(address_id, 0)) + 1
 		var state := "배송 완료"
 		if not parcel.is_delivered():
@@ -410,7 +450,7 @@ func _manifest_contents() -> String:
 		if full_route:
 			state = (parcel.failure_reason + " · 배송 불가") if parcel.shipment_failed else (state + " · 상태 %d%%" % parcel.condition)
 			if not parcel.loaded_once and not parcel.shipment_failed: state += " · 적재 필요"
-		lines.append("%s호 #%d · %.0fkg\n  %s" % [address_id, numbers[address_id], parcel.mass, state])
+		lines.append("%s #%d · %.0fkg\n  %s" % [parcel.display_name, numbers[address_id], parcel.mass, state])
 	lines.append("\n거리: 택배까지 직선 거리\n45kg 택배는 두 사람이 함께 운반")
 	return "\n".join(lines)
 
@@ -473,7 +513,7 @@ func _handle_finish_vote(slot: int, epoch: int, serial: int, agree: bool) -> voi
 	finish_votes[slot] = true
 	if occupied_slots().all(func(index): return finish_votes[index]):
 		if full_route: finish_freight("합의 종료")
-		else: _partial_result.rpc(generation, "\n".join(level._delivery_details), level._play_time_elapsed, [level.delivery_zone.delivered_count, level.second_zone.delivered_count])
+		else: _partial_result.rpc(generation, "\n".join(level._delivery_details), level._play_time_elapsed, level.destinations.map(func(zone): return zone.delivered_count))
 	else:
 		_finish_vote_state.rpc(generation, finish_serial, finish_votes)
 
@@ -612,7 +652,7 @@ func _join_rejected(message: String) -> void:
 func _show_room() -> void:
 	copy_row.visible = hosting
 	copy_button.text = "주소 복사"
-	_panel_title.text = "배송 대기실 · 빌라 201호 / 202호"
+	_set_panel_title("배송 대기실 · 빌라 201호 / 202호")
 	for item in [address, port_input, host_button, join_button]: item.hide()
 	room_ui.show_state(_characters, readiness, lobby_joined, local_slot, hosting, order_id, peer_slots)
 	room_ui.history_button.text = "방 기록 · %d건" % room_record.orders
@@ -620,11 +660,11 @@ func _show_room() -> void:
 	if lobby_joined:
 		status.text = "주문 확인 → 참가자 전원 준비 → 배송 시작\n호스트가 주문을 바꾸면 참가자 전원 다시 준비합니다"
 	if not course.is_empty():
-		room_ui.order_choice.select(DeliveryOrders.IDS.size())
+		room_ui.order_choice.select(room_ui._ids.size())
 		room_ui.order_brief.text = "코스 %d/3 · %s\n%s" % [course.index + 1, DeliveryOrders.get_order(order_id).title, DeliveryOrders.get_order(order_id).brief.get_slice("\n", 0)]
 		if lobby_joined: status.text = "3연속 배송 · 일반 → 혼합 → 공동\n주문마다 참가자 전원 준비 · 다른 주문 선택 시 코스 종료"
 	if full_route:
-		_panel_title.text = "전체 배송 · 물류센터 → 빌라"
+		_set_panel_title("전체 배송 · 물류센터 → 빌라")
 		status.text = "직접 적재 → 운전 → 하차·배송 → 평가\n혼자 시작 가능 · 최대 4명 전원 준비 후 출발"
 		room_ui.order_brief.text += "\n제한 %s · 상태/시간/차량 손상으로 평가" % DeliveryOrders.format_time(FreightRun.LIMITS.get(order_id, 480.0))
 
@@ -721,10 +761,10 @@ func _start_world(characters: Array, epoch: int, selected_order: String = "stand
 	_local_world_ready = false
 	_remote_world_ready = false
 	panel.show()
-	_panel_title.text = "배송 준비 중"
+	_set_panel_title("배송 준비 중")
 	status.text = DeliveryOrders.get_order(order_id).title + " · 빌라와 택배를 준비합니다"
 	_hud_status.text = ""
-	for item in [resume_button, personal_recover_button, recover_button, restart_button]: item.hide()
+	for item in [resume_button, recover_button, restart_button]: item.hide()
 	cancel_button.show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if is_instance_valid(level):
@@ -740,8 +780,6 @@ func _start_world(characters: Array, epoch: int, selected_order: String = "stand
 	_remote_controls.clear()
 	slot_inputs.clear()
 	slot_last_input.clear()
-	_personal_requests.clear()
-	_personal_last.clear()
 	_last_delivery = 0
 	rtt_ms = -1
 	_pending_pings.clear()
@@ -749,8 +787,18 @@ func _start_world(characters: Array, epoch: int, selected_order: String = "stand
 	if is_instance_valid(level):
 		remove_child(level)
 		level.queue_free()
-	level = preload("res://scenes/level/VillaDeliveryRun.tscn").instantiate()
-	level.set_script(preload("res://scenes/network/OnlineLevel.gd"))
+	# villa-77/79: "아파트"/"대저택" 주문은 완전히 다른 물리 맵이라 다른 씬/스크립트를 쓴다.
+	# 그 외 주문은 전부 기존 빌라 씬/스크립트 그대로다(분기 추가 외에는 변경 없음).
+	match order_id:
+		"apartment":
+			level = preload("res://scenes/level/ApartmentDeliveryRun.tscn").instantiate()
+			level.set_script(preload("res://scenes/network/ApartmentOnlineLevel.gd"))
+		"mansion":
+			level = preload("res://scenes/level/MansionDeliveryRun.tscn").instantiate()
+			level.set_script(preload("res://scenes/network/MansionOnlineLevel.gd"))
+		_:
+			level = preload("res://scenes/level/VillaDeliveryRun.tscn").instantiate()
+			level.set_script(preload("res://scenes/network/OnlineLevel.gd"))
 	level.order_id = order_id
 	level.name = "Level"
 	level.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -781,7 +829,7 @@ func _start_world(characters: Array, epoch: int, selected_order: String = "stand
 	level._second_feedback.player_pan = 0
 	if not hosting:
 		level.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-		for zone in [level.delivery_zone, level.second_zone]:
+		for zone in level.destinations:
 			zone.monitoring = false
 		for body in _bodies():
 			body.freeze = true
@@ -835,6 +883,14 @@ func _finish_loading() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if _window_unfocused:
 		_open_focus_menu()
+	elif full_route and not GameSettings.freight_onboarding_seen:
+		# First-ever full-delivery run on this machine: show the freight controls
+		# card automatically (loading cargo/driving/parking are unique to this
+		# mode and otherwise only surface if the player opens Esc themselves).
+		# Local-only UI state -- does not pause the shared session or other players.
+		_open_menu()
+		_open_controls()
+		GameSettings.set_freight_onboarding_seen(true)
 
 func _on_window_focus_exited() -> void:
 	_window_unfocused = true
@@ -946,10 +1002,12 @@ func _physics_process(delta: float) -> void:
 	var grab := not menu_open and not finished and Input.is_action_pressed("grab_object")
 	var jump := not menu_open and not finished and Input.is_action_pressed("jump")
 	var sprint := not menu_open and not finished and Input.is_action_pressed("sprint")
+	# Vehicle camera look is purely local/visual (each client owns its own
+	# camera), so it is applied directly here instead of through _apply_input,
+	# which only runs for authoritative (host-simulated) couriers.
+	if is_instance_valid(freight) and not menu_open and not finished and freight.truck.seat_of(local_slot) >= 0:
+		freight.truck.set_look(local_yaw, local_pitch)
 	if hosting:
-		for slot in _personal_requests.keys():
-			_restore_personal(slot)
-		_personal_requests.clear()
 		_advance_carry_help()
 		_apply_input(level.player, move, local_yaw, local_pitch, grab, jump, sprint)
 		for slot in occupied_slots():
@@ -1047,7 +1105,7 @@ func _send_snapshot() -> void:
 	var bodies: Array = []
 	for body in _bodies():
 		bodies.append([body.transform, body.is_delivered(), body.visible])
-	_state.rpc(generation, players, bodies, [level.delivery_zone.delivered_count, level.second_zone.delivered_count], level.delivery_hud.get_node("RouteLabel").text, level._play_time_elapsed)
+	_state.rpc(generation, players, bodies, level.destinations.map(func(zone): return zone.delivered_count), level.delivery_hud.get_node("RouteLabel").text, level._play_time_elapsed)
 	# Keep each unreliable packet below ENet's MTU for four couriers + bulk cargo.
 	if is_instance_valid(freight): _freight_state.rpc(generation, freight.snapshot())
 
@@ -1064,19 +1122,28 @@ func _state(epoch: int, players: Array, bodies: Array, counts: Array, route: Str
 	_body_targets = bodies
 	if not finished: level._play_time_elapsed = maxf(level._play_time_elapsed, elapsed)
 	# Completion is reliable; an older snapshot on another channel cannot undo it.
-	counts[0] = maxi(counts[0], level.delivery_zone.delivered_count)
-	counts[1] = maxi(counts[1], level.second_zone.delivered_count)
-	level.delivery_zone.delivered_count = counts[0]
-	level.second_zone.delivered_count = counts[1]
+	var total := 0
+	for index in level.destinations.size():
+		var zone: DeliveryZone = level.destinations[index]
+		var previous := zone.delivered_count
+		counts[index] = maxi(counts[index], zone.delivered_count)
+		zone.delivered_count = counts[index]
+		total += int(counts[index])
+		# Non-hosting clients never see the real DeliveryZone.body_entered signal
+		# (their cargo bodies are frozen/non-colliding), so the success VFX here
+		# mirrors the same delivered_count-diff trick already used for the sound cue.
+		if zone.delivered_count > previous:
+			ImpactEffect.spawn(level, zone.global_position + Vector3.UP * 0.6, Color(0.35, 0.95, 0.6))
 	level._update_stops()
-	level.delivery_hud.update_progress(counts[0] + counts[1], level._total_target())
+	level.delivery_hud.update_progress(total, level._total_target())
 	level.delivery_hud.get_node("RouteLabel").text = route
-	if counts[0] + counts[1] > _last_delivery:
+	if total > _last_delivery:
 		level._feedback.play_cue("delivery")
-	_last_delivery = counts[0] + counts[1]
+	_last_delivery = total
 	level.delivery_hud.set_crosshair_state(players[local_slot][6])
 
 func _process(delta: float) -> void:
+	loading_spinner.visible = cancel_button.visible
 	_update_manifest()
 	for marker in partner_markers: marker.hide()
 	if active and not finished and not menu_open and not manifest_held and is_instance_valid(level):
@@ -1087,8 +1154,10 @@ func _process(delta: float) -> void:
 			var partner: Player = _players()[slot]
 			partner_markers[index].update_partner(own.camera_pivot.get_node("Camera3D"), own.global_position, partner.global_position, "동료" if occupied_slots().size() == 2 else "P%d 동료" % (slot + 1))
 			index += 1
+		_update_destination_marker(own)
 	else:
 		partner_marker.hide()
+		destination_marker.hide()
 	_update_carry_help()
 	if hosting or not active or _targets.size() != MAX_PLAYERS:
 		return
@@ -1114,6 +1183,20 @@ func _process(delta: float) -> void:
 		body.visible = _body_targets[i][2]
 		body._delivered = _body_targets[i][1]
 
+# 목적지 방향 표시(반복 플레이 동기부여 검토에서 나온 UX 개선) — 들고 있는 택배가 있을 때만
+# 그 택배의 실제 배송지를 가리킨다. 기존 동료/도움 마커와 같은 OnlinePartnerMarker를 재사용해
+# 새 UI 없이 화면 밖 화살표·거리·위/아래 힌트를 그대로 얻는다.
+func _update_destination_marker(own: Player) -> void:
+	var held := own.held_grabbable as Package
+	if held == null or held.is_delivered():
+		destination_marker.hide()
+		return
+	var zone: DeliveryZone = level.destination(held.destination_id)
+	if zone == null:
+		destination_marker.hide()
+		return
+	destination_marker.update_partner(own.camera_pivot.get_node("Camera3D"), own.global_position, zone.global_position, held.display_name, 3.0, 1.0)
+
 func request_vehicle_action(kind: String) -> void:
 	if not full_route or not active or finished or menu_open: return
 	if hosting: _vehicle_notice.rpc(generation, 0, freight.action(0, kind))
@@ -1132,7 +1215,7 @@ func _vehicle_notice(epoch: int, slot: int, message: String) -> void:
 
 func finish_freight(reason: String) -> void:
 	if not hosting or not active or finished or not is_instance_valid(freight): return
-	_freight_result.rpc(generation, freight.evaluate(reason), [level.delivery_zone.delivered_count, level.second_zone.delivered_count], freight.snapshot())
+	_freight_result.rpc(generation, freight.evaluate(reason), level.destinations.map(func(zone): return zone.delivered_count), freight.snapshot())
 
 @rpc("authority", "call_local", "reliable")
 func _freight_result(epoch: int, evaluation: Dictionary, counts: Array, state: Dictionary) -> void:
@@ -1145,7 +1228,7 @@ func _freight_result(epoch: int, evaluation: Dictionary, counts: Array, state: D
 func _complete(epoch: int, details: String, elapsed: float = 0.0) -> void:
 	if epoch != generation or not is_instance_valid(level):
 		return
-	_display_result(epoch, details, elapsed, [level.delivery_zone.target_package_count, level.second_zone.target_package_count])
+	_display_result(epoch, details, elapsed, level.destinations.map(func(zone): return zone.target_package_count))
 
 @rpc("authority", "call_local", "reliable")
 func _partial_result(epoch: int, details: String, elapsed: float, counts: Array) -> void:
@@ -1158,7 +1241,7 @@ func _display_result(epoch: int, details: String, elapsed: float, counts: Array)
 	finished = true
 	if is_instance_valid(freight): freight.stop()
 	_record_order(elapsed, counts)
-	for zone in [level.delivery_zone, level.second_zone]:
+	for zone in level.destinations:
 		zone.accepting_deliveries = false
 		zone.set_deferred("monitoring", false)
 	for body in _bodies():
@@ -1166,19 +1249,17 @@ func _display_result(epoch: int, details: String, elapsed: float, counts: Array)
 			body.remove_grabber(courier)
 		body.freeze = true
 	level._play_time_elapsed = elapsed
-	level.delivery_zone.delivered_count = counts[0]
-	level.second_zone.delivered_count = counts[1]
+	for index in level.destinations.size(): level.destinations[index].delivered_count = counts[index]
 	level.delivery_hud.update_progress(level._delivered_total(), level._total_target())
 	level._update_stops()
 	level.set_physics_process(false)
 	for courier in _players():
 		courier.set_physics_process(false)
 	_open_menu()
-	_panel_title.text = ("주문 완료! · " if level._delivered_total() == level._total_target() else "주문 마무리 · ") + DeliveryOrders.get_order(order_id).title
+	_set_panel_title(("주문 완료! · " if level._delivered_total() == level._total_target() else "주문 마무리 · ") + DeliveryOrders.get_order(order_id).title)
 	if details.is_empty(): details = "배달한 택배 없음 · 다음 주문에서 다시 도전하세요"
 	status.text = "택배 %d/%d개 · 배송 시간 %s\n%s\n%s" % [level._delivered_total(), level._total_target(), DeliveryOrders.format_time(elapsed), details, "다음 주문은 대기실에서 선택 · 같은 주문은 바로 다시 시작" if hosting else "호스트가 다음 주문 준비 또는 같은 주문 재시작을 선택합니다"]
 	resume_button.hide()
-	personal_recover_button.hide()
 	recover_button.hide()
 	status.text += "\n이 방 누적 · 주문 %d건 / 배송 %d개" % [room_record.orders, room_record.delivered]
 	if not course.is_empty():
@@ -1189,8 +1270,12 @@ func _display_result(epoch: int, details: String, elapsed: float, counts: Array)
 		return_lobby_button.text = "코스 종료 · 대기실로" if course.closed else "다음 코스 주문 준비 · 대기실로"
 	else: return_lobby_button.text = "다음 주문 준비 · 함께 대기실로"
 	if full_route and not shipment_result.is_empty():
-		_panel_title.text = ("배송 성공" if shipment_result.success else "배송 실패·부분 결과") + " · " + shipment_result.grade + "등급"
-		status.text = "%s · %d/%d개 · %s\n점수 %d / 1000 · 배송 택배 상태 %.0f%%\n차량 상태 %.0f%% · 전체 복구 %d회\n%s\n이 방 누적 · %d건 / %d점" % [shipment_result.reason, shipment_result.delivered, shipment_result.total, DeliveryOrders.format_time(shipment_result.elapsed), shipment_result.score, shipment_result.quality, shipment_result.vehicle, shipment_result.recoveries, "함께 운반 보너스 +20" if shipment_result.teamwork else "상태·시간·차량 손상과 복구 횟수로 평가", room_record.orders, room_record.get("score", 0)]
+		_set_panel_title(("배송 성공" if shipment_result.success else "배송 실패·부분 결과") + " · " + shipment_result.grade + "등급", _GRADE_TITLE_COLORS.get(shipment_result.grade, _DEFAULT_TITLE_COLOR))
+		grade_badge.text = shipment_result.grade
+		grade_badge.add_theme_color_override("font_color", _GRADE_TITLE_COLORS.get(shipment_result.grade, _DEFAULT_TITLE_COLOR))
+		grade_badge.show()
+		var b: Dictionary = shipment_result.breakdown
+		status.text = "%s · %d/%d개 · %s\n점수 %d / 1000 (배송 %d 상태 %d 시간 %d 차량 %d 복구 %d 협동 %d)\n배송 택배 상태 %.0f%% · 차량 상태 %.0f%% · 전체 복구 %d회 · 오배송 시도 %d회\n배지 · %s\n이 방 누적 · %d건 / %d점" % [shipment_result.reason, shipment_result.delivered, shipment_result.total, DeliveryOrders.format_time(shipment_result.elapsed), shipment_result.score, b.delivery, b.quality, b.time, b.vehicle, b.recovery, b.teamwork, shipment_result.quality, shipment_result.vehicle, shipment_result.recoveries, shipment_result.wrong_address_attempts, _format_badges(shipment_result.badges), room_record.orders, room_record.get("score", 0)]
 		if not course.is_empty(): status.text += "\n코스 %d/3 주문 완료 · %s" % [course.completed, "종료" if course.closed else "대기실에서 다음 배송 준비"]
 
 func _open_menu() -> void:
@@ -1202,12 +1287,12 @@ func _open_menu() -> void:
 	settings_button.show()
 	menu_open = true
 	panel.show()
-	_panel_title.text = "온라인 메뉴"
-	status.text = "메뉴를 열어도 상대의 게임은 계속됩니다\nWASD · 마우스 잡기 · Space 점프 · Shift 달리기\n개인 복구는 내 위치만 · 전체 복구/재시작은 호스트만"
+	_set_panel_title("온라인 메뉴")
+	grade_badge.hide()
+	status.text = "상대의 게임은 계속됩니다 · 복구/재시작은 호스트만"
 	for item in [address, port_input, host_button, join_button]:
 		item.hide()
 	resume_button.visible = not finished
-	personal_recover_button.visible = not finished
 	recover_button.visible = hosting and not finished
 	restart_button.visible = hosting and not (finished and not course.is_empty())
 	return_lobby_button.visible = hosting and finished
@@ -1241,7 +1326,7 @@ func _open_controls() -> void:
 	if not active or not menu_open or loading: return
 	settings_panel.hide()
 	panel.hide()
-	controls_panel.configure_online(hosting, level._total_target(), level.delivery_zone.destination_name + " / " + level.second_zone.destination_name)
+	controls_panel.configure_online(hosting, level._total_target(), " / ".join(level.destinations.map(func(zone): return zone.destination_name)))
 	if full_route: controls_panel.configure_freight()
 	controls_panel.show()
 	controls_panel.grab_initial_focus()
@@ -1258,43 +1343,6 @@ func recover_world() -> void:
 	else: level.recover_all()
 	_reset_look.rpc()
 	_resume()
-
-func request_personal_recovery() -> void:
-	if not active or finished: return
-	if hosting:
-		_personal_requests[0] = true
-	else:
-		_request_personal.rpc_id(1, generation)
-	status.text = "내 위치 복구 요청 중…"
-
-@rpc("any_peer", "call_remote", "reliable")
-func _request_personal(epoch: int) -> void:
-	var slot := _sender_slot()
-	if hosting and active and not finished and epoch == generation and slot > 0:
-		_personal_requests[slot] = true
-
-func _restore_personal(slot: int) -> void:
-	if finished: return
-	var now := Time.get_ticks_msec()
-	if now - int(_personal_last.get(slot, -1000)) < 1000:
-		_personal_result.rpc(generation, slot, false)
-		return
-	_personal_last[slot] = now
-	if is_instance_valid(freight): freight.exit_seat(slot, true)
-	level.recover_slot(slot)
-	slot_inputs.erase(slot)
-	_apply_input(_players()[slot], Vector2.ZERO, PI, 0, false, false, false)
-	_personal_result.rpc(generation, slot, true)
-
-@rpc("authority", "call_local", "reliable")
-func _personal_result(epoch: int, slot: int, accepted: bool) -> void:
-	if epoch != generation or slot != local_slot: return
-	if not accepted:
-		status.text = "잠시 후 다시 요청해 주세요"
-		return
-	_reset_look()
-	_resume()
-	level.delivery_hud.show_delivery_toast("내 위치를 복구했습니다 · 상대와 완료한 배송은 유지됩니다")
 
 @rpc("authority", "call_local", "reliable")
 func _reset_look() -> void:
@@ -1340,15 +1388,13 @@ func _return_lobby(epoch: int) -> void:
 	_targets.clear()
 	_body_targets.clear()
 	_remote_controls.clear()
-	_personal_requests.clear()
-	_personal_last.clear()
 	_pending_pings.clear()
 	rtt_ms = -1
 	if is_instance_valid(level):
 		remove_child(level)
 		level.queue_free()
 		level = null
-	for item in [resume_button, personal_recover_button, recover_button, restart_button, return_lobby_button]: item.hide()
+	for item in [resume_button, recover_button, restart_button, return_lobby_button]: item.hide()
 	_hud_status.text = ""
 	panel.show()
 	cancel_button.show()
@@ -1393,12 +1439,12 @@ func _connection_ended(message: String) -> void:
 		level.queue_free()
 		level = null
 	panel.show()
-	_panel_title.text = "전체 배송 · 1~4인" if full_route else "온라인 협동 · 2~4인"
+	_set_panel_title("전체 배송 · 1~4인" if full_route else "온라인 협동 · 2~4인")
 	status.text = message
 	_hud_status.text = ""
 	for item in [address, port_input, host_button, join_button]:
 		item.show()
-	for item in [resume_button, personal_recover_button, recover_button, restart_button]:
+	for item in [resume_button, recover_button, restart_button]:
 		item.hide()
 	_set_connecting(false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -1429,7 +1475,7 @@ func _close_peer() -> void:
 func leave() -> void:
 	_close_peer()
 	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/ui/MainMenu.tscn")
+	SceneFader.change_scene("res://scenes/ui/MainMenu.tscn")
 
 func _exit_tree() -> void:
 	_close_peer()

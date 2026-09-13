@@ -107,7 +107,7 @@ func recover_all() -> void:
 
 func _on_package_delivered(_package: RigidBody3D, delivered_count: int, target_count: int) -> void:
 	delivery_hud.update_progress(delivered_count, target_count)
-	delivery_hud.show_delivery_toast()
+	delivery_hud.show_delivery_toast("배송 완료!", 2.5, "success")
 	_feedback.play_cue("delivery")
 
 

@@ -14,6 +14,8 @@ signal closed
 @onready var gamepad_sensitivity_slider: HSlider = $Panel/VBoxContainer/GamepadSensitivitySlider
 @onready var invert_y_check: CheckButton = $Panel/VBoxContainer/InvertYCheck
 @onready var master_volume_slider: HSlider = $Panel/VBoxContainer/MasterVolumeSlider
+@onready var bgm_volume_slider: HSlider = $Panel/VBoxContainer/BgmRow/BgmVolumeSlider
+@onready var sfx_volume_slider: HSlider = $Panel/VBoxContainer/SfxRow/SfxVolumeSlider
 @onready var reset_button: Button = $Panel/VBoxContainer/ResetButton
 @onready var shadows_check: CheckButton = $Panel/VBoxContainer/ShadowsCheck
 @onready var back_button: Button = $Panel/VBoxContainer/BackButton
@@ -30,6 +32,8 @@ func _ready() -> void:
 	gamepad_sensitivity_slider.value_changed.connect(_on_gamepad_sensitivity_changed)
 	invert_y_check.toggled.connect(_on_invert_y_toggled)
 	master_volume_slider.value_changed.connect(_on_master_volume_changed)
+	bgm_volume_slider.value_changed.connect(_on_bgm_volume_changed)
+	sfx_volume_slider.value_changed.connect(_on_sfx_volume_changed)
 	shadows_check.toggled.connect(_on_shadows_toggled)
 	reset_button.pressed.connect(_on_reset_pressed)
 	back_button.pressed.connect(_on_back_pressed)
@@ -61,6 +65,8 @@ func _refresh_from_settings() -> void:
 	gamepad_sensitivity_slider.value = GameSettings.gamepad_look_sensitivity
 	invert_y_check.button_pressed = GameSettings.invert_gamepad_y
 	master_volume_slider.value = GameSettings.master_volume * 100.0
+	bgm_volume_slider.value = GameSettings.bgm_volume * 100.0
+	sfx_volume_slider.value = GameSettings.sfx_volume * 100.0
 	shadows_check.button_pressed = GameSettings.shadows_enabled
 	_updating_ui = false
 
@@ -105,6 +111,18 @@ func _on_master_volume_changed(value: float) -> void:
 	if _updating_ui:
 		return
 	GameSettings.set_master_volume(value / 100.0)
+
+
+func _on_bgm_volume_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	GameSettings.set_bgm_volume(value / 100.0)
+
+
+func _on_sfx_volume_changed(value: float) -> void:
+	if _updating_ui:
+		return
+	GameSettings.set_sfx_volume(value / 100.0)
 
 
 func _on_reset_pressed() -> void:

@@ -105,9 +105,9 @@ func _run() -> void:
 	await capture("four-shared-grip")
 	_phase.rpc("shared-view", [])
 	if not await until(func(): return _all_ack("shared-view")): finish(); return
-	_phase.rpc("recover-last", [])
-	check(await until(func(): return parcel.get_grabber_count() == 3 and session.level.couriers[3].position.z < -12, 12), "P4 personal recovery releases only P4 grip and restores P4 spawn")
-	check(session.level.player.held_grabbable == parcel and session.level.player2.held_grabbable == parcel and session.level.couriers[2].held_grabbable == parcel, "other three grips remain after P4 recovery")
+	session.level.recover_slot(3)
+	check(await until(func(): return parcel.get_grabber_count() == 3 and session.level.couriers[3].position.z < -12, 12), "recovering P4's slot releases only P4 grip and restores P4 spawn")
+	check(session.level.player.held_grabbable == parcel and session.level.player2.held_grabbable == parcel and session.level.couriers[2].held_grabbable == parcel, "other three grips remain after P4 slot recovery")
 	_phase.rpc("stop", [])
 	await frames(20)
 	session.request_order_finish()
@@ -178,7 +178,7 @@ func start_round(tag: String) -> bool:
 func deliver_all() -> bool:
 	for body in session._bodies():
 		if not body is Package or body.is_delivered(): continue
-		var zone: DeliveryZone = session.level.delivery_zone if body.delivery_address == "201" else session.level.second_zone
+		var zone: DeliveryZone = session.level.destination(body.destination_id)
 		var before := zone.delivered_count
 		body.recover_to(Transform3D(Basis.IDENTITY, zone.global_position))
 		if not await until(func(): return zone.delivered_count == before + 1): check(false, "party fixture delivery"); return false
@@ -235,8 +235,6 @@ func _phase(tag: String, data: Array) -> void:
 		check(await until(func(): return session._players().all(func(p): return p.held_grabbable != null)), "all four carry poses reach client")
 		await capture("shared-grip")
 		_ack.rpc_id(1, tag)
-	elif tag == "recover-last" and session.local_slot == 3:
-		session._open_menu(); session.request_personal_recovery()
 	elif tag == "vote-others" and not session.hosting and session.local_slot != 3:
 		if await until(func(): return session.finish_pending): session.vote_order_finish(true)
 	elif tag == "vote-last" and session.local_slot == 3:
